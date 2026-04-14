@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block title %}Catálogos | JMIE{% endblock %}
+{% block section_name %}Catálogo de Tipos de Dispositivo{% endblock %}
+
+{% block nav_tipos %}text-jmie-orange bg-jmie-orange/10 border-r-2 border-jmie-orange{% endblock %}
+{% block nav_tipos_icon %}icon-filled text-jmie-orange{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Page Header -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/5 pb-4">
+        <div>
+            <div class="flex items-center text-xs font-bold text-jmie-orange uppercase tracking-widest mb-1">
+                <span>Catálogos</span>
+                <span class="material-symbols-outlined mx-2 text-[14px]">chevron_right</span>
+                <span class="text-on-background">Tipos de Dispositivo</span>
+            </div>
+            <h1 class="font-sans text-3xl font-black tracking-tighter">Tipos de Dispositivo</h1>
+        </div>
+        {% if perms.core.add_tipodispositivo %}
+        <button 
+            hx-get="{% url 'core:tipo_create' %}" 
+            hx-target="#modal-container" 
+            class="px-5 py-2.5 bg-jmie-orange hover:brightness-110 text-white font-bold rounded-lg flex items-center transition-all shadow-[0_0_15px_rgba(237,139,0,0.3)]"
+        >
+            <span class="material-symbols-outlined mr-2 text-[18px]">add</span>
+            Nuevo Tipo
+        </button>
+        {% endif %}
+    </div>
+
+    <!-- Refrescador de lista (Independiente para evitar conflictos) -->
+    <div 
+        hx-get="{% url 'core:tipo_list' %}"
+        hx-trigger="tipoListChanged from:body"
+        hx-target="#tipo-list-container"
+        hx-select="#tipo-list-container"
+        hx-swap="outerHTML"
+        class="hidden"
+    ></div>
+
+    <div 
+        id="tipo-list-container"
+        class="bg-surface-container-low rounded-xl border border-white/5 overflow-hidden"
+    >
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-white/5">
+                <thead class="bg-surface-container-high/50">
+                    <tr>
+                        <th class="px-6 py-4 text-left text-[11px] font-bold text-jmie-gray uppercase tracking-widest border-b border-white/5">Nombre del Tipo</th>
+                        <th class="px-6 py-4 text-left text-[11px] font-bold text-jmie-gray uppercase tracking-widest border-b border-white/5">Sigla</th>
+                        <th class="px-6 py-4 text-right text-[11px] font-bold text-jmie-gray uppercase tracking-widest border-b border-white/5">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-white/5 bg-transparent">
+                    {% for tipo in tipos %}
+                    <tr class="hover:bg-white/[0.03] transition-colors group">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-on-background">
+                            {{ tipo.nombre }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 py-1 bg-surface-container-highest rounded text-[10px] font-black text-jmie-orange border border-white/5 uppercase tracking-widest">
+                                {{ tipo.sigla|default:"--" }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm space-x-1">
+                            {% if perms.core.change_tipodispositivo %}
+                            <button 
+                                type="button"
+                                hx-get="{% url 'core:tipo_edit' tipo.pk %}"
+                                hx-target="#modal-container"
+                                class="text-jmie-gray hover:text-jmie-orange transition-colors p-2 rounded-lg hover:bg-white/5"
+                            >
+                                <span class="material-symbols-outlined text-[18px]">edit</span>
+                            </button>
+                            {% endif %}
+                            {% if perms.core.delete_tipodispositivo %}
+                            <button 
+                                type="button"
+                                hx-delete="{% url 'core:tipo_delete' tipo.pk %}"
+                                hx-target="#tipo-list-container"
+                                hx-swap="outerHTML"
+                                hx-confirm="¿Estás seguro de eliminar este tipo? Solo se puede eliminar si no tiene dispositivos asociados."
+                                class="text-jmie-gray hover:text-error transition-colors p-2 rounded-lg hover:bg-white/5"
+                            >
+                                <span class="material-symbols-outlined text-[18px]">delete</span>
+                            </button>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="3" class="px-6 py-12 text-center">
+                            <div class="flex flex-col items-center justify-center text-jmie-gray">
+                                <span class="material-symbols-outlined text-4xl mb-3 opacity-50">devices</span>
+                                <p class="text-sm font-semibold">No hay tipos registrados aún.</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

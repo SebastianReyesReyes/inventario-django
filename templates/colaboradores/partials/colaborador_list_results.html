@@ -1,0 +1,57 @@
+{% for c in colaboradores %}
+<tr id="colaborador-{{ c.id }}" class="hover:bg-white/[0.02] transition-colors group">
+    <td class="px-6 py-4">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-jmie-blue/20 flex items-center justify-center text-jmie-blue font-black text-sm">
+                {{ c.first_name|first|upper }}{{ c.last_name|first|upper }}
+            </div>
+            <div>
+                <p class="text-sm font-black text-on-background">{{ c.nombre_completo }}</p>
+                <p class="text-[10px] font-bold text-jmie-gray uppercase tracking-tighter">{{ c.email }}</p>
+            </div>
+        </div>
+    </td>
+    <td class="px-6 py-4 text-xs font-bold text-jmie-gray">{{ c.rut }}</td>
+    <td class="px-6 py-4">
+        <p class="text-xs font-bold text-on-background">{{ c.cargo }}</p>
+        <p class="text-[10px] font-bold text-jmie-blue uppercase tracking-widest">{{ c.departamento.nombre|default:"Sin Depto." }}</p>
+    </td>
+    <td class="px-6 py-4">
+        <span class="px-2.5 py-1 bg-white/5 rounded-md text-[10px] font-bold text-on-surface-variant border border-white/5">
+            {{ c.centro_costo.codigo_contable }} - {{ c.centro_costo.nombre }}
+        </span>
+    </td>
+    <td class="px-6 py-4">
+        <div class="flex items-center gap-1.5">
+            <span class="w-1.5 h-1.5 rounded-full bg-success"></span>
+            <span class="text-[10px] font-black uppercase text-success tracking-widest">Activo</span>
+        </div>
+    </td>
+    <td class="px-6 py-4 text-right">
+        <div class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            <a href="{% url 'colaboradores:colaborador_detail' c.pk %}" class="p-2 text-jmie-gray hover:text-white transition-colors" title="Ver Perfil">
+                <span class="material-symbols-outlined text-lg">visibility</span>
+            </a>
+            <a href="{% url 'colaboradores:colaborador_update' c.pk %}" class="p-2 text-jmie-gray hover:text-jmie-blue transition-colors" title="Editar">
+                <span class="material-symbols-outlined text-lg">edit</span>
+            </a>
+            <button hx-delete="{% url 'colaboradores:colaborador_delete' c.pk %}" 
+                    hx-confirm="¿Está seguro de desactivar a {{ c.nombre_completo }}? Esta acción es irreversible operativamente."
+                    hx-target="#colaborador-{{ c.id }}"
+                    hx-swap="outerHTML swap:0.5s"
+                    class="p-2 text-jmie-gray hover:text-error transition-colors" title="Desactivar">
+                <span class="material-symbols-outlined text-lg">person_remove</span>
+            </button>
+        </div>
+    </td>
+</tr>
+{% empty %}
+<tr>
+    <td colspan="6" class="px-6 py-12 text-center">
+        <div class="flex flex-col items-center gap-2 opacity-50">
+            <span class="material-symbols-outlined text-4xl">person_search</span>
+            <p class="text-xs font-bold uppercase tracking-widest">No se encontraron colaboradores</p>
+        </div>
+    </td>
+</tr>
+{% endfor %}

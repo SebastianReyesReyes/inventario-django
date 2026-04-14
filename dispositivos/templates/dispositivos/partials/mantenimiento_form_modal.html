@@ -1,0 +1,73 @@
+<div id="mantenimiento-modal" 
+     x-data="{ open: true }"
+     x-show="open"
+     @mantenimiento-saved.window="open = false; setTimeout(() => $el.remove(), 300)"
+     class="fixed inset-0 z-[70] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-300">
+    <div class="glass-panel w-full max-w-lg p-8 rounded-3xl border border-white/10 shadow-2xl space-y-6 relative overflow-hidden"
+         @click.away="open = false; setTimeout(() => $el.remove(), 300)">
+        
+        <!-- Glow Deco -->
+        <div class="absolute -top-24 -left-24 w-48 h-48 bg-amber-500/10 blur-[80px] rounded-full pointer-events-none"></div>
+
+        <div class="flex items-center justify-between">
+            <div>
+                <h3 class="text-xl font-black tracking-tighter text-on-background">
+                    {% if manto %}Editar Mantenimiento{% else %}Registrar Mantenimiento{% endif %}
+                </h3>
+                <p class="text-xs font-bold text-jmie-gray uppercase tracking-widest mt-1">Activo: {{ dispositivo.identificador_interno }}</p>
+            </div>
+            <button onclick="document.getElementById('mantenimiento-modal').remove()" class="p-2 hover:bg-white/5 rounded-full text-jmie-gray transition-colors">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+
+        <form hx-post="{% if manto %}{% url 'dispositivos:mantenimiento_update' manto.pk %}{% else %}{% url 'dispositivos:mantenimiento_create' dispositivo.pk %}{% endif %}"
+              hx-target="closest #mantenimiento-modal"
+              hx-swap="outerHTML"
+              class="space-y-6">
+            {% csrf_token %}
+            
+            <div class="space-y-4">
+                <div class="space-y-1.5">
+                    <label class="text-[10px] font-black uppercase text-jmie-gray tracking-tighter ml-1">Falla Reportada</label>
+                    {{ form.falla_reportada }}
+                </div>
+                
+                <div class="space-y-1.5">
+                    <label class="text-[10px] font-black uppercase text-jmie-gray tracking-tighter ml-1">Reparación Realizada</label>
+                    {{ form.reparacion_realizada }}
+                </div>
+
+                <div class="grid grid-cols-2 gap-6">
+                    <div class="space-y-1.5">
+                        <label class="text-[10px] font-black uppercase text-jmie-gray tracking-tighter ml-1">Costo ($)</label>
+                        {{ form.costo_reparacion }}
+                    </div>
+                    <div class="space-y-1.5">
+                        <label class="text-[10px] font-black uppercase text-jmie-gray tracking-tighter ml-1">Técnico Responsable</label>
+                        {{ form.tecnico_responsable }}
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-3 p-4 bg-amber-500/5 border border-amber-500/10 rounded-xl">
+                    {{ form.cambio_estado_automatico }}
+                    <label class="text-xs font-bold text-amber-200/80 cursor-pointer">Cambiar estado a "En Reparación" automáticamente</label>
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-3 pt-4">
+                <button type="button" 
+                        onclick="document.getElementById('mantenimiento-modal').remove()"
+                        class="px-6 py-2.5 bg-white/5 text-on-background text-xs font-black uppercase tracking-widest rounded-lg border border-white/5">
+                    Cancelar
+                </button>
+                <button type="submit" 
+                        id="save-button"
+                        class="px-8 py-2.5 bg-amber-500 text-white text-xs font-black uppercase tracking-widest rounded-lg hover:brightness-110 shadow-lg transition-all flex items-center justify-center gap-2 group">
+                    <span class="htmx-indicator w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                    <span class="group-[.htmx-request]:opacity-50">Guardar Registro</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

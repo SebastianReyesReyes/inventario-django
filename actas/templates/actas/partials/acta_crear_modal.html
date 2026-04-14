@@ -1,0 +1,130 @@
+<div x-data="{ open: true, tipoActa: 'ENTREGA' }" 
+     x-show="open" 
+     x-cloak
+     @modal-close.window="open = false; setTimeout(() => { $el.remove() }, 500)"
+     class="fixed inset-0 z-50 flex items-center justify-center p-4">
+    
+    <!-- Backdrop -->
+    <div class="absolute inset-0 bg-background/80 backdrop-blur-md" @click="open = false; setTimeout(() => { $el.remove() }, 500)"></div>
+
+    <!-- Modal Content -->
+    <div x-show="open"
+         x-transition:enter="ease-out duration-300"
+         x-transition:enter-start="opacity-0 scale-95 translate-y-4"
+         x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+         class="relative w-full max-w-2xl bg-surface-container border border-white/10 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-visible">
+        
+        <!-- Glow Effect -->
+        <div class="absolute -top-24 -left-24 w-48 h-48 bg-blue-500/10 blur-[80px] rounded-full"></div>
+
+        <div class="p-8 relative">
+            <div class="flex items-center justify-between mb-8 border-b border-white/5 pb-6">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-400 border border-blue-500/20">
+                        <span class="material-symbols-outlined text-3xl">description</span>
+                    </div>
+                    <div>
+                        <h2 class="text-2xl font-black tracking-tighter uppercase" x-text="tipoActa === 'ENTREGA' ? 'Generar Acta de Entrega' : 'Generar Acta de Devolución'">Generar Nueva Acta</h2>
+                        <p class="text-jmie-gray text-xs font-bold uppercase tracking-widest mt-0.5">Gestión de Respaldo Legal</p>
+                    </div>
+                </div>
+                <button @click="open = false; setTimeout(() => { $el.remove() }, 500)" class="text-jmie-gray hover:text-on-background transition-colors">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+
+            <form hx-post="{% url 'actas:acta_crear' %}" 
+                  hx-target="this" 
+                  hx-indicator="#form-indicator"
+                  class="space-y-6">
+                {% csrf_token %}
+                
+                <!-- Error Container -->
+                <div id="acta-errors" class="empty:hidden"></div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black uppercase tracking-widest text-jmie-gray ml-1">Colaborador</label>
+                        {{ form.colaborador }}
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black uppercase tracking-widest text-jmie-gray ml-1">Tipo de Documento</label>
+                        {{ form.tipo_acta }}
+                    </div>
+                </div>
+
+                <!-- Campos Condicionales de Devolución (NIST + Ministro de Fe) -->
+                <div x-show="tipoActa === 'DEVOLUCION'" 
+                     x-transition:enter="transition ease-out duration-200"
+                     x-transition:enter-start="opacity-0 -translate-y-2"
+                     x-transition:enter-end="opacity-100 translate-y-0"
+                     class="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-error/5 rounded-2xl border border-error/10">
+                    
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black uppercase tracking-widest text-error-container ml-1 flex items-center justify-between">
+                            <span>Ministro de Fe (Obra)</span>
+                            <span class="text-[8px] bg-error text-white px-1 rounded animate-pulse">REQUERIDO</span>
+                        </label>
+                        {{ form.ministro_de_fe }}
+                        <p class="text-[9px] text-jmie-gray italic">Administrador responsable en terreno.</p>
+                    </div>
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-[10px] font-black uppercase tracking-widest text-jmie-gray ml-1" x-text="tipoActa === 'ENTREGA' ? 'Equipos Pendientes de Entrega' : 'Equipos a Devolver'">Equipos Pendientes de Acta</label>
+                    <div id="asignaciones-container" class="bg-surface-container-low rounded-2xl border border-white/5 p-4 min-h-[120px] max-h-[200px] overflow-y-auto custom-scrollbar">
+                        <p class="text-xs text-jmie-gray italic text-center py-4">Seleccione un colaborador para ver los equipos.</p>
+                    </div>
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-[10px] font-black uppercase tracking-widest text-jmie-gray ml-1">Observaciones</label>
+                    {{ form.observaciones }}
+                </div>
+
+                <div class="pt-6 border-t border-white/5 flex items-center justify-between">
+                    <div id="form-indicator" class="htmx-indicator flex items-center gap-2 text-jmie-blue">
+                        <div class="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+                        <span class="text-[10px] font-black uppercase tracking-widest">Generando Documento...</span>
+                    </div>
+                    
+                    <div class="flex gap-3 ml-auto">
+                        <button type="button" 
+                                @click="open = false; setTimeout(() => { $el.remove() }, 500)"
+                                class="px-6 py-2.5 text-xs font-black uppercase tracking-widest text-jmie-gray hover:text-on-background border border-white/10 rounded-xl hover:bg-white/5 transition-all">
+                            Cancelar
+                        </button>
+                        <button type="submit" 
+                                class="px-8 py-2.5 bg-blue-600 text-white text-xs font-black uppercase tracking-widest rounded-xl hover:brightness-110 shadow-[0_10px_30px_rgba(37,99,235,0.2)] transition-all">
+                            Emitir Acta
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        const selectColaborador = document.querySelector('.htmx-colaborador-select');
+        const selectMinistro = document.querySelector('.htmx-ministro-select');
+        
+        if (selectColaborador) {
+            selectColaborador.addEventListener('change', function(e) {
+                const val = e.target.value;
+                if (val) {
+                    // 1. Cargar equipos pendientes
+                    const urlAsignaciones = `{% url 'actas:asignaciones_pendientes' 0 %}`.replace('0', val);
+                    htmx.ajax('GET', urlAsignaciones, {target:'#asignaciones-container'});
+                    
+                    // 2. Cargar Ministros de Fe filtrados por obra (solo si estamos en devolución o para tenerlo listo)
+                    const urlMinistros = `{% url 'actas:ministros_por_colaborador' 0 %}`.replace('0', val);
+                    htmx.ajax('GET', urlMinistros, {target:'.htmx-ministro-select'});
+                } else {
+                    document.getElementById('asignaciones-container').innerHTML = '<p class="text-xs text-jmie-gray italic text-center py-4">Seleccione un colaborador para ver los equipos.</p>';
+                }
+            });
+        }
+    })();
+</script>

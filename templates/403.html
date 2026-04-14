@@ -1,0 +1,123 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acceso Denegado | JMIE Consola de administración</title>
+    
+    <!-- Material Symbols -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1" rel="stylesheet">
+    
+    <!-- Scripts -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+    
+    <style>
+        @font-face {
+            font-family: 'Montserrat';
+            src: url('{% static "fonts/Montserrat-VariableFont_wght.ttf" %}') format('truetype');
+            font-weight: 100 900;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        :root {
+            color-scheme: dark;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            overflow-x: hidden;
+        }
+
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 1, 'wght' 300, 'GRAD' 0, 'opsz' 48;
+        }
+    </style>
+
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "jmie-blue": "#003594",
+                        "jmie-orange": "#ED8B00",
+                        "jmie-gray": "#7C878E",
+                        "background": "#0a0c14",
+                        "surface-container": "#171c28",
+                        "surface-container-high": "#1e2533",
+                        "on-background": "#f0f3f8",
+                        "on-surface": "#c8cdd5",
+                        "error": "#ef4444",
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-background text-on-background min-h-screen flex items-center justify-center relative">
+
+    <!-- Decoración de fondo -->
+    <div class="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] bg-jmie-blue/10 rounded-full blur-[120px]"></div>
+    <div class="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-jmie-orange/10 rounded-full blur-[100px]"></div>
+
+    <div class="max-w-2xl w-full px-6 relative z-10 text-center py-20">
+        
+        <!-- Icono de Seguridad con Giff Animado o Efecto -->
+        <div class="mb-10 relative inline-block">
+            <div class="absolute inset-0 bg-error/20 blur-3xl rounded-full scale-150 animate-pulse"></div>
+            <div class="w-32 h-32 rounded-[2.5rem] bg-surface-container border-2 border-error/30 flex items-center justify-center text-error relative z-10 shadow-2xl transform rotate-3 hover:rotate-0 transition-transform duration-500">
+                <span class="material-symbols-outlined text-6xl">lock_person</span>
+            </div>
+        </div>
+
+        <h1 class="text-6xl font-black tracking-tighter mb-4 text-on-background uppercase animate-[tracking-in-contract_0.8s_ease-out]">
+            Acceso <span class="text-error">Restringido</span>
+        </h1>
+        
+        <p class="text-jmie-gray text-xs font-black uppercase tracking-[0.4em] mb-12 opacity-80">
+            Error 403 — Permisos Insuficientes
+        </p>
+        
+        <div class="bg-white/[0.03] backdrop-blur-md border border-white/10 rounded-3xl p-8 mb-12 shadow-[0_20px_50px_rgba(0,0,0,0.5)] max-w-lg mx-auto transform hover:scale-[1.01] transition-all">
+            <p class="text-on-surface text-lg font-medium leading-relaxed">
+                Lo sentimos, tu cuenta no tiene privilegios para realizar esta acción o visualizar este módulo.
+            </p>
+            <div class="mt-4 pt-4 border-t border-white/5 flex items-center justify-center gap-2 text-jmie-gray">
+                <span class="material-symbols-outlined text-sm">info</span>
+                <span class="text-[10px] font-bold uppercase tracking-widest">Contacte a TI para solicitar acceso</span>
+            </div>
+        </div>
+
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-5">
+            <a href="{% url 'home' %}" 
+               class="w-full sm:w-auto px-10 py-5 bg-jmie-orange text-white text-xs font-black uppercase tracking-[0.2em] rounded-2xl hover:brightness-110 active:scale-95 transition-all shadow-[0_15px_30px_rgba(237,139,0,0.3)]">
+                Volver al Sistema
+            </a>
+            
+            <form action="{% url 'logout' %}" method="post" class="w-full sm:w-auto">
+                {% csrf_token %}
+                <button type="submit" 
+                        class="w-full sm:w-auto px-10 py-5 bg-white/5 border border-white/10 text-on-background text-xs font-black uppercase tracking-[0.2em] rounded-2xl hover:bg-white/10 active:scale-95 transition-all backdrop-blur-sm">
+                    Cerrar Sesión
+                </button>
+            </form>
+        </div>
+
+        <!-- Footer Branding -->
+        <div class="mt-24 pt-8 border-t border-white/5 inline-block opacity-40">
+            <img src="{% static 'img/logoBlanco.png' %}" alt="JMIE Logo" class="h-6 mx-auto grayscale brightness-200">
+            <p class="mt-4 text-[9px] font-black uppercase tracking-[0.3em] text-jmie-gray">Consola de administración v2.0</p>
+        </div>
+    </div>
+
+    <style>
+        @keyframes tracking-in-contract {
+            0% { letter-spacing: 1em; opacity: 0; }
+            40% { opacity: 0.6; }
+            100% { letter-spacing: -0.05em; opacity: 1; }
+        }
+    </style>
+</body>
+</html>

@@ -1,0 +1,437 @@
+
+--- PAGE 1 ---
+PROCEDIMIENTO CODIGO TI-PR-001
+FECHA MAR-2026
+“GESTIÓN DE ACCESOS Y ACTIVOS TI”
+VERSION 1
+Elaborado por: Sebastián Reyes R. Fecha: Firma:
+Revisado por: Fecha: Firma:
+Aprobado por: Fecha: Firma:
+1. OBJETIVO
+Establecer los lineamientos y parámetros bajo los cuales se deben gestionar las
+solicitudes de ingreso, desvinculación, asignación y devolución de activos
+tecnológicos en la empresa, garantizando la seguridad de la información y el estricto
+cumplimiento de la Ley Marco de Ciberseguridad y la Ley de Protección de Datos
+Personales
+ALCANCE
+2.
+El presente procedimiento aplica a los siguientes cargos:
+• Jefatura de RRHH (Oficina Central) y Encargados de RRHH en Obra.
+• Encargado de Tecnologías de la Información.
+• Administradores de Contrato u Obra.
+• Colaboradores que tengan facultades de contratación.
+• Gerencia.
+• Proveedores externos de servicios tecnológicos.
+JMIE | INGENIERÍA ELÉCTRICA
+Dirección: José Manuel Infante #2298, Ñuñoa, Santiago.
+Fono: +56 2 3252 7536 | Correo: contacto@jmie.cl
+--- PAGE 2 ---
+PROCEDIMIENTO CODIGO TI-PR-001
+FECHA MAR-2026
+“GESTIÓN DE ACCESOS Y ACTIVOS TI”
+VERSION 1
+Elaborado por: Sebastián Reyes R. Fecha: Firma:
+Revisado por: Fecha: Firma:
+Aprobado por: Fecha: Firma:
+3. FORMULARIOS Y PLANTILLAS
+Toda solicitud de creación de cuentas o entrega de equipos deberá realizarse
+exclusivamente mediante los documentos oficiales:
+• Formulario de Ingreso y Desvinculación de Personal.
+• Acta de Asignación de Equipos.
+• Tecnológicos Acta de Devolución y Autorización de Borrado de Dato.
+No se aceptarán solicitudes informales realizadas por otros medios, como correos
+electrónicos sin formato, aplicaciones de mensajería o peticiones verbales, salvo
+situaciones excepcionales de emergencia debidamente justificadas y canalizadas
+por las gerencias correspondientes.
+JMIE | INGENIERÍA ELÉCTRICA
+Dirección: José Manuel Infante #2298, Ñuñoa, Santiago.
+Fono: +56 2 3252 7536 | Correo: contacto@jmie.cl
+--- PAGE 3 ---
+PROCEDIMIENTO CODIGO TI-PR-001
+FECHA MAR-2026
+“GESTIÓN DE ACCESOS Y ACTIVOS TI”
+VERSION 1
+Elaborado por: Sebastián Reyes R. Fecha: Firma:
+Revisado por: Fecha: Firma:
+Aprobado por: Fecha: Firma:
+4. GLOSARIO
+Término Definición
+Pacto documentado que establece los tiempos de respuesta
+Acuerdo de nivel obligatorios entre el departamento de Recursos Humanos y el
+de servicios área de Tecnologías de la Información para la provisión de
+servicios o bloqueo de cuentas.
+Norma de seguridad que asegura que los permisos a los
+Control de Acceso
+sistemas informáticos y carpetas se asignen estrictamente
+Basado en
+según el cargo oficial del trabajador y no por peticiones
+Funciones
+arbitrarias.
+Regla de seguridad corporativa que prohíbe el
+Modelo de
+almacenamiento de información crítica o documentos de la
+Confianza Cero
+empresa en los discos físicos locales de los computadores.
+Normativa del
+Estándar técnico internacional, que dicta las directrices rigurosas y
+Instituto Nacional
+obligatorias para la sanitización y destrucción irreversible de la
+de Estándares y
+información en medios de almacenamiento.
+Tecnología
+Normativa técnica internacional dictada por el Instituto
+Estándar de Nacional de Estándares y Tecnología que rige los métodos de
+Borrado Seguro purga electrónica para destruir datos de un equipo de forma
+completamente irreversible.
+Procedimiento técnico de seguridad exigido por la normativa
+mencionada anteriormente, obligatorio para el
+reacondicionamiento de equipos. Consiste en aplicar
+Purga de Datos
+comandos de borrado criptográfico que destruyen la
+información desde la raíz del hardware antes de reasignar un
+computador a un nuevo usuario.
+JMIE | INGENIERÍA ELÉCTRICA
+Dirección: José Manuel Infante #2298, Ñuñoa, Santiago.
+Fono: +56 2 3252 7536 | Correo: contacto@jmie.cl
+--- PAGE 4 ---
+PROCEDIMIENTO CODIGO TI-PR-001
+FECHA MAR-2026
+“GESTIÓN DE ACCESOS Y ACTIVOS TI”
+VERSION 1
+Elaborado por: Sebastián Reyes R. Fecha: Firma:
+Revisado por: Fecha: Firma:
+Aprobado por: Fecha: Firma:
+5. NIVELES DE SERVICIO OBLIGATORIOS
+Para garantizar el correcto aprovisionamiento de herramientas tecnológicas y proteger la
+seguridad de la información corporativa, se establecen los siguientes tiempos de
+respuesta obligatorios.
+Ingreso de personal La jefatura de Recursos Humanos debe enviar la notificación
+con equipos de uso formal de ingreso aprobada con un mínimo de cinco días
+estándar hábiles de anticipación a la fecha oficial de inicio del
+colaborador.
+Este tiempo se detendrá inmediatamente si el formulario de
+ingreso llega incompleto o no define con exactitud el cargo a
+desempeñar, requisito vital para asignar los permisos
+informáticos.
+Ingreso de personal Para solicitudes de herramientas físicas especializadas o
+con equipos de alto estaciones de trabajo de capacidad avanzada, el aviso debe
+rendimiento realizarse con quince días hábiles de anticipación. Este plazo
+queda estrictamente sujeto a la disponibilidad logística de los
+proveedores externos, debiendo el área de Tecnologías de la
+Información notificar cualquier quiebre de inventario en el
+mercado.
+Desvinculación Las notificaciones de salida por fin de proyecto, renuncia
+programada de voluntaria o mutuo acuerdo deben enviarse con dos días
+colaboradores hábiles de anticipación a la fecha efectiva de retiro.
+Esto permite programar la revocación total de accesos al final
+del último día laboral del trabajador.
+Desvinculación de Ante salidas conflictivas o sin aviso previo, la jefatura de
+emergencia o despido Recursos Humanos debe comunicarse de forma directa,
+inmediato verbal e inequívoca con el encargado de Tecnologías de la
+Información.
+A partir de esa notificación, el área tecnológica tiene un plazo
+máximo e irrenunciable de una hora para ejecutar el bloqueo
+total de las cuentas y el cierre de las sesiones activas del
+usuario.
+JMIE | INGENIERÍA ELÉCTRICA
+Dirección: José Manuel Infante #2298, Ñuñoa, Santiago.
+Fono: +56 2 3252 7536 | Correo: contacto@jmie.cl
+--- PAGE 5 ---
+PROCEDIMIENTO CODIGO TI-PR-001
+FECHA MAR-2026
+“GESTIÓN DE ACCESOS Y ACTIVOS TI”
+VERSION 1
+Elaborado por: Sebastián Reyes R. Fecha: Firma:
+Revisado por: Fecha: Firma:
+Aprobado por: Fecha: Firma:
+Condiciones de Los plazos de respuesta exigidos al área de Tecnologías de
+Suspensión de los la Información se detendrán formalmente si el requerimiento
+Niveles de Servicio de ingreso llega incompleto, carece de la definición exacta del
+cargo o requiere licencias de programas informáticos no
+estandarizados.
+Plazos de Todo equipo tecnológico recuperado luego de la salida de un
+Reacondicionamiento trabajador requiere un tiempo técnico innegociable de
+y Purga de Datos cuarenta y ocho a setenta y dos horas hábiles para ejecutar
+la purga de datos exigida por la normativa internacional y la
+reinstalación del sistema.
+Ningún equipo podrá ser reasignado a un nuevo usuario sin
+haber cumplido este plazo de certificación de borrado.
+Recuperación de Para los servicios administrados por terceros, el área de
+Licencias en Tecnologías de la Información exigirá a dichos proveedores
+Proveedores que revoquen los accesos en los mismos plazos de
+Externos emergencia estipulados internamente.
+Asimismo, se establece un plazo máximo de treinta días tras
+la salida del trabajador para respaldar su información,
+transferir la titularidad de sus archivos críticos a su jefatura y
+eliminar definitivamente la cuenta para detener el cobro de la
+licencia respectiva.
+Reemplazo de Ante la notificación formal de falla de un componente físico,
+Equipos por Fallas daño accidental o robo de un equipo asignado, el área de
+Técnicas o Siniestros Tecnologías de la Información proveerá un activo de
+reemplazo en un plazo de veinticuatro a cuarenta y ocho
+horas hábiles, sujeto a la disponibilidad de inventario local.
+El plazo comenzará a regir exclusivamente una vez que el
+trabajador o el administrador de obra entregue el activo
+dañado o, en caso de robo, presente el comprobante oficial
+de la denuncia policial respectiva.
+Auditorías de El área de Tecnologías de la Información realizará una
+Accesos y Cuentas auditoría comparativa mensual entre los registros de cuentas
+Inactivas
+JMIE | INGENIERÍA ELÉCTRICA
+Dirección: José Manuel Infante #2298, Ñuñoa, Santiago.
+Fono: +56 2 3252 7536 | Correo: contacto@jmie.cl
+--- PAGE 6 ---
+PROCEDIMIENTO CODIGO TI-PR-001
+FECHA MAR-2026
+“GESTIÓN DE ACCESOS Y ACTIVOS TI”
+VERSION 1
+Elaborado por: Sebastián Reyes R. Fecha: Firma:
+Revisado por: Fecha: Firma:
+Aprobado por: Fecha: Firma:
+activas en los sistemas y la nómina oficial de trabajadores
+proporcionada por el departamento de Recursos Humanos.
+Cualquier discrepancia o cuenta inactiva detectada durante
+esta revisión será bloqueada de manera preventiva en un
+plazo máximo de veinticuatro horas.
+Tiempos de Toda solicitud formal levantada por un trabajador o
+Respuesta ante extrabajador respecto al acceso, rectificación, supresión u
+Derechos de oposición sobre sus datos personales almacenados en la
+Privacidad infraestructura corporativa será respondida por el área de
+Tecnologías de la Información en un plazo máximo de treinta
+días corridos.
+En el caso de solicitudes fundadas orientadas al bloqueo
+temporal de información, el plazo de respuesta innegociable
+será de dos días hábiles contados desde su recepción.
+JMIE | INGENIERÍA ELÉCTRICA
+Dirección: José Manuel Infante #2298, Ñuñoa, Santiago.
+Fono: +56 2 3252 7536 | Correo: contacto@jmie.cl
+--- PAGE 7 ---
+PROCEDIMIENTO CODIGO TI-PR-001
+FECHA MAR-2026
+“GESTIÓN DE ACCESOS Y ACTIVOS TI”
+VERSION 1
+Elaborado por: Sebastián Reyes R. Fecha: Firma:
+Revisado por: Fecha: Firma:
+Aprobado por: Fecha: Firma:
+6. RESPONSABILIDADES
+Jefatura de Recursos Humanos y encargados de Recursos Humanos en obra
+• Generar y enviar las notificaciones oficiales de ingreso y desvinculación
+cumpliendo rigurosamente los Acuerdos de Nivel de Servicio pactados.
+• Hay que confirmar que el formulario incluya el cargo exacto del trabajador
+para la correcta aplicación del control de acceso basado en funciones.
+• Coordinar directamente con el encargado de Tecnologías de la Información
+las desvinculaciones de emergencia para el bloqueo inmediato de accesos.
+Supervisores/jefes de Terreno/Equipo de Obra
+• Generar las solicitudes de materiales en tiempo y forma, utilizando el formato
+establecido.
+• Verificar previamente la necesidad real del requerimiento antes de solicitar.
+Encargado de Tecnologías de la Información
+• Validar y configurar los accesos, cuentas locales y credenciales temporales
+de los nuevos usuarios.
+• Hay que confirmar que todo equipo cuente con políticas de seguridad y
+cifrado de disco antes de su entrega física.
+• Ejecutar la purga de datos de los equipos devueltos cumpliendo la normativa
+técnica internacional para proteger la información confidencial.
+• Coordinar y supervisar al proveedor externo en la creación y baja de cuentas
+de correo corporativo.
+Gerencia
+• Aprobar los presupuestos necesarios para la adquisición de activos
+tecnológicos, infraestructura y licenciamiento de programas informáticos.
+• Patrocinar y exigir el cumplimiento estricto de este procedimiento en todas
+las áreas de la empresa para garantizar la alineación con la estrategia
+corporativa, las leyes de ciberseguridad y la protección de datos personales.
+• Autorizar formalmente aquellas solicitudes excepcionales o urgentes de
+equipos que no cumplan con los plazos regulares de aviso previo estipulados.
+JMIE | INGENIERÍA ELÉCTRICA
+Dirección: José Manuel Infante #2298, Ñuñoa, Santiago.
+Fono: +56 2 3252 7536 | Correo: contacto@jmie.cl
+--- PAGE 8 ---
+PROCEDIMIENTO CODIGO TI-PR-001
+FECHA MAR-2026
+“GESTIÓN DE ACCESOS Y ACTIVOS TI”
+VERSION 1
+Elaborado por: Sebastián Reyes R. Fecha: Firma:
+Revisado por: Fecha: Firma:
+Aprobado por: Fecha: Firma:
+Colaboradores que tengan facultades de contratación
+• Notificar al departamento de Recursos Humanos sobre las nuevas
+incorporaciones con la anticipación suficiente para no quebrar los Acuerdos
+de Nivel de Servicio pactados con el área de Tecnologías de la Información.
+• Definir con exactitud el cargo oficial y las funciones del nuevo trabajador al
+momento de solicitar su ingreso, condición obligatoria para la correcta
+asignación de los permisos informáticos.
+• Abstenerse de solicitar requerimientos técnicos por vías informales o de
+comprometer entregas inmediatas de equipos a los nuevos trabajadores sin
+la validación previa de disponibilidad logística
+Administradores de contrato u obra
+• Actuar como ministro de fe en terreno para la firma física y posterior
+digitalización de las Actas de Asignación y Devolución de equipos.
+• Hay que asegurar que los trabajadores bajo su mando respeten el modelo de
+confianza cero y las normativas corporativas de cuidado de los equipos
+tecnológicos.
+Proveedores externos de servicios tecnológicos
+• Ejecutar la creación, modificación y bloqueo de cuentas corporativas y
+licencias en la nube dentro de los plazos exigidos por la empresa.
+• Mantener estricto secreto profesional y confidencialidad sobre la información
+y los datos personales gestionados por encargo de la compañía.
+JMIE | INGENIERÍA ELÉCTRICA
+Dirección: José Manuel Infante #2298, Ñuñoa, Santiago.
+Fono: +56 2 3252 7536 | Correo: contacto@jmie.cl
+--- PAGE 9 ---
+PROCEDIMIENTO CODIGO TI-PR-001
+FECHA MAR-2026
+“GESTIÓN DE ACCESOS Y ACTIVOS TI”
+VERSION 1
+Elaborado por: Sebastián Reyes R. Fecha: Firma:
+Revisado por: Fecha: Firma:
+Aprobado por: Fecha: Firma:
+7. PROCEDIMIENTO
+Descripción del procedimiento
+Las solicitudes de cuentas de usuario y equipos tecnológicos deberán realizarse
+exclusivamente mediante el formulario oficial.
+No se aceptarán requerimientos informales realizados por correo electrónico sin
+formato, llamadas telefónicas, aplicaciones de mensajería u otros medios no
+establecidos en esta normativa.
+I. Planificación del requerimiento de ingreso
+El departamento de Recursos Humanos deberá enviar la solicitud oficial al área de
+Tecnologías de la Información respetando los tiempos de respuesta estipulados
+anteriormente.
+La solicitud debe incluir obligatoriamente el cargo exacto del nuevo trabajador para aplicar
+el control de acceso basado en funciones.
+Si esta información viene incompleta, la solicitud será devuelta y los plazos de entrega se
+suspenderán.
+II. Revisión de inventario y configuración
+El encargado de Tecnologías de la Información verificará la disponibilidad de equipos en
+la plataforma de inventario.
+Una vez asignado el computador, se configurará una cuenta de administrador local de uso
+exclusivo del área técnica y una cuenta de usuario estándar para el trabajador.
+Se aplicarán todas las políticas de seguridad corporativas, incluyendo el cifrado completo
+del disco de almacenamiento para proteger la información contra robos.
+III. Entrega física y firmas legales
+La entrega del equipo en terreno será validada obligatoriamente por el
+administrador de obra mediante la firma del acta de asignación de equipos
+tecnológicos.
+En este acto, se entregará al trabajador una contraseña temporal, la cual el
+sistema le exigirá cambiar por una clave personal e intransferible durante su
+primer inicio de sesión.
+JMIE | INGENIERÍA ELÉCTRICA
+Dirección: José Manuel Infante #2298, Ñuñoa, Santiago.
+Fono: +56 2 3252 7536 | Correo: contacto@jmie.cl
+--- PAGE 10 ---
+PROCEDIMIENTO CODIGO TI-PR-001
+FECHA MAR-2026
+“GESTIÓN DE ACCESOS Y ACTIVOS TI”
+VERSION 1
+Elaborado por: Sebastián Reyes R. Fecha: Firma:
+Revisado por: Fecha: Firma:
+Aprobado por: Fecha: Firma:
+IV. Retiro de accesos y purga de datos por desvinculación
+Al recibir la notificación oficial de salida de un trabajador, el área de Tecnologías de la
+Información ejecutará el bloqueo de credenciales en los sistemas y correos según los
+tiempos de emergencia o programados. Una vez recuperado el computador físico, el
+excolaborador deberá firmar el acta de devolución autorizando la destrucción de su
+información. Posteriormente, el equipo pasará a la etapa de purga de datos mediante
+borrado criptográfico irreversible, paso obligatorio antes de volver al inventario disponible.
+CONSIDERACIONES ESPECIALES
+Sin perjuicio de lo establecido en los puntos anteriores, se deberán considerar las
+siguientes disposiciones de cumplimiento obligatorio:
+I. Autorización formal y restricción de solicitantes
+Toda solicitud de creación de cuentas o entrega de equipos deberá contar con la
+autorización formal del administrador de obra o la jefatura directa correspondiente.
+No se aceptarán solicitudes directas de trabajadores, capataces o personal externo sin
+esta validación jerárquica.
+El incumplimiento de esta norma será considerado una falta grave a los protocolos de
+seguridad de la empresa.
+II. Prohibición de credenciales compartidas
+Queda estrictamente prohibida la creación y el uso de cuentas de usuario genéricas o
+compartidas entre múltiples colaboradores.
+Cada cuenta de acceso a los sistemas y plataformas en la nube debe estar vinculada de
+manera unívoca a la identidad legal de un solo trabajador.
+Las contraseñas de cuentas de uso común que deban existir por motivos de fuerza mayor
+serán modificadas inmediatamente tras la salida de cualquier trabajador que tuviese
+conocimiento de ellas.
+III. Respaldo y transferencia de titularidad
+Durante el proceso de desvinculación, y antes de ejecutar el borrado definitivo de una
+cuenta, el área de Tecnologías de la Información garantizará la transferencia de la
+titularidad de los archivos corporativos y correos electrónicos relevantes a la jefatura
+directa del trabajador saliente.
+Esta acción asegura la continuidad operativa del negocio y evita la pérdida de información
+crítica.
+JMIE | INGENIERÍA ELÉCTRICA
+Dirección: José Manuel Infante #2298, Ñuñoa, Santiago.
+Fono: +56 2 3252 7536 | Correo: contacto@jmie.cl
+--- PAGE 11 ---
+PROCEDIMIENTO CODIGO TI-PR-001
+FECHA MAR-2026
+“GESTIÓN DE ACCESOS Y ACTIVOS TI”
+VERSION 1
+Elaborado por: Sebastián Reyes R. Fecha: Firma:
+Revisado por: Fecha: Firma:
+Aprobado por: Fecha: Firma:
+IV. Derecho a la portabilidad de datos personales
+En estricto cumplimiento de la normativa nacional de protección de datos, todo trabajador
+tendrá derecho a solicitar una copia de sus datos personales facilitados a la empresa. El
+área de Tecnologías de la Información entregará esta información en un formato
+electrónico estructurado y de uso común, facilitando su transmisión directa si fuese
+técnicamente posible, dentro de los plazos legales establecidos.
+V. Control correlativo documental
+El área de Tecnologías de la Información mantendrá un registro numérico correlativo
+único de todas las solicitudes procesadas y de las actas de entrega y devolución firmadas,
+asegurando la trazabilidad absoluta del ciclo de vida de cada activo tecnológico.
+JMIE | INGENIERÍA ELÉCTRICA
+Dirección: José Manuel Infante #2298, Ñuñoa, Santiago.
+Fono: +56 2 3252 7536 | Correo: contacto@jmie.cl
+--- PAGE 12 ---
+PROCEDIMIENTO CODIGO TI-PR-001
+FECHA MAR-2026
+“GESTIÓN DE ACCESOS Y ACTIVOS TI”
+VERSION 1
+Elaborado por: Sebastián Reyes R. Fecha: Firma:
+Revisado por: Fecha: Firma:
+Aprobado por: Fecha: Firma:
+8. CONTROL DE CALIDAD Y SEGUIMIENTO
+Con el objetivo de asegurar la correcta aplicación del procedimiento y promover la mejora
+continua, se medirán, entre otros, los siguientes indicadores asociados a las solicitudes
+recibidas y procesadas:
+Cumplimiento de plazos de aviso previo
+Porcentaje de solicitudes de ingreso y desvinculación enviadas por el departamento de
+Recursos Humanos que cumplen efectivamente con los días de anticipación exigidos en
+la sección de niveles de servicio.
+Trazabilidad documental de activos
+Porcentaje de equipos tecnológicos entregados y recuperados que cuentan con su
+respectiva acta legal debidamente firmada por el trabajador y el administrador de obra, y
+que se encuentre digitalizada en la plataforma documental de la empresa.
+Calidad de las solicitudes
+Evaluación del nivel de precisión de los formularios recibidos, considerando la cantidad de
+solicitudes rechazadas o devueltas por falta de información crítica, como la omisión del
+cargo exacto del trabajador o firmas faltantes.
+JMIE | INGENIERÍA ELÉCTRICA
+Dirección: José Manuel Infante #2298, Ñuñoa, Santiago.
+Fono: +56 2 3252 7536 | Correo: contacto@jmie.cl
+--- PAGE 13 ---
+PROCEDIMIENTO CODIGO TI-PR-001
+FECHA MAR-2026
+“GESTIÓN DE ACCESOS Y ACTIVOS TI”
+VERSION 1
+Elaborado por: Sebastián Reyes R. Fecha: Firma:
+Revisado por: Fecha: Firma:
+Aprobado por: Fecha: Firma:
+9. MEJORA CONTINUA DEL PROCEDIMIENTO
+El presente procedimiento será revisado y actualizado cuando:
+• Se incorporen nuevas herramientas tecnológicas o metodologías de trabajo.
+• Se generen cambios operacionales que afecten su aplicación.
+• Se promulguen nuevas normativas legales sobre seguridad digital o datos
+personales Se detecten desviaciones relevantes en su ejecución.
+10. GESTIÓN DE CAMBIOS
+Las solicitudes de modificación al procedimiento podrán ser propuestas por las jefaturas y
+deberán ser canalizadas a través del encargado de Tecnologías de la Información.
+Dichas propuestas serán evaluadas en conjunto con las áreas involucradas, con el fin de
+analizar su pertinencia y definir su implementación.
+11. ANEXOS
+• Formulario Oficial de Ingreso y Desvinculación de Personal.
+• Plantilla de Acta de Asignación de Equipos Tecnológicos.
+• Plantilla de Acta de Devolución y Autorización de Borrado de Datos Catálogo de
+Perfiles de Acceso Informático.
+JMIE | INGENIERÍA ELÉCTRICA
+Dirección: José Manuel Infante #2298, Ñuñoa, Santiago.
+Fono: +56 2 3252 7536 | Correo: contacto@jmie.cl

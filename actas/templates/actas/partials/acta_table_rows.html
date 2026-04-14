@@ -1,0 +1,72 @@
+{% load acta_tags %}
+{% for acta in page_obj %}
+<tr class="hover:bg-white/[0.02] transition-colors cursor-pointer group"
+    hx-get="{% url 'actas:acta_detail' acta.pk %}"
+    hx-target="#side-over-container">
+    <td class="px-6 py-4">
+        <span class="text-xs font-black text-on-background bg-surface-container px-2 py-1 rounded border border-white/5 uppercase">
+            {{ acta.folio }}
+        </span>
+    </td>
+    <td class="px-6 py-4">
+        <div class="flex flex-col">
+            <span class="text-sm font-bold text-on-background">{{ acta.colaborador.nombre_completo }}</span>
+            <span class="text-[10px] text-jmie-gray font-black tracking-widest">{{ acta.colaborador.rut|default:"SIN RUT"|format_rut }}</span>
+        </div>
+    </td>
+    <td class="px-6 py-4">
+        <span class="text-xs font-bold text-on-surface-variant">{{ acta.fecha|date:"d M Y" }}</span>
+    </td>
+    <td class="px-6 py-4">
+        <span class="text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border 
+            {% if acta.tipo_acta == 'ENTREGA' %}
+                bg-blue-500/10 text-blue-400 border-blue-500/20
+            {% else %}
+                bg-purple-500/10 text-purple-400 border-purple-500/20
+            {% endif %}">
+            {{ acta.get_tipo_acta_display }}
+        </span>
+    </td>
+    <td class="px-6 py-4">
+        {% if acta.firmada %}
+        <div class="flex items-center gap-2">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span class="text-[10px] font-black text-emerald-400 uppercase tracking-widest">FIRMADA & BLINDADA</span>
+        </div>
+        {% else %}
+        <div class="flex items-center gap-2 opacity-60">
+            <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+            <span class="text-[10px] font-black text-amber-400 uppercase tracking-widest">PENDIENTE DE FIRMA</span>
+        </div>
+        {% endif %}
+    </td>
+    <td class="px-6 py-4 text-right" onclick="event.stopPropagation()">
+        <div class="flex items-center justify-end gap-2">
+            <a href="{% url 'actas:acta_pdf' acta.pk %}" 
+               target="_blank"
+               class="p-2 text-jmie-gray hover:text-jmie-blue hover:bg-jmie-blue/10 rounded-lg transition-all"
+               title="Ver PDF">
+                <span class="material-symbols-outlined text-lg">picture_as_pdf</span>
+            </a>
+            
+            {% if not acta.firmada and perms.actas.change_acta %}
+            <button class="p-2 text-jmie-gray hover:text-emerald-400 hover:bg-emerald-400/10 rounded-lg transition-all"
+                    hx-post="{% url 'actas:acta_firmar' acta.pk %}"
+                    hx-confirm="¿Está seguro de firmar esta acta? Una vez firmada, el documento queda bloqueado legalmente según Ley 21.663 y 21.719."
+                    title="Firmar Acta">
+                <span class="material-symbols-outlined text-lg">draw</span>
+            </button>
+            {% endif %}
+        </div>
+    </td>
+</tr>
+{% empty %}
+<tr>
+    <td colspan="6" class="px-6 py-12 text-center">
+        <div class="flex flex-col items-center justify-center space-y-3 opacity-40">
+            <span class="material-symbols-outlined text-5xl">description</span>
+            <p class="text-sm font-bold uppercase tracking-widest">No hay actas registradas</p>
+        </div>
+    </td>
+</tr>
+{% endfor %}

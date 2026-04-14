@@ -1,0 +1,62 @@
+<div class="p-6">
+    <div class="flex items-center justify-between mb-6">
+        <h3 class="text-xl font-bold text-on-background">Reasignar Equipo</h3>
+        <button @click="showModal = false" class="text-jmie-gray hover:text-on-background transition-colors">
+            <span class="material-symbols-outlined text-xl">close</span>
+        </button>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <div class="p-4 bg-white/5 border border-white/10 rounded-xl opacity-60">
+            <p class="text-[10px] text-jmie-gray uppercase tracking-widest font-bold mb-1">Poseedor Anterior</p>
+            <p class="text-on-background font-medium">{{ anterior|default:"S/A" }}</p>
+        </div>
+        <div class="p-4 bg-jmie-orange/10 border border-jmie-orange/20 rounded-xl">
+            <p class="text-[10px] text-jmie-orange uppercase tracking-widest font-bold mb-1">Nuevo Destino</p>
+            <p class="text-on-background font-medium">Por asignar...</p>
+        </div>
+    </div>
+
+    <form hx-post="{% url 'dispositivos:dispositivo_reasignar' dispositivo.pk %}"
+          hx-target="#modal-content"
+          hx-disabled-elt="this"
+          class="space-y-5">
+        {% csrf_token %}
+        
+        <div>
+            {{ form.colaborador.label_tag }}
+            {{ form.colaborador }}
+            {% if form.colaborador.errors %}
+                <p class="mt-1 text-xs text-red-400">{{ form.colaborador.errors.0 }}</p>
+            {% endif %}
+        </div>
+
+        <div>
+            {{ form.condicion_fisica.label_tag }}
+            {{ form.condicion_fisica }}
+            {% if form.condicion_fisica.errors %}
+                <p class="mt-1 text-xs text-red-400">{{ form.condicion_fisica.errors.0 }}</p>
+            {% endif %}
+        </div>
+
+        <div class="p-4 bg-yellow-400/10 border border-yellow-400/20 rounded-lg flex gap-3">
+            <span class="material-symbols-outlined text-yellow-500 mt-1">warning</span>
+            <p class="text-xs text-yellow-200/80 leading-relaxed">
+                Esta acción cerrará automáticamente la asignación actual para registrar el nuevo ingreso.
+            </p>
+        </div>
+
+        <div class="flex justify-end gap-3 pt-4 border-t border-white/5">
+            <button type="button" 
+                    @click="showModal = false"
+                    class="px-5 py-2.5 rounded-xl border border-white/10 text-on-background hover:bg-white/5 transition-all">
+                Cancelar
+            </button>
+            <button type="submit" 
+                    class="px-5 py-2.5 rounded-xl bg-jmie-orange text-white font-bold hover:shadow-[0_0_20px_rgba(255,107,0,0.3)] transition-all flex items-center gap-2">
+                <span>Ejecutar Reasignación</span>
+                <div class="htmx-indicator animate-spin h-4 w-4 border-2 border-white/30 border-t-white rounded-full"></div>
+            </button>
+        </div>
+    </form>
+</div>

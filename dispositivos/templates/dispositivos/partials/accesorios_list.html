@@ -1,0 +1,29 @@
+<div class="space-y-3">
+    {% for acc in accesorios %}
+        <div class="p-3 bg-white/[0.02] border border-white/5 rounded-xl hover:border-jmie-orange/20 transition-all group">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center text-jmie-gray group-hover:text-jmie-orange transition-colors">
+                        <span class="material-symbols-outlined text-sm">cable</span>
+                    </div>
+                    <div>
+                        <p class="text-sm font-bold text-on-background">{{ acc.tipo }}</p>
+                        <p class="text-[10px] text-jmie-gray uppercase tracking-tighter">{{ acc.fecha|date:"d M, Y" }}</p>
+                    </div>
+                </div>
+                <div class="flex flex-col items-end">
+                    <span class="text-xs font-bold text-on-background">x{{ acc.cantidad }}</span>
+                </div>
+            </div>
+            {% if acc.descripcion %}
+                <p class="mt-2 text-xs text-jmie-gray italic border-l-2 border-white/10 pl-2">
+                    {{ acc.descripcion }}
+                </p>
+            {% endif %}
+        </div>
+    {% empty %}
+        <div class="text-center py-6 bg-white/[0.02] border border-dashed border-white/10 rounded-xl">
+            <p class="text-xs text-jmie-gray">Sin accesorios registrados.</p>
+        </div>
+    {% endfor %}
+</div>

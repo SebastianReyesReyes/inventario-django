@@ -1,0 +1,68 @@
+<div class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+    
+    <!-- Acción: Ver / Detalle -->
+    {% if can_view and url_view %}
+        {% if action_type == 'it_asset' %}
+            {# Los dispositivos suelen usar side-over con HTMX #}
+            <button 
+                hx-get="{{ url_view }}"
+                hx-target="#side-over-container"
+                class="p-1.5 hover:bg-white/10 rounded-lg text-jmie-gray hover:text-on-background transition-colors"
+                title="Ver detalles del equipo">
+                <span class="material-symbols-outlined text-[18px]">visibility</span>
+            </button>
+        {% else %}
+            {# Otros suelen ser links directos o detalle estándar #}
+            <a href="{{ url_view }}" 
+               class="p-2 text-jmie-gray hover:text-white transition-colors" 
+               title="Ver Detalles">
+                <span class="material-symbols-outlined text-[18px]">visibility</span>
+            </a>
+        {% endif %}
+    {% endif %}
+
+    <!-- Acción: Editar -->
+    {% if can_change %}
+        {% if action_type == 'catalog' %}
+            {# Los catálogos suelen usar modales HTMX #}
+            <button 
+                hx-get="{{ url_update }}"
+                hx-target="#modal-container"
+                class="text-jmie-gray hover:text-jmie-orange transition-colors p-2 rounded-lg hover:bg-white/5"
+                title="Editar">
+                <span class="material-symbols-outlined text-[18px]">edit</span>
+            </button>
+        {% else %}
+            <a href="{{ url_update }}" 
+               class="p-2 text-jmie-gray hover:text-jmie-blue transition-colors" 
+               title="Editar">
+                <span class="material-symbols-outlined text-[18px]">edit</span>
+            </a>
+        {% endif %}
+    {% endif %}
+
+    <!-- Acción: Eliminar / Desactivar -->
+    {% if can_delete %}
+        {% if action_type == 'personnel' %}
+            {# Para personal usamos icono de remover persona #}
+            <button hx-delete="{{ url_delete }}" 
+                    hx-confirm="¿Está seguro de desactivar este registro? Esta acción es irreversible operativamente."
+                    hx-target="closest tr"
+                    hx-swap="outerHTML swap:0.5s"
+                    class="p-2 text-jmie-gray hover:text-error transition-colors" 
+                    title="Desactivar Colaborador">
+                <span class="material-symbols-outlined text-[18px]">person_remove</span>
+            </button>
+        {% else %}
+            <button hx-delete="{{ url_delete }}" 
+                    hx-confirm="¿Estás seguro de eliminar este registro? Esta acción no se puede deshacer."
+                    hx-target="closest tr"
+                    hx-swap="outerHTML swap:1s"
+                    class="p-1.5 hover:bg-white/10 rounded-lg text-jmie-gray hover:text-error transition-colors"
+                    title="Eliminar">
+                <span class="material-symbols-outlined text-[18px]">delete</span>
+            </button>
+        {% endif %}
+    {% endif %}
+
+</div>

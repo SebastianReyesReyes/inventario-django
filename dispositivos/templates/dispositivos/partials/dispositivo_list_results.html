@@ -1,0 +1,51 @@
+{% for d in dispositivos %}
+<tr class="group hover:bg-white/[0.02] border-b border-white/5 transition-colors">
+    <td class="px-6 py-4">
+        <div class="flex flex-col">
+            <span class="text-xs font-black tracking-tighter text-on-background">{{ d.identificador_interno }}</span>
+            <span class="text-[10px] text-jmie-gray font-bold">{{ d.numero_serie }}</span>
+        </div>
+    </td>
+    <td class="px-6 py-4 text-xs font-bold text-jmie-gray">{{ d.tipo.nombre }}</td>
+    <td class="px-6 py-4">
+        <div class="flex flex-col">
+            <span class="text-xs font-bold text-on-background">{{ d.modelo.fabricante.nombre }}</span>
+            <span class="text-[10px] text-jmie-gray">{{ d.modelo.nombre }}</span>
+        </div>
+    </td>
+    <td class="px-6 py-4">
+        {% if d.propietario_actual %}
+            <div class="flex flex-col">
+                <span class="text-xs font-bold text-on-background">{{ d.propietario_actual.nombre_completo }}</span>
+                <span class="text-[10px] text-jmie-gray font-bold">{{ d.centro_costo.nombre|default:"Sin CC" }}</span>
+            </div>
+        {% else %}
+            <span class="text-[10px] font-black uppercase tracking-widest text-white/20">Sin Asignación</span>
+        {% endif %}
+    </td>
+    <td class="px-6 py-4">
+        {% with e=d.estado.nombre.lower %}
+        <span class="px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-wider
+            {% if 'disponible' in e or 'bueno' in e %} bg-success/10 text-success border border-success/20
+            {% elif 'asignado' in e %} bg-jmie-blue/10 text-jmie-blue border border-jmie-blue/20
+            {% elif 'reparación' in e or 'falla' in e %} bg-jmie-orange/10 text-jmie-orange border border-jmie-orange/20
+            {% else %} bg-white/5 text-jmie-gray border border-white/10 {% endif %}">
+            {{ d.estado.nombre }}
+        </span>
+        {% endwith %}
+    </td>
+    <td class="px-6 py-4 text-right">
+        {% load action_tags %}
+        {% render_actions d 'it_asset' %}
+    </td>
+</tr>
+{% empty %}
+<tr>
+    <td colspan="6" class="px-6 py-12 text-center">
+        <div class="flex flex-col items-center">
+            <span class="material-symbols-outlined text-4xl text-white/10 mb-2">inventory_2</span>
+            <p class="text-jmie-gray text-sm font-bold">No se encontraron dispositivos que coincidan con la búsqueda.</p>
+        </div>
+    </td>
+</tr>
+{% endfor %}

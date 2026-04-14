@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block title %}Directorio de Colaboradores | JMIE{% endblock %}
+{% block section_name %}Recursos Humanos{% endblock %}
+
+{% block nav_colaboradores %}text-on-background bg-white/5 border-l-2 border-jmie-orange rounded-none{% endblock %}
+{% block nav_colaboradores_icon %}text-jmie-orange{% endblock %}
+
+{% block content %}
+<div class="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    
+    <!-- Header y Buscador -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/5 pb-6">
+        <div>
+            <h1 class="text-3xl font-black tracking-tighter">Directorio de Personal</h1>
+            <p class="text-jmie-gray mt-1 text-sm font-bold">Gestión de colaboradores, perfiles y equipos asignados.</p>
+        </div>
+        
+        <div class="flex items-center gap-3">
+            <!-- Buscador en Vivo -->
+            <div class="relative group">
+                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-jmie-gray group-focus-within:text-jmie-blue transition-colors text-sm">search</span>
+                <input type="text" 
+                       name="q" 
+                       placeholder="Buscar por nombre, RUT o cargo..."
+                       class="pl-10 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-xs font-bold text-on-background focus:outline-none focus:ring-2 focus:ring-jmie-blue/20 focus:border-jmie-blue/50 transition-all w-64 md:w-80"
+                       hx-get="{% url 'colaboradores:colaborador_list' %}"
+                       hx-trigger="keyup changed delay:500ms, search"
+                       hx-target="#search-results"
+                       hx-indicator=".htmx-indicator">
+            </div>
+            
+            <a href="{% url 'colaboradores:colaborador_create' %}" class="px-4 py-2.5 bg-jmie-orange text-white text-xs font-black rounded-xl hover:brightness-110 shadow-[0_4px_20px_rgba(237,139,0,0.2)] transition-all flex items-center">
+                <span class="material-symbols-outlined text-sm mr-2 leading-none">person_add</span>
+                Nuevo Colaborador
+            </a>
+        </div>
+    </div>
+
+    <!-- Tabla de Resultados -->
+    <div class="glass-panel rounded-2xl border border-white/5 overflow-hidden relative">
+        <!-- Indicador de Carga HTMX -->
+        <div class="htmx-indicator absolute inset-0 bg-background/50 backdrop-blur-[2px] z-10 flex items-center justify-center opacity-0 pointer-events-none transition-opacity">
+            <div class="flex items-center gap-3 px-4 py-2 bg-white/10 rounded-full border border-white/10">
+                <div class="w-4 h-4 border-2 border-jmie-blue border-t-transparent rounded-full animate-spin"></div>
+                <span class="text-[10px] font-black uppercase tracking-widest">Buscando...</span>
+            </div>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-white/[0.02] border-b border-white/5 text-jmie-gray uppercase text-[10px] font-black tracking-widest">
+                        <th class="px-6 py-4">Colaborador</th>
+                        <th class="px-6 py-4">RUT</th>
+                        <th class="px-6 py-4">Cargo / Depto</th>
+                        <th class="px-6 py-4">Centro de Costo</th>
+                        <th class="px-6 py-4">Estado</th>
+                        <th class="px-6 py-4 text-right">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="search-results" class="divide-y divide-white/5">
+                    {% include "colaboradores/partials/colaborador_list_results.html" %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Footer de la tabla -->
+        <div class="px-6 py-4 bg-white/[0.01] border-t border-white/5 flex items-center justify-between">
+            <span class="text-[10px] font-bold text-jmie-gray uppercase tracking-tighter">
+                Mostrando {{ colaboradores.count }} colaboradores activos
+            </span>
+        </div>
+    </div>
+</div>
+
+<style>
+    .htmx-request.htmx-indicator {
+        opacity: 1;
+        pointer-events: auto;
+    }
+</style>
+{% endblock %}

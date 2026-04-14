@@ -1,0 +1,63 @@
+{% if asignaciones or accesorios %}
+<div class="space-y-6">
+    {% if asignaciones %}
+    <div class="space-y-3">
+        <h4 class="text-[9px] font-black text-jmie-gray uppercase tracking-widest border-b border-white/5 pb-1">Equipos (Serializados)</h4>
+        {% for asig in asignaciones %}
+        <label class="flex items-start gap-4 p-4 rounded-xl bg-surface-container-highest/30 border border-white/5 hover:border-jmie-blue/30 hover:bg-jmie-blue/5 transition-all cursor-pointer group">
+            <div class="pt-1">
+                <input type="checkbox" 
+                       name="asignaciones" 
+                       value="{{ asig.pk }}" 
+                       checked
+                       class="w-5 h-5 rounded border-white/10 bg-surface-container-high text-jmie-blue focus:ring-jmie-blue/40 transition-all cursor-pointer">
+            </div>
+            <div class="flex-1">
+                <div class="flex items-center justify-between mb-1">
+                    <span class="text-xs font-black text-on-background uppercase tracking-tight group-hover:text-jmie-blue transition-colors">{{ asig.dispositivo.identificador_interno }}</span>
+                    <span class="text-[9px] font-black text-jmie-gray bg-white/5 px-1.5 py-0.5 rounded border border-white/10 uppercase">{{ asig.dispositivo.tipo.sigla }}</span>
+                </div>
+                <p class="text-[11px] font-bold text-on-surface-variant uppercase">{{ asig.dispositivo.modelo }}</p>
+                <div class="flex items-center gap-4 mt-2">
+                    <div class="flex items-center gap-1.5 opacity-60">
+                        <span class="material-symbols-outlined text-[14px] text-jmie-gray">barcode</span>
+                        <span class="text-[9px] font-medium text-jmie-gray font-mono">{{ asig.dispositivo.numero_serie }}</span>
+                    </div>
+                </div>
+            </div>
+        </label>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if accesorios %}
+    <div class="space-y-3">
+        <h4 class="text-[9px] font-black text-jmie-gray uppercase tracking-widest border-b border-white/5 pb-1">Accesorios (Consumibles)</h4>
+        {% for acc in accesorios %}
+        <label class="flex items-start gap-4 p-4 rounded-xl bg-surface-container-highest/30 border border-white/5 hover:border-emerald-500/30 hover:bg-emerald-500/5 transition-all cursor-pointer group">
+            <div class="pt-1">
+                <input type="checkbox" 
+                       name="accesorios" 
+                       value="{{ acc.pk }}" 
+                       checked
+                       class="w-5 h-5 rounded border-white/10 bg-surface-container-high text-emerald-500 focus:ring-emerald-500/40 transition-all cursor-pointer">
+            </div>
+            <div class="flex-1">
+                <div class="flex items-center justify-between mb-1">
+                    <span class="text-xs font-black text-on-background uppercase tracking-tight group-hover:text-emerald-500 transition-colors">{{ acc.tipo }}</span>
+                    <span class="text-[9px] font-black text-on-background bg-emerald-500/20 px-1.5 py-0.5 rounded border border-emerald-500/30 uppercase">x{{ acc.cantidad }}</span>
+                </div>
+                <p class="text-[11px] text-jmie-gray font-bold uppercase">{{ acc.descripcion|default:"Entrega sin detalles" }}</p>
+                <p class="text-[9px] text-jmie-gray/60 font-medium mt-1">Registrado el {{ acc.fecha|date:"d/m/Y" }}</p>
+            </div>
+        </label>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+{% else %}
+<div class="flex flex-col items-center justify-center py-8 opacity-40">
+    <span class="material-symbols-outlined text-4xl mb-2 text-jmie-gray">inventory</span>
+    <p class="text-xs font-bold uppercase tracking-widest text-jmie-gray text-center px-4">Este colaborador no tiene equipos ni accesorios pendientes de acta.</p>
+</div>
+{% endif %}

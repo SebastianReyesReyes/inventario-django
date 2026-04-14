@@ -1,0 +1,34 @@
+<div class="p-6">
+    <div class="flex items-center gap-4 mb-6">
+        <div class="w-12 h-12 rounded-full bg-error/10 flex items-center justify-center text-error">
+            <span class="material-symbols-outlined">delete_forever</span>
+        </div>
+        <div>
+            <h3 class="text-lg font-black tracking-tight text-on-background">Eliminar Dispositivo</h3>
+            <p class="text-xs text-jmie-gray font-bold uppercase tracking-widest mt-0.5">{{ dispositivo.identificador_interno }}</p>
+        </div>
+    </div>
+
+    <div class="bg-surface-container-high/50 border border-white/5 rounded-2xl p-4 mb-6">
+        <p class="text-sm text-on-background font-medium leading-relaxed">
+            ¿Estás seguro de que deseas eliminar este dispositivo? Esta acción <span class="text-error font-bold">no se puede deshacer</span> y el equipo quedará fuera del inventario.
+        </p>
+    </div>
+
+    <form hx-post="{% url 'dispositivos:dispositivo_delete' dispositivo.pk %}"
+          hx-target="#main-content"
+          hx-select="#main-content"
+          hx-swap="outerHTML"
+          class="flex gap-3">
+        {% csrf_token %}
+        <button type="button" 
+                onclick="closeModal()"
+                class="flex-1 px-4 py-3 bg-white/5 hover:bg-white/10 text-on-background font-black text-[10px] uppercase tracking-widest rounded-xl border border-white/10 transition-all">
+            Cancelar
+        </button>
+        <button type="submit" 
+                class="flex-1 px-4 py-3 bg-error hover:bg-error-container text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-error/20">
+            Confirmar Eliminación
+        </button>
+    </form>
+</div>

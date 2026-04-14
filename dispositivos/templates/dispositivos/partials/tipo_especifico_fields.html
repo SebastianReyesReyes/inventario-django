@@ -1,0 +1,19 @@
+{% if form %}
+<div class="space-y-4 animate-in fade-in zoom-in-95 duration-500">
+    <div class="flex items-center gap-2 mb-2">
+        <span class="material-symbols-outlined text-info text-lg">settings_suggest</span>
+        <h3 class="text-xs uppercase font-black tracking-widest text-info">Detalles Técnicos Especializados</h3>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {% for field in form %}
+            {% if not field.is_hidden %}
+                <div class="space-y-1.5">
+                    <label class="text-[10px] font-black uppercase text-jmie-gray tracking-tighter ml-1">{{ field.label }}</label>
+                    {{ field }}
+                </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+    <div class="h-px bg-white/5 mt-6"></div>
+</div>
+{% endif %}

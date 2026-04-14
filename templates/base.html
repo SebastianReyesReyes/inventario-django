@@ -1,0 +1,390 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es" class="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Panel de Control | JMIE{% endblock %}</title>
+
+    <!-- Material Symbols -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1"
+        rel="stylesheet">
+
+    <!-- Scripts -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+    <style>
+        @font-face {
+            font-family: 'Montserrat';
+            src: url('{% static "fonts/Montserrat-VariableFont_wght.ttf" %}') format('truetype');
+            font-weight: 100 900;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        @font-face {
+            font-family: 'Montserrat';
+            src: url('{% static "fonts/Montserrat-Italic-VariableFont_wght.ttf" %}') format('truetype');
+            font-weight: 100 900;
+            font-style: italic;
+            font-display: swap;
+        }
+
+        :root {
+            color-scheme: dark;
+        }
+
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+        }
+
+        .icon-filled {
+            font-variation-settings: 'FILL' 1, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+        }
+
+        /* Fix Select/Datalist Contrast */
+        select, option {
+            background-color: #171c28 !important;
+            color: #f0f3f8 !important;
+            appearance: none;
+        }
+
+        /* Forzar modo oscuro en elementos de sistema */
+        input, select, textarea, datalist {
+            color-scheme: dark !important;
+        }
+
+        /* Estilo para los selects de Tailwind */
+        .dark select {
+            background-color: #171c28;
+            color: #f0f3f8;
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Custom Autocomplete styles */
+        .autocomplete-list {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            z-index: 9999;
+            width: 100%;
+            max-height: 250px;
+            overflow-y: auto;
+            background: #1e2533;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 0.75rem;
+            margin-top: 4px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 1), 0 0 0 1px rgba(255,255,255,0.05);
+        }
+
+        .autocomplete-list.up {
+            top: auto;
+            bottom: 100%;
+            margin-top: 0;
+            margin-bottom: 4px;
+        }
+
+        .autocomplete-item {
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .autocomplete-item:hover {
+            background: rgba(255,255,255,0.05);
+            color: #ED8B00;
+        }
+
+        .autocomplete-item.selected {
+            background: rgba(237, 139, 0, 0.1);
+            color: #ED8B00;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #0a0c14;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #2a3344;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #ED8B00;
+        }
+
+        ::selection {
+            background: rgba(0, 53, 148, 0.4);
+        }
+
+        .glass-panel {
+            background: rgba(30, 37, 51, 0.6);
+            backdrop-filter: blur(20px);
+        }
+
+        [x-cloak] {
+            display: none !important;
+        }
+
+        /* HTMX Anims */
+        .htmx-added {
+            opacity: 0;
+        }
+
+        .htmx-settling {
+            opacity: 1;
+            transition: opacity 0.3s ease-in;
+        }
+    </style>
+
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "jmie-blue": "#003594",
+                        "jmie-orange": "#ED8B00",
+                        "jmie-gray": "#7C878E",
+
+                        "background": "#0a0c14",
+                        "surface-container-low": "#10141e",
+                        "surface-container": "#171c28",
+                        "surface-container-high": "#1e2533",
+                        "surface-container-highest": "#2a3344",
+                        "surface-bright": "#354052",
+
+                        "on-background": "#f0f3f8",
+                        "on-surface": "#c8cdd5",
+                        "on-surface-variant": "#7C878E",
+
+                        "accent": "#ED8B00",
+                        "on-accent": "#1a0800",
+                        "success": "#34d399",
+                        "error": "#ef4444",
+                        "info": "#60a5fa",
+                    },
+                    fontFamily: {
+                        "sans": ["Montserrat", "system-ui", "sans-serif"],
+                    },
+                    borderRadius: {
+                        DEFAULT: "0.375rem",
+                        lg: "0.5rem",
+                        xl: "0.75rem",
+                        "2xl": "1rem",
+                    },
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="bg-background text-on-background font-sans min-h-screen" x-data="{ sidebarOpen: false }">
+
+    <!-- Overlay móvil -->
+    <div x-cloak x-show="sidebarOpen" @click="sidebarOpen = false"
+        class="lg:hidden fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
+        x-transition:enter="transition-opacity duration-300" x-transition:leave="transition-opacity duration-200"></div>
+
+    <!-- Sidebar -->
+    <aside
+        class="fixed left-0 top-0 h-full w-64 z-50 bg-background/95 backdrop-blur-lg border-r border-white/5 flex flex-col py-6 transform lg:translate-x-0 transition-transform duration-300"
+        :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'">
+
+        <!-- Logo JMIE -->
+        <div class="px-6 pb-6 mb-2 border-b border-white/5 flex items-center justify-center">
+            <img src="{% static 'img/logoBlanco.png' %}" alt="JMIE Logo"
+                class="h-10 w-auto object-contain drop-shadow-md">
+        </div>
+
+        <!-- Navegación -->
+        <nav class="flex-1 px-4 space-y-1 overflow-y-auto">
+            <!-- Activo (Naranja) -->
+            <a href="/"
+                class="flex items-center px-3 py-3 text-sm font-bold uppercase tracking-wide rounded-l-lg transition-all group {% block nav_dashboard %}text-jmie-gray hover:text-on-background hover:bg-white/5{% endblock %}">
+                <span
+                    class="material-symbols-outlined mr-3 {% block nav_dashboard_icon %}group-hover:text-jmie-orange{% endblock %}">dashboard</span>
+                Panel de Control
+            </a>
+
+            <div class="pt-4 pb-2 px-3 text-[10px] font-bold text-jmie-gray uppercase tracking-widest">Inventario</div>
+            <a href="{% url 'dispositivos:dispositivo_list' %}"
+                class="flex items-center px-3 py-2 text-sm font-bold uppercase tracking-wide rounded-lg transition-all group {% block nav_inventario %}text-jmie-gray hover:text-on-background hover:bg-white/5{% endblock %}">
+                <span class="material-symbols-outlined mr-3 {% block nav_inventario_icon %}group-hover:text-jmie-orange{% endblock %}">inventory_2</span>
+                Activos IT
+            </a>
+            <a href="{% url 'actas:acta_list' %}"
+                class="flex items-center px-3 py-2 text-sm font-bold uppercase tracking-wide rounded-lg transition-all group {% block nav_actas %}text-jmie-gray hover:text-on-background hover:bg-white/5{% endblock %}">
+                <span class="material-symbols-outlined mr-3 {% block nav_actas_icon %}group-hover:text-jmie-orange{% endblock %}">description</span>
+                Actas
+            </a>
+
+            <p class="px-5 text-[10px] font-black text-jmie-gray uppercase tracking-widest mb-3 mt-4 opacity-50">Administración</p>
+            <div class="space-y-1 px-3">
+                <a href="{% url 'core:fabricante_list' %}" class="flex items-center px-4 py-2.5 rounded-xl transition-all group {% block nav_catalogos %}{% endblock %}">
+                    <span class="material-symbols-outlined mr-3 text-[22px] group-hover:scale-110 transition-transform {% block nav_catalogos_icon %}{% endblock %}">category</span>
+                    <span class="text-sm font-bold">Fabricantes</span>
+                </a>
+                <a href="{% url 'core:tipo_list' %}" class="flex items-center px-4 py-2.5 rounded-xl transition-all group {% block nav_tipos %}{% endblock %}">
+                    <span class="material-symbols-outlined mr-3 text-[22px] group-hover:scale-110 transition-transform {% block nav_tipos_icon %}{% endblock %}">devices</span>
+                    <span class="text-sm font-bold">Tipos Equipos</span>
+                </a>
+                <a href="{% url 'core:cc_list' %}" class="flex items-center px-4 py-2.5 rounded-xl transition-all group {% block nav_ccs %}{% endblock %}">
+                    <span class="material-symbols-outlined mr-3 text-[22px] group-hover:scale-110 transition-transform {% block nav_ccs_icon %}{% endblock %}">payments</span>
+                    <span class="text-sm font-bold">Centros Costo</span>
+                </a>
+                <a href="{% url 'core:estado_list' %}" class="flex items-center px-4 py-2.5 rounded-xl transition-all group {% block nav_estados %}{% endblock %}">
+                    <span class="material-symbols-outlined mr-3 text-[22px] group-hover:scale-110 transition-transform {% block nav_estados_icon %}{% endblock %}">label</span>
+                    <span class="text-sm font-bold">Estados</span>
+                </a>
+            </div>
+
+            <a href="{% url 'colaboradores:colaborador_list' %}"
+                class="flex items-center px-3 py-2 mt-4 text-sm font-bold uppercase tracking-wide rounded-lg transition-all group {% block nav_colaboradores %}text-jmie-gray hover:text-on-background hover:bg-white/5{% endblock %}">
+                <span class="material-symbols-outlined mr-3 {% block nav_colaboradores_icon %}group-hover:text-jmie-orange{% endblock %}">badge</span>
+                Personal
+            </a>
+            <a href="#"
+                class="flex items-center px-3 py-2 text-sm font-bold uppercase tracking-wide text-jmie-gray rounded-lg hover:text-on-background hover:bg-white/5 transition-all group">
+                <span class="material-symbols-outlined mr-3 group-hover:text-jmie-orange">analytics</span>
+                Reportes
+            </a>
+        </nav>
+
+        {% if perms.dispositivos.add_dispositivo %}
+        <!-- CTA General -->
+        <div class="px-4 py-4">
+            <a href="{% url 'dispositivos:dispositivo_create' %}"
+                class="w-full flex items-center justify-center py-3 bg-jmie-orange text-white font-bold rounded-lg hover:brightness-110 transition-all shadow-[0_0_15px_rgba(237,139,0,0.3)]">
+                <span class="material-symbols-outlined mr-2 text-sm">add</span>
+                Nuevo Registro
+            </a>
+        </div>
+        {% endif %}
+
+        <!-- Footer / User -->
+        <div class="px-4 border-t border-white/5 pt-4 mt-2">
+            <div class="flex items-center p-2 rounded-lg hover:bg-white/5 transition-all">
+                <div
+                    class="h-9 w-9 rounded-full bg-surface-container-highest border border-white/10 flex items-center justify-center text-on-background font-bold">
+                    {{ user.username|first|upper }}
+                </div>
+                <div class="ml-3 flex-1 overflow-hidden">
+                    <p class="text-sm font-bold text-on-background truncate">{{ user.username }}</p>
+                    <form action="{% url 'logout' %}" method="post" class="mt-0.5">
+                        {% csrf_token %}
+                        <button type="submit" class="text-xs font-bold text-jmie-gray hover:text-error transition-colors flex items-center bg-transparent border-none p-0 cursor-pointer">
+                            <span class="material-symbols-outlined text-[14px] mr-1">logout</span>
+                            Cerrar Sesión
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Wrapper -->
+    <div class="lg:pl-64 flex flex-col min-h-screen">
+
+        <!-- TopBar -->
+        <header
+            class="sticky top-0 z-30 h-14 bg-background/80 backdrop-blur-xl border-b border-white/5 flex items-center px-4 lg:px-8">
+            <button @click="sidebarOpen = true" class="lg:hidden text-jmie-gray hover:text-on-background mr-4">
+                <span class="material-symbols-outlined">menu</span>
+            </button>
+            <div class="flex-1 flex justify-between uppercase text-xs tracking-widest font-bold text-jmie-gray">
+                {% block section_name %}Inicio{% endblock %}
+            </div>
+
+            <div class="hidden md:flex items-center">
+                <div class="relative">
+                    <span
+                        class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-jmie-gray text-sm">search</span>
+                    <input type="text" placeholder="Buscar..."
+                        class="bg-surface-container-high border-none rounded-full py-1.5 pl-9 pr-4 text-sm font-bold text-on-background placeholder:text-jmie-gray focus:ring-1 focus:ring-jmie-blue/40 w-64">
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-4 ml-6">
+                <button class="text-jmie-gray hover:text-on-background relative transition-colors">
+                    <span class="material-symbols-outlined text-xl">notifications</span>
+                    <span
+                        class="absolute top-0 right-0 w-2 h-2 bg-jmie-orange rounded-full border border-background"></span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Content -->
+        <main class="flex-1 p-4 lg:p-8">
+            <div class="max-w-[1600px] mx-auto" id="main-content">
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+    </div>
+
+    <!-- Capas de Interfaz (Capas apiladas) -->
+    <div id="side-over-container" class="relative z-40"></div>
+    <div id="modal-container" class="relative z-50"></div>
+
+    <!-- Toast Notifications -->
+    <div 
+        x-data="{ 
+            notifications: [],
+            add(msg) {
+                this.notifications.push({ id: Date.now(), msg: msg });
+                setTimeout(() => { this.notifications = this.notifications.filter(n => n.id !== this.notifications[0]?.id) }, 3000);
+            }
+        }"
+        @show-notification.window="add($event.detail.value || $event.detail)"
+        class="fixed bottom-6 right-6 z-[100] flex flex-col gap-3"
+    >
+        <template x-for="n in notifications" :key="n.id">
+            <div 
+                x-transition:enter="ease-out duration-300"
+                x-transition:enter-start="opacity-0 translate-y-4"
+                x-transition:enter-end="opacity-100 translate-y-0"
+                x-transition:leave="ease-in duration-200"
+                x-transition:leave-start="opacity-100"
+                x-transition:leave-end="opacity-0"
+                class="bg-surface-container-highest border border-jmie-orange/30 rounded-xl px-5 py-3 shadow-[0_10px_25px_-5px_rgba(0,0,0,0.5)] flex items-center gap-3 min-w-[300px]"
+            >
+                <div class="bg-jmie-orange/20 p-1.5 rounded-lg text-jmie-orange">
+                    <span class="material-symbols-outlined text-[18px]">check_circle</span>
+                </div>
+                <div class="flex-1">
+                    <p class="text-xs font-black text-jmie-gray uppercase tracking-widest mb-0.5">Notificación</p>
+                    <p class="text-sm font-bold text-on-background" x-text="n.msg"></p>
+                </div>
+                <button @click="notifications = notifications.filter(i => i.id !== n.id)" class="text-jmie-gray hover:text-on-background">
+                    <span class="material-symbols-outlined text-[16px]">close</span>
+                </button>
+            </div>
+        </template>
+    </div>
+
+    <script>
+        // Configurar CSRF Token para HTMX
+        document.body.addEventListener('htmx:configRequest', (event) => {
+            event.detail.headers['X-CSRFToken'] = '{{ csrf_token }}';
+        });
+
+        // Configurar cierre de modales automático para respuestas exitosas (204)
+        document.body.addEventListener('htmx:afterOnLoad', (event) => {
+            if (event.detail.xhr.status === 204) {
+                // Si el status es 204, enviamos evento para cerrar modales si existen
+                window.dispatchEvent(new CustomEvent('modal-close'));
+            }
+        });
+    </script>
+</body>
+
+</html>

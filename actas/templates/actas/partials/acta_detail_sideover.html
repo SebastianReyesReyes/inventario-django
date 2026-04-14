@@ -1,0 +1,146 @@
+{% load acta_tags %}
+<div x-data="{ open: true }" 
+     x-show="open" 
+     @close-sideover.window="open = false; setTimeout(() => { $el.remove() }, 500)"
+     class="fixed inset-0 z-40 overflow-hidden">
+    
+    <!-- Backdrop -->
+    <div class="absolute inset-0 bg-background/40 backdrop-blur-sm transition-opacity" 
+         @click="open = false; setTimeout(() => { $el.remove() }, 500)"
+         x-show="open"
+         x-transition:enter="ease-in-out duration-500"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="ease-in-out duration-500"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"></div>
+
+    <div class="fixed inset-y-0 right-0 pl-10 max-w-full flex">
+        <div x-show="open"
+             x-transition:enter="transform transition ease-in-out duration-500 sm:duration-700"
+             x-transition:enter-start="translate-x-full"
+             x-transition:enter-end="translate-x-0"
+             x-transition:leave="transform transition ease-in-out duration-500 sm:duration-700"
+             x-transition:leave-start="translate-x-0"
+             x-transition:leave-end="translate-x-full"
+             class="w-screen max-w-md">
+            
+            <div class="h-full flex flex-col bg-surface-container shadow-2xl border-l border-white/5 relative overflow-hidden">
+                <!-- Decorative Glow -->
+                <div class="absolute -top-24 -right-24 w-64 h-64 bg-jmie-orange/10 blur-[100px] rounded-full"></div>
+                
+                <!-- Header -->
+                <div class="px-6 py-6 border-b border-white/5 flex items-center justify-between relative z-10">
+                    <div class="flex items-center gap-3">
+                        <div class="p-2 rounded-xl bg-surface-container-highest border border-white/10">
+                            <span class="material-symbols-outlined text-jmie-orange">description</span>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-black tracking-tight uppercase">{{ acta.folio }}</h3>
+                            <div class="flex items-center gap-2">
+                                <span class="w-1.5 h-1.5 rounded-full {% if acta.firmada %}bg-emerald-500{% else %}bg-amber-500{% endif %}"></span>
+                                <span class="text-[10px] font-black uppercase tracking-widest {% if acta.firmada %}text-emerald-400{% else %}text-amber-400{% endif %}">
+                                    {{ acta.firmada|yesno:"FIRMADA & BLINDADA,PENDIENTE DE FIRMA" }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <button @click="open = false; setTimeout(() => { $el.remove() }, 500)" 
+                            class="p-2 text-jmie-gray hover:text-on-background hover:bg-white/5 rounded-lg transition-all">
+                        <span class="material-symbols-outlined">close</span>
+                    </button>
+                </div>
+
+                <!-- Content -->
+                <div class="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-8 relative z-10">
+                    <!-- General Details -->
+                    <section class="space-y-4">
+                        <h4 class="text-[10px] font-black uppercase tracking-widest text-jmie-gray border-b border-white/5 pb-2">Información del Acta</h4>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="p-3 rounded-xl bg-surface-container-low border border-white/5">
+                                <p class="text-[9px] font-black text-jmie-gray uppercase tracking-widest mb-1">Fecha Emisión</p>
+                                <p class="text-sm font-bold text-on-background">{{ acta.fecha|date:"d/m/Y H:i" }}</p>
+                            </div>
+                            <div class="p-3 rounded-xl bg-surface-container-low border border-white/5">
+                                <p class="text-[9px] font-black text-jmie-gray uppercase tracking-widest mb-1">Tipo Documento</p>
+                                <p class="text-sm font-bold text-on-background">{{ acta.get_tipo_acta_display }}</p>
+                            </div>
+                        </div>
+                        <div class="p-3 rounded-xl bg-surface-container-low border border-white/5">
+                            <p class="text-[9px] font-black text-jmie-gray uppercase tracking-widest mb-1">Emitido Por</p>
+                            <p class="text-sm font-bold text-on-background">{{ acta.creado_por.nombre_completo }}</p>
+                        </div>
+                    </section>
+
+                    <!-- Colaborador -->
+                    <section class="space-y-4">
+                        <h4 class="text-[10px] font-black uppercase tracking-widest text-jmie-gray border-b border-white/5 pb-2">Colaborador / Receptor</h4>
+                        <div class="flex items-center gap-4 p-4 rounded-2xl bg-white/[0.02] border border-white/5">
+                            <div class="h-12 w-12 rounded-full bg-jmie-blue/20 flex items-center justify-center text-jmie-blue font-black border border-jmie-blue/30">
+                                {{ acta.colaborador.first_name|first|upper }}{{ acta.colaborador.last_name|first|upper }}
+                            </div>
+                            <div>
+                                <p class="text-base font-black text-on-background">{{ acta.colaborador.nombre_completo }}</p>
+                                <p class="text-[10px] text-jmie-gray font-black tracking-widest uppercase">{{ acta.colaborador.rut|default:"SIN RUT"|format_rut }}</p>
+                                <p class="text-xs font-bold text-jmie-orange mt-0.5">{{ acta.colaborador.cargo|default:"Cargo no definido" }}</p>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Equipos -->
+                    <section class="space-y-4">
+                        <h4 class="text-[10px] font-black uppercase tracking-widest text-jmie-gray border-b border-white/5 pb-2">Equipos Vinculados</h4>
+                        <div class="space-y-2">
+                            {% for asig in asignaciones %}
+                            <div class="p-3 rounded-xl bg-surface-container-low border border-white/5 hover:border-white/10 transition-all group">
+                                <div class="flex justify-between items-start mb-1">
+                                    <span class="text-[10px] font-black uppercase tracking-widest text-jmie-orange">{{ asig.dispositivo.id_jmie }}</span>
+                                    <span class="text-[9px] font-bold text-jmie-gray uppercase tracking-widest">{{ asig.dispositivo.tipo.sigla }}</span>
+                                </div>
+                                <p class="text-xs font-bold text-on-background uppercase">{{ asig.dispositivo.modelo }}</p>
+                                <p class="text-[9px] text-jmie-gray font-medium tracking-wide">S/N: {{ asig.dispositivo.serie }}</p>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </section>
+
+                    {% if acta.observaciones %}
+                    <!-- Observaciones -->
+                    <section class="space-y-4">
+                        <h4 class="text-[10px] font-black uppercase tracking-widest text-jmie-gray border-b border-white/5 pb-2">Observaciones</h4>
+                        <p class="text-xs text-on-surface-variant bg-surface-container-low p-4 rounded-xl border border-white/5 whitespace-pre-wrap">{{ acta.observaciones }}</p>
+                    </section>
+                    {% endif %}
+
+                    <!-- Marco Legal Badge -->
+                    <div class="p-4 rounded-2xl bg-emerald-500/5 border border-emerald-500/10 flex items-center gap-4">
+                        <span class="material-symbols-outlined text-emerald-500">security</span>
+                        <div>
+                            <p class="text-[9px] font-black text-emerald-400 uppercase tracking-widest">Documento Certificado</p>
+                            <p class="text-[10px] text-on-surface-variant font-bold">Compatible con Leyes 21.663 y 21.719</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="p-6 bg-background/50 backdrop-blur-md border-t border-white/5 relative z-10 flex flex-col gap-3">
+                    <a href="{% url 'actas:acta_pdf' acta.pk %}" 
+                       target="_blank"
+                       class="w-full flex items-center justify-center py-3 bg-white/5 text-on-background font-black text-xs uppercase tracking-widest rounded-xl border border-white/10 hover:bg-white/10 transition-all group">
+                        <span class="material-symbols-outlined mr-2 text-jmie-blue group-hover:scale-110 transition-transform">picture_as_pdf</span>
+                        Descargar PDF
+                    </a>
+                    
+                    {% if not acta.firmada and perms.actas.change_acta %}
+                    <button hx-post="{% url 'actas:acta_firmar' acta.pk %}"
+                            hx-confirm="¿Está seguro de firmar esta acta? Una vez firmada, el documento queda bloqueado legalmente y no podrá ser modificado."
+                            class="w-full flex items-center justify-center py-3 bg-jmie-orange text-white font-black text-xs uppercase tracking-widest rounded-xl shadow-[0_4px_20px_rgba(237,139,0,0.2)] hover:brightness-110 transition-all">
+                        <span class="material-symbols-outlined mr-2">draw</span>
+                        Firmar Acta
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

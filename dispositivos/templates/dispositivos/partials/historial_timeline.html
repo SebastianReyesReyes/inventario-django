@@ -1,0 +1,49 @@
+<div class="space-y-6 relative before:absolute before:left-[19px] before:top-2 before:bottom-2 before:w-[2px] before:bg-white/5">
+    {% for mov in historial %}
+        <div class="relative pl-12">
+            <!-- Icon Point -->
+            <div class="absolute left-0 top-1 w-10 h-10 rounded-xl flex items-center justify-center bg-surface border border-white/10 z-10 transition-all hover:scale-110">
+                {% if forloop.first and not mov.fecha_fin %}
+                    <span class="material-symbols-outlined text-jmie-blue text-lg">person_check</span>
+                {% elif mov.fecha_fin %}
+                    <span class="material-symbols-outlined text-jmie-gray text-lg">undo</span>
+                {% else %}
+                    <span class="material-symbols-outlined text-jmie-gray opacity-50 text-lg">history</span>
+                {% endif %}
+            </div>
+
+            <div class="flex flex-col">
+                <div class="flex items-center justify-between mb-1">
+                    <p class="text-sm font-bold text-on-background">
+                        {{ mov.colaborador.nombre_completo }}
+                    </p>
+                    <span class="text-[10px] py-1 px-2 rounded-lg bg-surface-container-high text-jmie-gray border border-white/5">
+                        {{ mov.fecha_inicio|date:"d M, Y" }}
+                    </span>
+                </div>
+                
+                <div class="p-3 bg-white/[0.02] border border-white/5 rounded-xl text-xs text-jmie-gray leading-relaxed">
+                    {{ mov.condicion_fisica|linebreaksbr }}
+                    
+                    {% if mov.fecha_fin %}
+                        <div class="mt-2 pt-2 border-t border-white/5 flex items-center justify-between opacity-60">
+                            <span>Devuelto el: {{ mov.fecha_fin|date:"d M, Y" }}</span>
+                        </div>
+                    {% else %}
+                        <div class="mt-2 pt-2 border-t border-jmie-blue/20 flex items-center gap-2">
+                            <div class="w-1.5 h-1.5 rounded-full bg-jmie-blue animate-pulse"></div>
+                            <span class="text-jmie-blue font-bold uppercase tracking-tighter">Asignación Actual</span>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    {% empty %}
+        <div class="text-center py-10">
+            <div class="w-16 h-16 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mx-auto mb-4 opacity-50">
+                <span class="material-symbols-outlined text-2xl text-jmie-gray">timeline</span>
+            </div>
+            <p class="text-jmie-gray">No hay registros históricos de asignación.</p>
+        </div>
+    {% endfor %}
+</div>

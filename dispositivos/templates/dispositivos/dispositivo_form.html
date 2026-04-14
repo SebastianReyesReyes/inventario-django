@@ -1,0 +1,215 @@
+{% extends "base.html" %}
+
+{% block title %}Registrar Nuevo Dispositivo | JMIE{% endblock %}
+{% block section_name %}Activos IT{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    
+    <!-- Header de la página -->
+    <div class="flex items-center justify-between border-b border-white/5 pb-6">
+        <div>
+            <h1 class="text-3xl font-black tracking-tighter">Registrar Nuevo Activo</h1>
+            <p class="text-jmie-gray mt-1 text-sm font-bold">Complete la información técnica y administrativa del equipo.</p>
+        </div>
+        <a href="{% url 'home' %}" class="px-4 py-2 bg-white/5 hover:bg-white/10 text-on-background text-xs font-bold rounded-lg border border-white/10 transition-all flex items-center">
+            <span class="material-symbols-outlined text-sm mr-2 shadow-sm">arrow_back</span>
+            Volver
+        </a>
+    </div>
+    
+    <!-- Formulario Principal -->
+    <div x-data="{ 
+        tipoEquipoId: '{{ form.tipo.value|default:'' }}',
+        tipoNombre: '',
+        updateTipoEquipo() {
+            const select = document.getElementById('id_tipo');
+            this.tipoNombre = select.options[select.selectedIndex].text.toLowerCase();
+        }
+    }" x-init="updateTipoEquipo()">
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+            
+            <div class="glass-panel p-8 rounded-2xl border border-white/5 space-y-8 relative overflow-hidden">
+                <!-- Glow Deco -->
+                <div class="absolute -top-24 -right-24 w-48 h-48 bg-jmie-blue/10 blur-[80px] rounded-full pointer-events-none"></div>
+
+                <!-- Sección: Identificación -->
+                <div class="space-y-4">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="material-symbols-outlined text-jmie-blue text-lg">fingerprint</span>
+                        <h3 class="text-xs uppercase font-black tracking-widest text-jmie-blue">Identificación Base</h3>
+                    </div>
+                    {% if form.non_field_errors %}
+                        <div class="bg-error/10 border border-error/20 p-4 rounded-xl text-error text-xs font-bold mb-4">
+                            {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+                        </div>
+                    {% endif %}
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-1.5">
+                            <label class="text-[10px] font-black uppercase text-jmie-gray tracking-tighter ml-1">ID Interno JMIE</label>
+                            {{ form.identificador_interno }}
+                            {{ form.identificador_interno.errors }}
+                        </div>
+                        <div class="space-y-1.5">
+                            <label class="text-[10px] font-black uppercase text-jmie-gray tracking-tighter ml-1">Número de Serie</label>
+                            {{ form.numero_serie }}
+                            {{ form.numero_serie.errors }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="h-px bg-white/5"></div>
+
+                <!-- Sección: Clasificación (Donde ocurre la magia de HTMX + Alpine) -->
+                <div class="space-y-4">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="material-symbols-outlined text-jmie-orange text-lg">category</span>
+                        <h3 class="text-xs uppercase font-black tracking-widest text-jmie-orange">Clasificación Técnica</h3>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="space-y-1.5">
+                            <label class="text-[10px] font-black uppercase text-jmie-gray tracking-tighter ml-1">Tipo de Equipo</label>
+                            {{ form.tipo }}
+                        </div>
+                        <div class="space-y-1.5">
+                            <label class="text-[10px] font-black uppercase text-jmie-gray tracking-tighter ml-1">Marca / Fabricante</label>
+                            {{ form.fabricante }}
+                        </div>
+                        <div class="space-y-1.5">
+                            <label class="text-[10px] font-black uppercase text-jmie-gray tracking-tighter ml-1">Modelo Específico</label>
+                            {{ form.modelo }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Espacio dinámico para Campos Técnicos (Alpine.js) -->
+                <div id="campos-tecnicos-alpine">
+                    <!-- Notebook -->
+                    <template x-if="tipoNombre.includes('notebook') || tipoNombre.includes('laptop')">
+                        <div class="space-y-4 animate-in fade-in zoom-in-95 duration-500 pt-6">
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="material-symbols-outlined text-info text-lg">settings_suggest</span>
+                                <h3 class="text-xs uppercase font-black tracking-widest text-info">Detalles Notebook</h3>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                {% for field in tech_forms.notebook %}
+                                <div class="space-y-1.5">
+                                    <label class="text-[10px] font-black uppercase text-jmie-gray tracking-tighter ml-1">{{ field.label }}</label>
+                                    {{ field }}
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Smartphone -->
+                    <template x-if="tipoNombre.includes('smartphone') || tipoNombre.includes('celular')">
+                        <div class="space-y-4 animate-in fade-in zoom-in-95 duration-500 pt-6">
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="material-symbols-outlined text-info text-lg">smartphone</span>
+                                <h3 class="text-xs uppercase font-black tracking-widest text-info">Detalles Smartphone</h3>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                {% for field in tech_forms.smartphone %}
+                                <div class="space-y-1.5">
+                                    <label class="text-[10px] font-black uppercase text-jmie-gray tracking-tighter ml-1">{{ field.label }}</label>
+                                    {{ field }}
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Monitor -->
+                    <template x-if="tipoNombre.includes('monitor')">
+                        <div class="space-y-4 animate-in fade-in zoom-in-95 duration-500 pt-6">
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="material-symbols-outlined text-info text-lg">desktop_windows</span>
+                                <h3 class="text-xs uppercase font-black tracking-widest text-info">Detalles Monitor</h3>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {% for field in tech_forms.monitor %}
+                                <div class="space-y-1.5">
+                                    <label class="text-[10px] font-black uppercase text-jmie-gray tracking-tighter ml-1">{{ field.label }}</label>
+                                    {{ field }}
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </template>
+                </div>
+
+                <div class="h-px bg-white/5"></div>
+
+                <!-- Sección: Asignación -->
+                <div class="space-y-4">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="material-symbols-outlined text-success text-lg">person</span>
+                        <h3 class="text-xs uppercase font-black tracking-widest text-success">Asignación ACTUAL</h3>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="space-y-1.5">
+                            <label class="text-[10px] font-black uppercase text-jmie-gray tracking-tighter ml-1">Estado</label>
+                            {{ form.estado }}
+                        </div>
+                        <div class="space-y-1.5">
+                            <label class="text-[10px] font-black uppercase text-jmie-gray tracking-tighter ml-1">Responsable</label>
+                            {{ form.propietario_actual }}
+                        </div>
+                        <div class="space-y-1.5">
+                            <label class="text-[10px] font-black uppercase text-jmie-gray tracking-tighter ml-1">Centro de Costo</label>
+                            {{ form.centro_costo }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="h-px bg-white/5"></div>
+
+                <!-- Sección: Contable y Condición -->
+                <div class="space-y-4">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="material-symbols-outlined text-amber-400 text-lg">payments</span>
+                        <h3 class="text-xs uppercase font-black tracking-widest text-amber-400">Información Contable</h3>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-1.5">
+                            <label class="text-[10px] font-black uppercase text-jmie-gray tracking-tighter ml-1">Fecha de Compra</label>
+                            {{ form.fecha_compra }}
+                        </div>
+                        <div class="space-y-1.5">
+                            <label class="text-[10px] font-black uppercase text-jmie-gray tracking-tighter ml-1">Valor Contable ($)</label>
+                            {{ form.valor_contable }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="h-px bg-white/5"></div>
+
+                <div class="space-y-4">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="material-symbols-outlined text-jmie-gray text-lg">description</span>
+                        <h3 class="text-xs uppercase font-black tracking-widest text-jmie-gray">Notas de Condición Física</h3>
+                    </div>
+                    <div class="space-y-1.5">
+                        {{ form.notas_condicion }}
+                        <p class="text-[10px] text-jmie-gray italic">Explique detalladamente el estado físico del equipo (ej: rayas en tapa, pantalla impecable, etc.)</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botones de Acción -->
+            <div class="flex justify-end gap-4 p-4">
+                <button type="reset" class="px-8 py-3 bg-white/5 hover:bg-white/10 text-on-background font-bold rounded-xl border border-white/5 transition-all">
+                    Resetear
+                </button>
+                <button type="submit" class="px-10 py-3 bg-jmie-orange text-white font-black rounded-xl hover:brightness-110 shadow-[0_4px_20px_rgba(237,139,0,0.4)] transition-all">
+                    Finalizar Registro
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+    </form>
+</div>
+{% endblock %}

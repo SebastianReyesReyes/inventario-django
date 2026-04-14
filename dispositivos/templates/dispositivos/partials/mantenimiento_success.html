@@ -1,0 +1,11 @@
+<div class="flex flex-col items-center justify-center p-12 text-center space-y-4 animate-in zoom-in duration-300"
+     hx-trigger="load delay:1s"
+     @load.window="setTimeout(() => { document.getElementById('mantenimiento-modal')?.remove() }, 1500)">
+    
+    <div class="w-16 h-16 bg-success/20 rounded-full flex items-center justify-center mb-2">
+        <span class="material-symbols-outlined text-success text-4xl">check_circle</span>
+    </div>
+    
+    <h3 class="text-xl font-black text-on-background">¡Registro Guardado!</h3>
+    <p class="text-sm text-jmie-gray font-bold">El historial del equipo ha sido actualizado correctamente.</p>
+</div>

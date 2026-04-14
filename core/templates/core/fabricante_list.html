@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block title %}Catálogos | JMIE{% endblock %}
+{% block section_name %}Catálogo de Fabricantes{% endblock %}
+
+{% block nav_catalogos %}text-jmie-orange bg-jmie-orange/10 border-r-2 border-jmie-orange{% endblock %}
+{% block nav_catalogos_icon %}icon-filled text-jmie-orange{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Page Header -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/5 pb-4">
+        <div>
+            <div class="flex items-center text-xs font-bold text-jmie-orange uppercase tracking-widest mb-1">
+                <span>Catálogos</span>
+                <span class="material-symbols-outlined mx-2 text-[14px]">chevron_right</span>
+                <span class="text-on-background">Fabricantes</span>
+            </div>
+            <h1 class="font-sans text-3xl font-black tracking-tighter">Fabricantes</h1>
+        </div>
+        <div class="flex items-center gap-3">
+            <a 
+                href="{% url 'core:modelo_list' %}" 
+                class="px-5 py-2.5 bg-surface-container-high hover:bg-white/5 text-on-surface font-bold rounded-lg flex items-center transition-all border border-white/5 shadow-lg"
+            >
+                <span class="material-symbols-outlined mr-2 text-[18px]">inventory</span>
+                Ver Modelos
+            </a>
+            {% if perms.core.add_fabricante %}
+            <button 
+                hx-get="{% url 'core:fabricante_create' %}" 
+                hx-target="#modal-container" 
+                class="px-5 py-2.5 bg-jmie-orange hover:brightness-110 text-white font-bold rounded-lg flex items-center transition-all shadow-[0_0_15px_rgba(237,139,0,0.3)]"
+            >
+                <span class="material-symbols-outlined mr-2 text-[18px]">add</span>
+                Nuevo Fabricante
+            </button>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Refrescador de lista (Independiente para evitar conflictos) -->
+    <div 
+        hx-get="{% url 'core:fabricante_list' %}"
+        hx-trigger="fabricanteListChanged from:body"
+        hx-target="#fabricante-list-container"
+        hx-select="#fabricante-list-container"
+        hx-swap="outerHTML"
+        class="hidden"
+    ></div>
+
+    <div 
+        id="fabricante-list-container"
+        class="bg-surface-container-low rounded-xl border border-white/5 overflow-hidden"
+    >
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-white/5">
+                <thead class="bg-surface-container-high/50">
+                    <tr>
+                        <th class="px-6 py-4 text-left text-[11px] font-bold text-jmie-gray uppercase tracking-widest border-b border-white/5">Nombre del Fabricante</th>
+                        <th class="px-6 py-4 text-left text-[11px] font-bold text-jmie-gray uppercase tracking-widest border-b border-white/5">Equipos Asociados</th>
+                        <th class="px-6 py-4 text-right text-[11px] font-bold text-jmie-gray uppercase tracking-widest border-b border-white/5">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-white/5 bg-transparent">
+                    {% for fabricante in fabricantes %}
+                    <tr class="hover:bg-white/[0.03] transition-colors group">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-on-background">
+                            {{ fabricante.nombre }}
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="flex flex-col gap-1">
+                                <span class="text-[10px] font-black uppercase tracking-widest text-jmie-gray mb-1">
+                                    {{ fabricante.modelos.count }} Modelos registrados:
+                                </span>
+                                <div class="flex flex-wrap gap-1.5">
+                                    {% for modelo in fabricante.modelos.all %}
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-white/5 text-on-background border border-white/5">
+                                        {{ modelo.nombre }}
+                                    </span>
+                                    {% empty %}
+                                    <span class="text-[10px] text-white/20 italic">Sin modelos registrados</span>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm space-x-1">
+                            {% load action_tags %}
+                            {% render_actions fabricante 'catalog' %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="3" class="px-6 py-12 text-center">
+                            <div class="flex flex-col items-center justify-center text-jmie-gray">
+                                <span class="material-symbols-outlined text-4xl mb-3 opacity-50">category</span>
+                                <p class="text-sm font-semibold">No hay fabricantes registrados aún.</p>
+                                <p class="text-xs mt-1 opacity-75">Haz clic en "Nuevo Fabricante" para comenzar.</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Paginación (Placeholder para el futuro) -->
+        <div class="bg-surface-container-high/30 border-t border-white/5 px-6 py-3 flex items-center justify-between">
+            <span class="text-xs text-jmie-gray font-semibold">Mostrando listado completo</span>
+        </div>
+    </div>
+</div>
+{% endblock %}

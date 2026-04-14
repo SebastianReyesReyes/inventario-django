@@ -1,0 +1,271 @@
+{% load humanize %}
+<!-- Metricas Principales (Operativas) -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <!-- Total Activos -->
+    <a href="{% url 'dispositivos:dispositivo_list' %}?{{ request.GET.urlencode }}" 
+       class="bg-surface-container-low p-6 rounded-xl border-b-[3px] border-white/20 hover:bg-surface-bright transition-colors cursor-pointer block group">
+        <div class="flex items-center justify-between mb-2">
+            <span class="text-[10px] uppercase font-bold tracking-widest text-jmie-gray group-hover:text-on-background transition-colors">Activos Totales</span>
+            <span class="material-symbols-outlined text-on-background text-sm group-hover:scale-110 transition-transform">devices</span>
+        </div>
+        <div class="text-4xl font-black text-on-background mt-1">{{ total_dispositivos }}</div>
+        <div class="mt-2 text-xs font-bold text-on-background/50 flex items-center">
+            Equipos bajo gestiÃ³n
+            <span class="material-symbols-outlined text-[14px] ml-1 opacity-0 group-hover:opacity-100 transition-opacity">arrow_forward</span>
+        </div>
+    </a>
+
+    <!-- % AsignaciÃ³n -->
+    <div class="bg-surface-container-low p-6 rounded-xl border-b-[3px] border-[#10b981]/30 hover:bg-surface-bright transition-colors cursor-default">
+        <div class="flex items-center justify-between mb-2">
+            <span class="text-[10px] uppercase font-bold tracking-widest text-jmie-gray">Tasa de AsignaciÃ³n</span>
+            <span class="material-symbols-outlined text-[#10b981] text-sm">assignment_ind</span>
+        </div>
+        <div class="text-4xl font-black text-on-background mt-1">{{ porcentaje_asignados }}%</div>
+        <div class="mt-3 flex-1 h-1 bg-white/5 rounded-full overflow-hidden">
+            <div class="h-full bg-[#10b981]" style="width: {{ porcentaje_asignados }}%"></div>
+        </div>
+    </div>
+
+    <!-- Disponibles -->
+    <a href="{% url 'dispositivos:dispositivo_list' %}?{{ request.GET.urlencode }}&estado={{ total_disponibles_id|default:'' }}" 
+       class="bg-surface-container-low p-6 rounded-xl border-b-[3px] border-jmie-blue/30 hover:bg-surface-bright transition-colors cursor-pointer block group">
+        <div class="flex items-center justify-between mb-2">
+            <span class="text-[10px] uppercase font-bold tracking-widest text-jmie-gray group-hover:text-on-background transition-colors">Disponibles / Stock</span>
+            <span class="material-symbols-outlined text-jmie-blue text-sm group-hover:scale-110 transition-transform">inventory_2</span>
+        </div>
+        <div class="text-4xl font-black text-on-background mt-1">{{ total_disponibles }}</div>
+        <div class="mt-2 text-xs font-bold text-jmie-blue flex items-center">
+            Listos para entrega
+            <span class="material-symbols-outlined text-[14px] ml-1 opacity-0 group-hover:opacity-100 transition-opacity">arrow_forward</span>
+        </div>
+    </a>
+
+    <!-- Mantenimiento -->
+    <a href="{% url 'dispositivos:dispositivo_list' %}?{{ request.GET.urlencode }}&estado={{ total_mantenimiento_id|default:'' }}" 
+       class="bg-surface-container-low p-6 rounded-xl border-b-[3px] border-[#ef4444]/30 hover:bg-surface-bright transition-colors cursor-pointer block group">
+        <div class="flex items-center justify-between mb-2">
+            <span class="text-[10px] uppercase font-bold tracking-widest text-jmie-gray group-hover:text-on-background transition-colors">En ReparaciÃ³n</span>
+            <span class="material-symbols-outlined text-[#ef4444] text-sm group-hover:scale-110 transition-transform">build</span>
+        </div>
+        <div class="text-4xl font-black text-on-background mt-1">{{ total_mantenimiento }}</div>
+        <div class="mt-2 text-xs font-bold text-[#ef4444] flex items-center">
+            Requieren atenciÃ³n
+            <span class="material-symbols-outlined text-[14px] ml-1 opacity-0 group-hover:opacity-100 transition-opacity">arrow_forward</span>
+        </div>
+    </a>
+</div>
+
+<!-- Deep Dive: Disponibilidad por CategorÃ­a CrÃ­tica -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <!-- Notebooks Disponibles -->
+    <a href="{% url 'dispositivos:dispositivo_list' %}?tipo={{ tipo_notebook_id|default:'' }}&estado={{ total_disponibles_id|default:'' }}" 
+       class="bg-surface-container-high/30 p-5 rounded-xl border border-white/5 hover:border-jmie-orange/30 transition-all group flex items-center gap-4">
+        <div class="w-12 h-12 rounded-lg bg-jmie-orange/10 flex items-center justify-center border border-jmie-orange/20 group-hover:bg-jmie-orange/20 transition-colors">
+            <span class="material-symbols-outlined text-jmie-orange">laptop_mac</span>
+        </div>
+        <div>
+            <div class="text-2xl font-black text-on-background">{{ total_notebooks_disponibles }}</div>
+            <div class="text-[10px] font-bold uppercase tracking-widest text-jmie-gray">Notebooks Disponibles</div>
+        </div>
+        <span class="material-symbols-outlined ml-auto text-jmie-gray opacity-20 group-hover:opacity-100 group-hover:translate-x-1 transition-all">chevron_right</span>
+    </a>
+
+    <!-- Smartphones Disponibles -->
+    <a href="{% url 'dispositivos:dispositivo_list' %}?tipo={{ tipo_smartphone_id|default:'' }}&estado={{ total_disponibles_id|default:'' }}" 
+       class="bg-surface-container-high/30 p-5 rounded-xl border border-white/5 hover:border-jmie-blue/30 transition-all group flex items-center gap-4">
+        <div class="w-12 h-12 rounded-lg bg-jmie-blue/10 flex items-center justify-center border border-jmie-blue/20 group-hover:bg-jmie-blue/20 transition-colors">
+            <span class="material-symbols-outlined text-jmie-blue text-[20px]">smartphone</span>
+        </div>
+        <div>
+            <div class="text-2xl font-black text-on-background">{{ total_smartphones_disponibles }}</div>
+            <div class="text-[10px] font-bold uppercase tracking-widest text-jmie-gray">Smartphones Disponibles</div>
+        </div>
+        <span class="material-symbols-outlined ml-auto text-jmie-gray opacity-20 group-hover:opacity-100 group-hover:translate-x-1 transition-all">chevron_right</span>
+    </a>
+</div>
+
+<!-- Metricas Financieras y BotÃ³n de Reporte -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+    <!-- Valor Total de Activos -->
+    <div class="bg-surface-container-low p-6 rounded-xl border-l-[3px] border-jmie-orange/50 flex items-center justify-between">
+        <div>
+            <span class="text-[10px] uppercase font-bold tracking-widest text-jmie-gray block mb-1">ValorizaciÃ³n de Flota (Filtro)</span>
+            <div class="text-2xl font-black text-on-background">$ {{ total_valor|intcomma }}</div>
+        </div>
+        <span class="material-symbols-outlined text-jmie-orange text-3xl opacity-30">payments</span>
+    </div>
+
+    <!-- Costo de Mantenimiento Acumulado -->
+    <div class="bg-surface-container-low p-6 rounded-xl border-l-[3px] border-[#ef4444]/50 flex items-center justify-between">
+        <div>
+            <span class="text-[10px] uppercase font-bold tracking-widest text-jmie-gray block mb-1">InversiÃ³n en Mantenimiento</span>
+            <div class="text-2xl font-black text-on-background">$ {{ costo_mantenimiento|intcomma }}</div>
+        </div>
+        <span class="material-symbols-outlined text-[#ef4444] text-3xl opacity-30">history_edu</span>
+    </div>
+
+    <!-- AcciÃ³n: Exportar Reporte -->
+    <div class="bg-surface-container-high/40 p-6 rounded-xl border border-white/5 flex items-center justify-center">
+        <a href="{% url 'dashboard:exportar_excel' %}?{{ request.GET.urlencode }}" class="w-full flex items-center justify-center gap-3 py-3 bg-white/5 hover:bg-white/10 text-on-background font-black text-[10px] uppercase tracking-widest rounded-lg border border-white/10 transition-all">
+            <span class="material-symbols-outlined text-sm">download</span>
+            Generar Reporte Excel (Filtro Actual)
+        </a>
+    </div>
+</div>
+
+<!-- GrÃ¡ficos -->
+<div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+    <!-- GrÃ¡fico por Tipo -->
+    <div class="bg-surface-container-low p-6 rounded-xl border border-white/5 space-y-4">
+        <h3 class="text-[11px] font-bold uppercase tracking-widest text-jmie-gray border-b border-white/5 pb-2">Distribución por Categoría</h3>
+        <div class="relative h-64">
+            <canvas id="chartTipo" 
+                    data-labels='{{ chart_tipo_labels|safe }}'
+                    data-values='{{ chart_tipo_values|safe }}'></canvas>
+        </div>
+    </div>
+
+    <!-- GrÃ¡fico por Estado -->
+    <div class="bg-surface-container-low p-6 rounded-xl border border-white/5 space-y-4">
+        <h3 class="text-[11px] font-bold uppercase tracking-widest text-jmie-gray border-b border-white/5 pb-2">Estados Operativos</h3>
+        <div class="relative h-64">
+            <canvas id="chartEstado"
+                    data-labels='{{ chart_estado_labels|safe }}'
+                    data-values='{{ chart_estado_values|safe }}'></canvas>
+        </div>
+    </div>
+
+    <!-- GrÃ¡fico de Adquisiciones -->
+    <div class="bg-surface-container-low p-6 rounded-xl border border-white/5 space-y-4 lg:col-span-2 xl:col-span-1">
+        <h3 class="text-[11px] font-bold uppercase tracking-widest text-jmie-gray border-b border-white/5 pb-2">HistÃ³rico de Adquisiciones</h3>
+        <div class="relative h-64">
+            <canvas id="chartAdq"
+                    data-labels='{{ chart_adq_labels|safe }}'
+                    data-values='{{ chart_adq_values|safe }}'></canvas>
+        </div>
+    </div>
+
+    <!-- GrÃ¡fico por Centro de Costo (Full Width) -->
+    <div class="bg-surface-container-low p-6 rounded-xl border border-white/5 space-y-4 lg:col-span-3">
+        <h3 class="text-[11px] font-bold uppercase tracking-widest text-jmie-gray border-b border-white/5 pb-2">Top 10 Centros de Costo (Obras)</h3>
+        <div class="relative h-80">
+            <canvas id="chartCC"
+                    data-labels='{{ chart_cc_labels|safe }}'
+                    data-values='{{ chart_cc_values|safe }}'></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Inicialización de Gráficos -->
+<script>
+    (function() {
+        const parseData = (id) => {
+            const el = document.getElementById(id);
+            if (!el) return { labels: [], values: [] };
+            try {
+                return {
+                    labels: JSON.parse(el.getAttribute('data-labels') || '[]'),
+                    values: JSON.parse(el.getAttribute('data-values') || '[]')
+                };
+            } catch (e) {
+                console.error(`[Dashboard] Error parsing data for ${id}:`, e);
+                return { labels: [], values: [] };
+            }
+        };
+
+        const createClickHandler = (id) => (event, elements, chart) => {
+            if (elements.length > 0) {
+                const firstPoint = elements[0];
+                const label = chart.data.labels[firstPoint.index];
+                let filterParam = '';
+                
+                if (id === 'chartTipo') filterParam = `tipo=${encodeURIComponent(label)}`;
+                else if (id === 'chartEstado') filterParam = `estado=${encodeURIComponent(label)}`;
+                else if (id === 'chartCC') filterParam = `centro_costo=${encodeURIComponent(label)}`;
+
+                if (filterParam && typeof htmx !== 'undefined') {
+                    const url = `{% url 'dispositivos:dispositivo_list' %}?${filterParam}&_modal=true`;
+                    htmx.ajax('GET', url, {
+                        target: '#side-over-container',
+                        swap: 'innerHTML'
+                    });
+                }
+            }
+        };
+
+        const commonOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { color: '#94a3b8', font: { size: 10, weight: 'bold' }, padding: 20, usePointStyle: true }
+                }
+            }
+        };
+
+        const colors = ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#f97316', '#14b8a6', '#6366f1'];
+
+        // 1. Chart Tipo
+        const tipoData = parseData('chartTipo');
+        createOrUpdateChart('chartTipo', {
+            type: 'doughnut',
+            data: {
+                labels: tipoData.labels,
+                datasets: [{ data: tipoData.values, backgroundColor: colors, borderWidth: 0, hoverOffset: 15 }]
+            },
+            options: { ...commonOptions, cutout: '70%', onClick: createClickHandler('chartTipo') }
+        });
+
+        // 2. Chart Estado
+        const estadoData = parseData('chartEstado');
+        createOrUpdateChart('chartEstado', {
+            type: 'pie',
+            data: {
+                labels: estadoData.labels,
+                datasets: [{ data: estadoData.values, backgroundColor: [...colors].reverse(), borderWidth: 0, hoverOffset: 15 }]
+            },
+            options: { ...commonOptions, onClick: createClickHandler('chartEstado') }
+        });
+
+        // 3. Chart Adq
+        const adqData = parseData('chartAdq');
+        createOrUpdateChart('chartAdq', {
+            type: 'line',
+            data: {
+                labels: adqData.labels,
+                datasets: [{ 
+                    label: 'Equipos Comprados', 
+                    data: adqData.values, 
+                    borderColor: '#ED8B00', 
+                    backgroundColor: 'rgba(237, 139, 0, 0.1)', 
+                    borderWidth: 3, 
+                    fill: true, 
+                    tension: 0.4, 
+                    pointBackgroundColor: '#ED8B00' 
+                }]
+            },
+            options: { ...commonOptions, plugins: { ...commonOptions.plugins, legend: { display: false } } }
+        });
+
+        // 4. Chart CC
+        const ccData = parseData('chartCC');
+        createOrUpdateChart('chartCC', {
+            type: 'bar',
+            data: {
+                labels: ccData.labels,
+                datasets: [{ label: 'Cantidad de Equipos', data: ccData.values, backgroundColor: colors, borderRadius: 12 }]
+            },
+            options: { 
+                ...commonOptions, 
+                onClick: createClickHandler('chartCC'),
+                plugins: { ...commonOptions.plugins, legend: { display: false } },
+                scales: {
+                    x: { grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 10, weight: 'bold' } } },
+                    y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } }
+                }
+            }
+        });
+    })();
+</script>

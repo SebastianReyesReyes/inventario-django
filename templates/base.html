@@ -15,6 +15,7 @@
     <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
         @font-face {
@@ -253,9 +254,9 @@
                 <span class="material-symbols-outlined mr-3 {% block nav_colaboradores_icon %}group-hover:text-jmie-orange{% endblock %}">badge</span>
                 Personal
             </a>
-            <a href="#"
-                class="flex items-center px-3 py-2 text-sm font-bold uppercase tracking-wide text-jmie-gray rounded-lg hover:text-on-background hover:bg-white/5 transition-all group">
-                <span class="material-symbols-outlined mr-3 group-hover:text-jmie-orange">analytics</span>
+            <a href="{% url 'dashboard:reportes' %}"
+                class="flex items-center px-3 py-2 text-sm font-bold uppercase tracking-wide rounded-lg transition-all group {% block nav_reportes %}text-jmie-gray hover:text-on-background hover:bg-white/5{% endblock %}">
+                <span class="material-symbols-outlined mr-3 {% block nav_reportes_icon %}group-hover:text-jmie-orange{% endblock %}">analytics</span>
                 Reportes
             </a>
         </nav>

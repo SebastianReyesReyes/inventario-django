@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Centro de Mando | JMIE{% endblock %}
+{% block section_name %}Analítica e Inventario{% endblock %}
+
+{% block content %}
+<div class="space-y-6" id="dashboard-wrapper">
+
+    <!-- Scripts de Gráficos (Chart.js) -->
+    <script>
+        // Inicialización global para evitar colisiones en recargas parciales de HTMX
+        let charts = {};
+
+        function createOrUpdateChart(id, config) {
+            const canS = document.getElementById(id);
+            if (!canS) {
+                console.warn(`[Dashboard] Canvas element with id "${id}" not found.`);
+                return;
+            }
+
+            try {
+                if (charts[id]) {
+                    charts[id].destroy();
+                }
+                const ctx = canS.getContext('2d');
+                charts[id] = new Chart(ctx, config);
+            } catch (error) {
+                console.error(`[Dashboard] Error creating chart "${id}":`, error);
+            }
+        }
+    </script>
+
+    <!-- Header del Dashboard -->
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 border-b border-white/5 pb-6">
+        <div>
+            <h1 class="font-sans text-3xl lg:text-4xl font-black tracking-tighter">Centro de Mando</h1>
+            <p class="text-jmie-gray mt-1 text-sm font-bold uppercase tracking-widest opacity-80">Analítica de Activos
+                IT en Tiempo Real</p>
+        </div>
+    </div>
+
+    <!-- Panel de Filtros Estático (HTMX) -->
+    <div class="bg-surface-container-low p-6 rounded-xl border border-white/5">
+        <div class="flex items-center gap-2 mb-4 border-b border-white/5 pb-3">
+            <span class="material-symbols-outlined text-[18px] text-jmie-gray">tune</span>
+            <h2 class="text-[11px] font-bold uppercase tracking-widest text-jmie-gray">Filtros de Análisis Dinámico</h2>
+        </div>
+        <form hx-get="{% url 'dashboard:principal' %}" hx-target="#dashboard-content"
+            hx-trigger="change delay:200ms" hx-push-url="true" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            
+            <div class="space-y-2">
+                <label class="text-[10px] font-black uppercase text-jmie-gray ml-1">Centro de Costo / Obra</label>
+                {{ filter.form.centro_costo }}
+            </div>
+
+            <div class="space-y-2">
+                <label class="text-[10px] font-black uppercase text-jmie-gray ml-1">Fabricante / Marca</label>
+                {{ filter.form.fabricante }}
+            </div>
+
+            <div class="space-y-2">
+                <label class="text-[10px] font-black uppercase text-jmie-gray ml-1">Tipo de Equipo</label>
+                {{ filter.form.tipo }}
+            </div>
+            
+            <div class="space-y-2">
+                <label class="text-[10px] font-black uppercase text-jmie-gray ml-1">Estado Operativo</label>
+                {{ filter.form.estado }}
+            </div>
+
+            <div class="md:col-span-2 lg:col-span-4 space-y-2">
+                <label class="text-[10px] font-black uppercase text-jmie-gray ml-1">Rango de Fecha de Compra</label>
+                <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                    {{ filter.form.fecha_compra }}
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Contenido Dinámico (HTMX Target) -->
+    <div id="dashboard-content">
+        {% include "dashboard/partials/dashboard_content.html" %}
+    </div>
+
+</div>
+
+{% endblock %}

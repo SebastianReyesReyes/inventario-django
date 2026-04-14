@@ -30,6 +30,7 @@ urlpatterns = [
     path('dispositivos/', include('dispositivos.urls', namespace='dispositivos')),
     path('colaboradores/', include('colaboradores.urls', namespace='colaboradores')),
     path('actas/', include('actas.urls', namespace='actas')),
+    path('dashboard/', include('dashboard.urls', namespace='dashboard')),
     path('login/', auth_views.LoginView.as_view(template_name='auth/login.html'), name='login'),
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
 ]

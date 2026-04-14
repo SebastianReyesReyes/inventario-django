@@ -31,12 +31,16 @@ ALLOWED_HOSTS = ['*']
 # Application definition
 
 INSTALLED_APPS = [
+    'polymorphic',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.humanize',
+    'constance',
+    'constance.backends.database',  
     'rest_framework',
     'mcp_server',
     'django_htmx',
@@ -44,8 +48,27 @@ INSTALLED_APPS = [
     'colaboradores.apps.ColaboradoresConfig',
     'dispositivos',
     'actas',
-    
+    'dashboard',
+    'simple_history',
+    'treebeard',
+    'guardian',
+    'imagekit',
+    'django_filters',
+    'template_partials',
+
 ]
+
+
+CONSTANCE_BACKEND = 'constance.backends.database.DatabaseBackend'
+
+CONSTANCE_CONFIG = {
+    'CLI_PREFIX_ID': ('JMIE', 'Prefijo para los identificadores internos de equipos'),
+}
+
+AUTHENTICATION_BACKENDS = (
+    'django.contrib.auth.backends.ModelBackend',
+    'guardian.backends.ObjectPermissionBackend',
+)
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -56,6 +79,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django_htmx.middleware.HtmxMiddleware',
+    'simple_history.middleware.HistoryRequestMiddleware',
 ]
 
 ROOT_URLCONF = 'inventario_jmie.urls'

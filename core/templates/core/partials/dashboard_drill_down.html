@@ -1,0 +1,102 @@
+<div 
+    x-data="{ open: true }" 
+    x-show="open" 
+    class="fixed inset-0 z-50 overflow-hidden" 
+    aria-labelledby="slide-over-title" 
+    role="dialog" 
+    aria-modal="true"
+    @keydown.escape.window="open = false; setTimeout(() => $el.remove(), 300)"
+>
+    <!-- Background overlay -->
+    <div 
+        x-show="open"
+        x-transition:enter="ease-in-out duration-500"
+        x-transition:enter-start="opacity-0"
+        x-transition:enter-end="opacity-100"
+        x-transition:leave="ease-in-out duration-500"
+        x-transition:leave-start="opacity-100"
+        x-transition:leave-end="opacity-0"
+        class="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" 
+        @click="open = false; setTimeout(() => $el.remove(), 300)"
+    ></div>
+
+    <div class="fixed inset-y-0 right-0 pl-10 max-w-full flex">
+        <div 
+            x-show="open"
+            x-transition:enter="transform transition ease-in-out duration-500 sm:duration-700"
+            x-transition:enter-start="translate-x-full"
+            x-transition:enter-end="translate-x-0"
+            x-transition:leave="transform transition ease-in-out duration-500 sm:duration-700"
+            x-transition:leave-start="translate-x-0"
+            x-transition:leave-end="translate-x-full"
+            class="relative w-screen max-w-2xl"
+        >
+            <div class="h-full flex flex-col bg-surface-container border-l border-white/10 shadow-2xl overflow-y-scroll">
+                <!-- Header -->
+                <div class="px-6 py-6 border-b border-white/5 bg-surface-container-low sticky top-0 z-20">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h2 class="text-xl font-black text-on-background uppercase tracking-tight" id="slide-over-title">
+                                {{ title }}
+                            </h2>
+                            <p class="mt-1 text-xs font-bold text-jmie-gray uppercase tracking-widest">
+                                {{ results_count }} equipos encontrados
+                            </p>
+                        </div>
+                        <button @click="open = false; setTimeout(() => $el.remove(), 300)" class="p-2 transition-colors hover:bg-white/5 rounded-full text-jmie-gray hover:text-on-background">
+                            <span class="material-symbols-outlined">close</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Content -->
+                <div class="relative flex-1 px-6 py-6 pb-20">
+                    <div class="space-y-3">
+                        {% for d in dispositivos %}
+                        <div class="bg-surface-container-low p-4 rounded-xl border border-white/5 hover:border-jmie-orange/30 transition-all flex items-center justify-between group">
+                            <div class="flex items-center gap-4">
+                                <div class="p-2.5 bg-surface-container-highest rounded-lg border border-white/5">
+                                    <span class="material-symbols-outlined text-jmie-gray group-hover:text-jmie-orange transition-colors">
+                                        {% if d.tipo.nombre == 'Notebook' %}laptop_mac
+                                        {% elif d.tipo.nombre == 'Smartphone' %}smartphone
+                                        {% else %}devices{% endif %}
+                                    </span>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-black text-on-background tracking-tight">{{ d.identificador_interno }}</p>
+                                    <p class="text-[11px] font-bold text-jmie-gray uppercase tracking-tighter">
+                                        {{ d.modelo.fabricante.nombre }} {{ d.modelo.nombre }}
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            <div class="text-right">
+                                <span class="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-widest border border-white/10 {% if d.estado.id == 1 %}text-success bg-success/10{% elif d.estado.id == 2 %}text-info bg-info/10{% else %}text-jmie-gray bg-white/5{% endif %}">
+                                    {{ d.estado.nombre }}
+                                </span>
+                                <p class="text-[10px] text-jmie-gray mt-1 font-bold">{{ d.centro_costo.nombre }}</p>
+                            </div>
+                            
+                            <a href="{{ d.get_absolute_url }}" class="absolute inset-0 opacity-0">Ver detalle</a>
+                        </div>
+                        {% empty %}
+                        <div class="flex flex-col items-center justify-center py-20 text-jmie-gray">
+                            <span class="material-symbols-outlined text-4xl mb-2 opacity-20">search_off</span>
+                            <p class="text-sm font-bold uppercase tracking-widest">No se encontraron equipos</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <!-- Footer -->
+                {% if results_count > 100 %}
+                <div class="px-6 py-4 bg-surface-container-low border-t border-white/5 sticky bottom-0 z-20">
+                    <p class="text-center text-[10px] font-bold text-jmie-gray uppercase tracking-widest">
+                        Mostrando los primeros 100 resultados de {{ results_count }}
+                    </p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>

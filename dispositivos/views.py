@@ -12,10 +12,10 @@ from core.models import TipoDispositivo, Modelo, Fabricante, EstadoDispositivo
 from colaboradores.models import Colaborador
 from .models import Dispositivo, BitacoraMantenimiento, HistorialAsignacion, EntregaAccesorio
 from .forms import (
-    DispositivoForm, NotebookForm, SmartphoneForm, MonitorForm,
     NotebookTechForm, SmartphoneTechForm, MonitorTechForm, MantenimientoForm,
     AsignacionForm, ReasignacionForm, DevolucionForm, AccesorioForm
 )
+from .services import DispositivoFactory
 
 @login_required
 @permission_required('dispositivos.add_dispositivo', raise_exception=True)
@@ -29,27 +29,13 @@ def dispositivo_create(request):
 
     if request.method == 'POST':
         tipo_id = request.POST.get('tipo')
-        if tipo_id:
-            try:
-                tipo = TipoDispositivo.objects.get(pk=tipo_id)
-                if tipo.nombre == 'Notebook':
-                    form = NotebookForm(request.POST, request.FILES)
-                elif tipo.nombre == 'Smartphone':
-                    form = SmartphoneForm(request.POST, request.FILES)
-                elif tipo.nombre == 'Monitor':
-                    form = MonitorForm(request.POST, request.FILES)
-                else:
-                    form = DispositivoForm(request.POST, request.FILES)
-            except TipoDispositivo.DoesNotExist:
-                form = DispositivoForm(request.POST, request.FILES)
-        else:
-            form = DispositivoForm(request.POST, request.FILES)
+        form = DispositivoFactory.create_form_instance(request.POST, request.FILES, tipo_id)
 
         if form.is_valid():
-            dispositivo = form.save()
+            form.save()
             return redirect('dispositivos:dispositivo_list')
     else:
-        form = DispositivoForm()
+        form = DispositivoFactory.create_form_instance()
     
     return render(request, 'dispositivos/dispositivo_form.html', {
         'form': form,
@@ -60,12 +46,42 @@ def dispositivo_create(request):
 @login_required
 def dispositivo_list(request):
     """Listado de inventario con filtros y búsqueda HTMX."""
+    from dashboard.filters import AnaliticaInventarioFilter
+    
     query = request.GET.get('q', '')
-    tipo_id = request.GET.get('tipo', '')
-    estado_id = request.GET.get('estado', '')
+    dispositivos = Dispositivo.objects.select_related('tipo', 'modelo__fabricante', 'estado', 'propietario_actual', 'centro_costo')
     
-    dispositivos = Dispositivo.objects.select_related('tipo', 'modelo__fabricante', 'estado', 'propietario_actual')
+    # Aplicar Filtros Avanzados (los mismos del Dashboard)
+    filterset = AnaliticaInventarioFilter(request.GET, queryset=dispositivos)
+    dispositivos = filterset.qs
+
+    # Filtros por nombre para el Drill-down desde Chart.js
+    tipo_nombre = request.GET.get('tipo_nombre')
+    estado_nombre = request.GET.get('estado_nombre')
+    cc_nombre = request.GET.get('cc_nombre')
+
+    if tipo_nombre:
+        dispositivos = dispositivos.filter(tipo__nombre=tipo_nombre)
+    if estado_nombre:
+        dispositivos = dispositivos.filter(estado__nombre=estado_nombre)
+    if cc_nombre:
+        if cc_nombre == 'Central/Stock':
+            dispositivos = dispositivos.filter(centro_costo__isnull=True)
+        else:
+            dispositivos = dispositivos.filter(centro_costo__codigo_contable=cc_nombre)
     
+    # Manejo de alertas desde la Home
+    alerta = request.GET.get('alerta')
+    if alerta == 'mantenimiento':
+        dispositivos = dispositivos.filter(estado__nombre__icontains='Reparación')
+    elif alerta == 'sin_acta':
+        # Dispositivos que tienen una asignación actual sin acta
+        dispositivos = dispositivos.filter(
+            historial__isnull=False,
+            historial__acta__isnull=True
+        ).distinct()
+    
+    # Búsqueda textual adicional
     if query:
         dispositivos = dispositivos.filter(
             Q(identificador_interno__icontains=query) |
@@ -74,20 +90,20 @@ def dispositivo_list(request):
             Q(propietario_actual__first_name__icontains=query) |
             Q(propietario_actual__last_name__icontains=query)
         )
-    
-    if tipo_id:
-        dispositivos = dispositivos.filter(tipo_id=tipo_id)
-    if estado_id:
-        dispositivos = dispositivos.filter(estado_id=estado_id)
         
     context = {
         'dispositivos': dispositivos,
+        'filter': filterset,
         'tipos': TipoDispositivo.objects.all(),
         'estados': EstadoDispositivo.objects.all(),
         'query': query,
     }
     
     if request.headers.get('HX-Request'):
+        if request.GET.get('_modal') == 'true':
+            # Renderizamos la lista en un panel side-over
+            context['drilldown_title'] = f"Equipos: {tipo_nombre or estado_nombre or cc_nombre or 'Listado'}"
+            return render(request, 'dispositivos/partials/dispositivo_sideover_list.html', context)
         return render(request, 'dispositivos/partials/dispositivo_list_results.html', context)
         
     return render(request, 'dispositivos/dispositivo_list.html', context)
@@ -359,29 +375,12 @@ def dispositivo_update(request, pk):
     }
 
     if request.method == 'POST':
-        tipo = dispositivo.tipo
-        if tipo and tipo.nombre == 'Notebook' and hasattr(dispositivo, 'notebook'):
-            form = NotebookForm(request.POST, request.FILES, instance=dispositivo.notebook)
-        elif tipo and tipo.nombre == 'Smartphone' and hasattr(dispositivo, 'smartphone'):
-            form = SmartphoneForm(request.POST, request.FILES, instance=dispositivo.smartphone)
-        elif tipo and tipo.nombre == 'Monitor' and hasattr(dispositivo, 'monitor'):
-            form = MonitorForm(request.POST, request.FILES, instance=dispositivo.monitor)
-        else:
-            form = DispositivoForm(request.POST, request.FILES, instance=dispositivo)
-
+        form = DispositivoFactory.create_form_instance(request.POST, request.FILES, instance=dispositivo)
         if form.is_valid():
             form.save()
             return redirect('dispositivos:dispositivo_detail', pk=pk)
     else:
-        tipo = dispositivo.tipo
-        if tipo and tipo.nombre == 'Notebook' and hasattr(dispositivo, 'notebook'):
-            form = NotebookForm(instance=dispositivo.notebook)
-        elif tipo and tipo.nombre == 'Smartphone' and hasattr(dispositivo, 'smartphone'):
-            form = SmartphoneForm(instance=dispositivo.smartphone)
-        elif tipo and tipo.nombre == 'Monitor' and hasattr(dispositivo, 'monitor'):
-            form = MonitorForm(instance=dispositivo.monitor)
-        else:
-            form = DispositivoForm(instance=dispositivo)
+        form = DispositivoFactory.create_form_instance(instance=dispositivo)
     
     return render(request, 'dispositivos/dispositivo_form.html', {
         'form': form,

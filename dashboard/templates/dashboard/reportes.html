@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}Central de Reportes | JMIE{% endblock %}
+{% block section_name %}Inteligencia de Datos{% endblock %}
+{% block nav_reportes %}bg-white/5 text-on-background{% endblock %}
+{% block nav_reportes_icon %}text-jmie-orange{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    <!-- Header -->
+    <div class="border-b border-white/5 pb-6">
+        <h1 class="text-3xl lg:text-4xl font-black tracking-tighter">Central de Reportes</h1>
+        <p class="text-jmie-gray mt-1 text-sm font-bold uppercase tracking-widest opacity-80">Exportación y Auditoría de Activos IT</p>
+    </div>
+
+    <!-- Grid de Reportes -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        
+        <!-- Reporte 1: Inventario Completo -->
+        <div class="bg-surface-container-low p-6 rounded-xl border border-white/5 hover:border-jmie-blue/30 transition-all group">
+            <div class="flex items-center justify-between mb-4">
+                <div class="p-3 bg-jmie-blue/10 rounded-lg text-jmie-blue">
+                    <span class="material-symbols-outlined">inventory_2</span>
+                </div>
+                <span class="text-[10px] font-black text-jmie-gray uppercase">Excel (.xlsx)</span>
+            </div>
+            <h3 class="text-lg font-black text-on-background mb-2">Inventario Maestro</h3>
+            <p class="text-sm text-jmie-gray mb-6 leading-relaxed">Listado detallado de todos los equipos con sus especificaciones, estados y ubicaciones actuales.</p>
+            <a href="{% url 'dashboard:exportar_excel' %}" class="inline-flex items-center gap-2 text-xs font-black uppercase tracking-widest text-jmie-blue hover:text-white transition-colors">
+                Descargar ahora
+                <span class="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform">arrow_forward</span>
+            </a>
+        </div>
+
+        <!-- Reporte 2: Bitácora de Mantenimiento -->
+        <div class="bg-surface-container-low p-6 rounded-xl border border-white/5 opacity-60 grayscale cursor-not-allowed relative overflow-hidden">
+            <div class="absolute top-4 right-4 bg-jmie-orange/20 text-jmie-orange text-[8px] font-black px-2 py-1 rounded uppercase tracking-tighter">Próximamente</div>
+            <div class="flex items-center justify-between mb-4">
+                <div class="p-3 bg-red-500/10 rounded-lg text-red-500">
+                    <span class="material-symbols-outlined">build</span>
+                </div>
+                <span class="text-[10px] font-black text-jmie-gray uppercase">PDF</span>
+            </div>
+            <h3 class="text-lg font-black text-on-background mb-2">Historial de Mantenciones</h3>
+            <p class="text-sm text-jmie-gray mb-6 leading-relaxed">Resumen de costos de reparación por equipo, fallas frecuentes y tiempos de respuesta técnica.</p>
+        </div>
+
+        <!-- Reporte 3: Asignaciones por Personal -->
+        <div class="bg-surface-container-low p-6 rounded-xl border border-white/5 opacity-60 grayscale cursor-not-allowed relative overflow-hidden">
+            <div class="absolute top-4 right-4 bg-jmie-orange/20 text-jmie-orange text-[8px] font-black px-2 py-1 rounded uppercase tracking-tighter">Próximamente</div>
+            <div class="flex items-center justify-between mb-4">
+                <div class="p-3 bg-jmie-green/10 rounded-lg text-jmie-green">
+                    <span class="material-symbols-outlined">assignment_ind</span>
+                </div>
+                <span class="text-[10px] font-black text-jmie-gray uppercase">Excel</span>
+            </div>
+            <h3 class="text-lg font-black text-on-background mb-2">Auditoría de Personal</h3>
+            <p class="text-sm text-jmie-gray mb-6 leading-relaxed">Listado de colaboradores con el detalle de activos y accesorios que tienen bajo su responsabilidad.</p>
+        </div>
+
+    </div>
+
+    <!-- Info Section -->
+    <div class="bg-surface-container-high/30 p-8 rounded-2xl border border-white/5 flex flex-col md:flex-row items-center gap-8">
+        <div class="text-center md:text-left space-y-2">
+            <h4 class="text-xl font-black text-on-background">¿Necesitas un reporte a medida?</h4>
+            <p class="text-sm text-jmie-gray max-w-xl">El sistema permite generar filtros complejos desde el Dashboard que pueden ser exportados directamente. Para reportes de auditoría legal o contable, contacta al administrador.</p>
+        </div>
+        <div class="flex-shrink-0">
+            <a href="mailto:s.reyes@jmie.cl" class="px-6 py-3 bg-surface-container-highest hover:bg-white/10 text-on-background font-black text-xs uppercase tracking-widest rounded-xl border border-white/10 transition-all flex items-center gap-2">
+                <span class="material-symbols-outlined text-sm">mail</span>
+                Solicitar soporte
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -7,3 +7,4 @@ media/
 varios/
 .agents/
 .vscode/
+.pytest_cache/

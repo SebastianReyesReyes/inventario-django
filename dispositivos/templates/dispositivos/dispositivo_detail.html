@@ -1,0 +1,291 @@
+{% extends "base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Detalle de Equipo: {{ d.identificador_interno }} | JMIE{% endblock %}
+{% block section_name %}Activos IT / Detalle{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    
+    <!-- Header / Resumen -->
+    <div class="bg-surface-container-low p-8 rounded-2xl border border-white/5 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-xl relative overflow-hidden">
+        <!-- Decoración de fondo -->
+        <div class="absolute top-0 right-0 w-64 h-64 bg-jmie-blue/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl"></div>
+        
+        <div class="relative z-10">
+            <div class="flex items-center gap-3 mb-2">
+                <span class="px-3 py-1 bg-jmie-blue/10 text-jmie-blue text-[10px] font-black uppercase tracking-widest rounded-lg border border-jmie-blue/20">
+                    {{ d.tipo.nombre }}
+                </span>
+                <span class="px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider
+                    {% if 'disponible' in d.estado.nombre.lower or 'bueno' in d.estado.nombre.lower %} bg-success/10 text-success border border-success/20
+                    {% elif 'asignado' in d.estado.nombre.lower %} bg-jmie-blue/10 text-jmie-blue border border-jmie-blue/20
+                    {% elif 'reparación' in d.estado.nombre.lower or 'falla' in d.estado.nombre.lower %} bg-jmie-orange/10 text-jmie-orange border border-jmie-orange/20
+                    {% else %} bg-white/5 text-jmie-gray border border-white/10 {% endif %}">
+                    {{ d.estado.nombre }}
+                </span>
+            </div>
+            <h1 class="text-4xl font-black tracking-tighter text-on-background">{{ d.identificador_interno }}</h1>
+            <p class="text-jmie-gray mt-1 font-bold text-sm tracking-wide">{{ d.modelo.fabricante.nombre }} — {{ d.modelo.nombre }}</p>
+        </div>
+
+        <div class="flex items-center gap-4 relative z-10">
+            <div class="text-right hidden sm:block border-r border-white/10 pr-6">
+                <p class="text-[10px] font-black uppercase tracking-widest text-jmie-gray mb-1">N° de Serie</p>
+                <p class="text-sm font-mono font-bold text-on-background">{{ d.numero_serie }}</p>
+            </div>
+            
+            <!-- Acciones Rápidas -->
+            <div class="flex items-center gap-2">
+                {% if perms.dispositivos.change_dispositivo %}
+                <a href="{% url 'dispositivos:dispositivo_update' d.pk %}" class="p-3 bg-surface-container-high hover:bg-white/10 text-on-background rounded-xl border border-white/10 transition-all group" title="Editar Equipo">
+                    <span class="material-symbols-outlined text-[20px] group-hover:scale-110 transition-transform">edit</span>
+                </a>
+                {% endif %}
+                <div x-data="{ open: false }" class="relative">
+                    <button @click="open = !open" class="p-3 bg-jmie-blue/10 hover:bg-jmie-blue/20 text-jmie-blue rounded-xl border border-jmie-blue/20 transition-all group" title="Ver Código QR">
+                        <span class="material-symbols-outlined text-[20px] group-hover:scale-110 transition-transform">qr_code_2</span>
+                    </button>
+                    <!-- QR Modal -->
+                    <div x-show="open" @click.away="open = false" 
+                         class="absolute right-0 mt-3 p-6 bg-white rounded-2xl shadow-2xl z-50 border border-white/10 w-48 animate-in fade-in zoom-in-95 duration-200">
+                        <img src="{% url 'dispositivos:dispositivo_qr' d.pk %}" alt="QR Code" class="w-full h-auto">
+                        <p class="text-[10px] text-black font-black uppercase tracking-widest text-center mt-4">ID JMIE</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Grid de Detalles -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        <!-- Columna Izquierda: Información Técnica y Costos -->
+        <div class="lg:col-span-2 space-y-8">
+            
+            <!-- Specs y Atributos -->
+            <div class="bg-surface-container-low rounded-2xl border border-white/5 overflow-hidden">
+                <div class="px-6 py-4 bg-white/[0.02] border-b border-white/5 flex items-center justify-between">
+                    <h3 class="text-xs font-black uppercase tracking-widest text-jmie-gray flex items-center gap-2">
+                        <span class="material-symbols-outlined text-sm">settings</span>
+                        Especificaciones Técnicas
+                    </h3>
+                </div>
+                <div class="p-6">
+                    <!-- Atributos Dinámicos según tipo (Notebook, Smartphone, etc.) -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-6">
+                        {% if d.notebook %}
+                            <div class="space-y-1">
+                                <p class="text-[10px] font-black uppercase text-jmie-gray">Procesador</p>
+                                <p class="text-sm font-bold">{{ d.notebook.procesador }}</p>
+                            </div>
+                            <div class="space-y-1">
+                                <p class="text-[10px] font-black uppercase text-jmie-gray">Memoria RAM</p>
+                                <p class="text-sm font-bold">{{ d.notebook.ram_gb }} GB</p>
+                            </div>
+                            <div class="space-y-1">
+                                <p class="text-[10px] font-black uppercase text-jmie-gray">Almacenamiento</p>
+                                <p class="text-sm font-bold">{{ d.notebook.almacenamiento }}</p>
+                            </div>
+                            <div class="space-y-1">
+                                <p class="text-[10px] font-black uppercase text-jmie-gray">S.O.</p>
+                                <p class="text-sm font-bold">{{ d.notebook.sistema_operativo }}</p>
+                            </div>
+                            <div class="sm:col-span-2 space-y-1">
+                                <p class="text-[10px] font-black uppercase text-jmie-gray">Dirección MAC</p>
+                                <p class="text-sm font-mono font-bold">{{ d.notebook.mac_address|default:"No registrada" }}</p>
+                            </div>
+                        {% elif d.smartphone %}
+                            <div class="space-y-1">
+                                <p class="text-[10px] font-black uppercase text-jmie-gray">IMEI 1</p>
+                                <p class="text-sm font-mono font-bold">{{ d.smartphone.imei_1 }}</p>
+                            </div>
+                            <div class="space-y-1">
+                                <p class="text-[10px] font-black uppercase text-jmie-gray">IMEI 2</p>
+                                <p class="text-sm font-mono font-bold">{{ d.smartphone.imei_2|default:"-" }}</p>
+                            </div>
+                            <div class="space-y-1">
+                                <p class="text-[10px] font-black uppercase text-jmie-gray">N° Teléfono</p>
+                                <p class="text-sm font-bold">{{ d.smartphone.numero_telefono|default:"Sin asignar" }}</p>
+                            </div>
+                        {% elif d.monitor %}
+                            <div class="space-y-1">
+                                <p class="text-[10px] font-black uppercase text-jmie-gray">Tamaño</p>
+                                <p class="text-sm font-bold">{{ d.monitor.pulgadas }} Pulgadas</p>
+                            </div>
+                            <div class="space-y-1">
+                                <p class="text-[10px] font-black uppercase text-jmie-gray">Resolución</p>
+                                <p class="text-sm font-bold">{{ d.monitor.resolucion }}</p>
+                            </div>
+                        {% else %}
+                            <div class="sm:col-span-2 py-4 text-center">
+                                <p class="text-xs text-jmie-gray font-bold italic">No hay especificaciones técnicas adicionales registradas.</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gestión de Mantenimiento -->
+            <div class="bg-surface-container-low rounded-2xl border border-white/5 overflow-hidden">
+                <div class="px-6 py-4 bg-white/[0.02] border-b border-white/5 flex items-center justify-between">
+                    <h3 class="text-xs font-black uppercase tracking-widest text-jmie-gray flex items-center gap-2">
+                        <span class="material-symbols-outlined text-sm">build</span>
+                        Historial de Mantenimiento
+                    </h3>
+                    {% if perms.dispositivos.add_bitacoramantenimiento %}
+                    <button hx-get="{% url 'dispositivos:mantenimiento_create' d.pk %}" 
+                            hx-target="#modal-container"
+                            class="text-[10px] font-black uppercase tracking-widest text-jmie-blue hover:text-white transition-colors">
+                        + Registrar Falla
+                    </button>
+                    {% endif %}
+                </div>
+                <div class="p-0">
+                    <div id="mantenimiento-list">
+                        {% if d.mantenimientos.exists %}
+                            <table class="w-full text-left">
+                                <thead class="text-[10px] font-black uppercase tracking-widest text-jmie-gray border-b border-white/5">
+                                    <tr>
+                                        <th class="px-6 py-3">Fecha</th>
+                                        <th class="px-6 py-3">Falla / Reparación</th>
+                                        <th class="px-6 py-3 text-right">Costo</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-white/5">
+                                    {% for m in d.mantenimientos.all %}
+                                    <tr class="hover:bg-white/[0.01] transition-colors">
+                                        <td class="px-6 py-4 text-xs font-bold text-on-background">{{ m.fecha|date:"d/m/Y" }}</td>
+                                        <td class="px-6 py-4">
+                                            <p class="text-xs font-bold text-on-background">{{ m.falla_reportada }}</p>
+                                            <p class="text-[10px] text-jmie-gray mt-1 italic">{{ m.reparacion_realizada|default:"Pendiente" }}</p>
+                                        </td>
+                                        <td class="px-6 py-4 text-right text-xs font-black text-on-background">$ {{ m.costo_reparacion|intcomma }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        {% else %}
+                            <div class="p-12 text-center">
+                                <span class="material-symbols-outlined text-3xl text-white/10 mb-2">history</span>
+                                <p class="text-xs text-jmie-gray font-bold">Sin registros de mantenimiento preventivo o correctivo.</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Columna Derecha: Asignación y Finanzas -->
+        <div class="space-y-8">
+            
+            <!-- Responsable Actual -->
+            <div class="bg-surface-container-low rounded-2xl border border-white/5 overflow-hidden">
+                <div class="px-6 py-4 bg-white/[0.02] border-b border-white/5 flex items-center justify-between">
+                    <h3 class="text-xs font-black uppercase tracking-widest text-jmie-gray flex items-center gap-2">
+                        <span class="material-symbols-outlined text-sm">badge</span>
+                        Responsable
+                    </h3>
+                </div>
+                <div class="p-6">
+                    {% if d.propietario_actual %}
+                        <div class="flex items-center gap-4 mb-6">
+                            <div class="w-12 h-12 rounded-full bg-jmie-blue/20 flex items-center justify-center text-jmie-blue font-black text-lg">
+                                {{ d.propietario_actual.first_name|first|upper }}{{ d.propietario_actual.last_name|first|upper }}
+                            </div>
+                            <div>
+                                <p class="text-sm font-black text-on-background">{{ d.propietario_actual.nombre_completo }}</p>
+                                <p class="text-xs font-bold text-jmie-gray uppercase tracking-widest mt-0.5">{{ d.propietario_actual.departamento|default:"Sin Depto." }}</p>
+                            </div>
+                        </div>
+                        <div class="space-y-3">
+                            <div class="flex justify-between text-xs font-bold">
+                                <span class="text-jmie-gray">Centro de Costo</span>
+                                <span class="text-on-background">{{ d.centro_costo.codigo_contable }}</span>
+                            </div>
+                            <div class="flex justify-between text-xs font-bold pb-4 border-b border-white/5">
+                                <span class="text-jmie-gray">Desde</span>
+                                <span class="text-on-background">{{ d.historial.first.fecha_inicio|date:"d/m/Y"|default:"-" }}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-2 mt-6">
+                            {% if perms.dispositivos.add_historialasignacion %}
+                            <button hx-get="{% url 'dispositivos:dispositivo_reasignar' d.pk %}" 
+                                    hx-target="#modal-container"
+                                    class="py-2 bg-surface-container-high hover:bg-white/10 text-[10px] font-black uppercase tracking-widest rounded-lg border border-white/10 transition-all">
+                                Reasignar
+                            </button>
+                            <button hx-get="{% url 'dispositivos:dispositivo_devolver' d.pk %}" 
+                                    hx-target="#modal-container"
+                                    class="py-2 bg-surface-container-high hover:bg-white/10 text-[10px] font-black uppercase tracking-widest rounded-lg border border-white/10 transition-all">
+                                Devolver
+                            </button>
+                            {% endif %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-6">
+                            <span class="material-symbols-outlined text-3xl text-white/10 mb-3">inventory_2</span>
+                            <p class="text-xs text-jmie-gray font-bold uppercase tracking-widest mb-6">Equipo en Bodega / Stock</p>
+                            
+                            {% if perms.dispositivos.add_historialasignacion %}
+                            <button hx-get="{% url 'dispositivos:dispositivo_asignar' d.pk %}" 
+                                    hx-target="#modal-container"
+                                    class="w-full py-3 bg-jmie-blue text-white text-xs font-black uppercase tracking-widest rounded-xl hover:brightness-110 shadow-[0_4px_20px_rgba(0,53,148,0.2)] transition-all">
+                                Asignar a Personal
+                            </button>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Datos Financieros -->
+            <div class="bg-surface-container-low rounded-2xl border border-white/5 overflow-hidden">
+                <div class="px-6 py-4 bg-white/[0.02] border-b border-white/5 flex items-center justify-between">
+                    <h3 class="text-xs font-black uppercase tracking-widest text-jmie-gray flex items-center gap-2">
+                        <span class="material-symbols-outlined text-sm">payments</span>
+                        Contabilidad e Info
+                    </h3>
+                </div>
+                <div class="p-6 space-y-4">
+                    <div class="flex justify-between border-b border-white/5 pb-2">
+                        <span class="text-xs text-jmie-gray font-bold">Valor Contable</span>
+                        <span class="text-sm font-black text-on-background">$ {{ d.valor_contable|intcomma }}</span>
+                    </div>
+                    <div class="flex justify-between border-b border-white/5 pb-2">
+                        <span class="text-xs text-jmie-gray font-bold">Fecha de Compra</span>
+                        <span class="text-xs text-on-background font-bold">{{ d.fecha_compra|date:"d/m/Y"|default:"No registrada" }}</span>
+                    </div>
+                    <div class="space-y-2">
+                        <p class="text-[10px] font-black uppercase text-jmie-gray">Condición Física</p>
+                        <p class="text-xs text-on-background font-medium italic leading-relaxed">{{ d.notas_condicion|default:"No hay observaciones registradas." }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Timeline rápido (Mini) -->
+            <div class="px-2">
+                <a href="{% url 'dispositivos:dispositivo_historial' d.pk %}" 
+                   hx-get="{% url 'dispositivos:dispositivo_historial' d.pk %}"
+                   hx-target="#modal-container"
+                   class="w-full flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest text-jmie-gray hover:text-white transition-colors">
+                    Ver historial completo de movimientos
+                    <span class="material-symbols-outlined text-sm">open_in_new</span>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Listener para recargar la página si se guarda un movimiento o mantenimiento exitoso
+    document.body.addEventListener('asignacion-saved', function() {
+        location.reload();
+    });
+    document.body.addEventListener('mantenimiento-saved', function() {
+        location.reload();
+    });
+</script>
+{% endblock %}

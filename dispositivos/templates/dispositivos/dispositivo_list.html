@@ -17,19 +17,6 @@
         </div>
         
         <div class="flex items-center gap-3">
-            <!-- Buscador en Vivo -->
-            <div class="relative group">
-                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-jmie-gray group-focus-within:text-jmie-blue transition-colors text-sm">search</span>
-                <input type="text" 
-                       name="q" 
-                       placeholder="Buscar por serie, ID o modelo..."
-                       class="pl-10 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-xs font-bold text-on-background focus:outline-none focus:ring-2 focus:ring-jmie-blue/20 focus:border-jmie-blue/50 transition-all w-64 md:w-80"
-                       hx-get="{% url 'dispositivos:dispositivo_list' %}"
-                       hx-trigger="keyup changed delay:500ms, search, mantenimiento-saved from:body"
-                       hx-target="#search-results"
-                       hx-indicator=".htmx-indicator">
-            </div>
-            
             {% if perms.dispositivos.add_dispositivo %}
             <a href="{% url 'dispositivos:dispositivo_create' %}" class="px-4 py-2.5 bg-jmie-orange text-white text-xs font-black rounded-xl hover:brightness-110 shadow-[0_4px_20px_rgba(237,139,0,0.2)] transition-all flex items-center">
                 <span class="material-symbols-outlined text-sm mr-2 leading-none">add</span>
@@ -37,6 +24,51 @@
             </a>
             {% endif %}
         </div>
+    </div>
+
+    <!-- Panel de Filtros y Búsqueda -->
+    <div class="bg-surface-container-low p-6 rounded-xl border border-white/5 space-y-6">
+        <form hx-get="{% url 'dispositivos:dispositivo_list' %}" 
+              hx-target="#search-results" 
+              hx-trigger="change delay:200ms, keyup changed delay:500ms from:input[name='q']"
+              hx-push-url="true"
+              class="space-y-6">
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- Buscador Principal -->
+                <div class="lg:col-span-2 space-y-2">
+                    <label class="text-[10px] font-black uppercase text-jmie-gray ml-1">Búsqueda Rápida</label>
+                    <div class="relative group">
+                        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-jmie-gray group-focus-within:text-jmie-blue transition-colors text-sm">search</span>
+                        <input type="text" 
+                               name="q" 
+                               value="{{ query }}"
+                               placeholder="Buscar por serie, ID o modelo..."
+                               class="w-full pl-10 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-xs font-bold text-on-background focus:outline-none focus:ring-2 focus:ring-jmie-blue/20 focus:border-jmie-blue/50 transition-all">
+                    </div>
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-[10px] font-black uppercase text-jmie-gray ml-1">Centro de Costo</label>
+                    {{ filter.form.centro_costo }}
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-[10px] font-black uppercase text-jmie-gray ml-1">Estado</label>
+                    {{ filter.form.estado }}
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-[10px] font-black uppercase text-jmie-gray ml-1">Tipo de Equipo</label>
+                    {{ filter.form.tipo }}
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-[10px] font-black uppercase text-jmie-gray ml-1">Fabricante</label>
+                    {{ filter.form.fabricante }}
+                </div>
+            </div>
+        </form>
     </div>
 
     <!-- Tabla de Resultados -->

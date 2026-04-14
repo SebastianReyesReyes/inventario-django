@@ -32,4 +32,7 @@ urlpatterns = [
     path('estados/crear/', views.estado_create, name='estado_create'),
     path('estados/<int:pk>/editar/', views.estado_edit, name='estado_edit'),
     path('estados/<int:pk>/eliminar/', views.estado_delete, name='estado_delete'),
+    
+    # Dashboard API / Drill-down
+    path('dashboard/drill-down/', views.dashboard_drill_down, name='dashboard_drill_down'),
 ]

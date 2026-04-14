@@ -6,43 +6,61 @@ import json
 
 from .models import Fabricante, TipoDispositivo, Modelo, CentroCosto, EstadoDispositivo
 from .forms import FabricanteForm, TipoDispositivoForm, ModeloForm, CentroCostoForm, EstadoDispositivoForm
-from dispositivos.models import Dispositivo
+from .filters import DashboardFilterSet
+from dispositivos.models import Dispositivo, BitacoraMantenimiento, HistorialAsignacion
+from colaboradores.models import Colaborador
+from django.utils import timezone
+from datetime import timedelta
+from django.db.models import Count, Sum
 
 @login_required
 def home(request):
-    from colaboradores.models import Colaborador
-    from dispositivos.models import BitacoraMantenimiento
-    from django.utils import timezone
-    from datetime import timedelta
+    """
+    Landing Page Operativa.
+    Punto de entrada rápido con alertas y accesos directos.
+    """
+    # Alertas rápidas (Queries ligeros)
+    mantenimientos_pendientes = BitacoraMantenimiento.objects.filter(reparacion_realizada__isnull=True).count()
+    asignaciones_sin_acta = HistorialAsignacion.objects.filter(acta__isnull=True).count()
     
-    # Métricas principales por estado (incluyendo sinónimos encontrados en la BD)
-    total_disponibles = Dispositivo.objects.filter(estado__nombre__in=['Disponible', 'Reservado']).count()
-    total_asignados = Dispositivo.objects.filter(estado__nombre__in=['Asignado', 'En uso']).count()
-    total_mantenimiento = Dispositivo.objects.filter(estado__nombre__icontains='Reparación').count()
-    total_baja = Dispositivo.objects.filter(estado__nombre__in=['Fuera de Inventario', 'De Baja', 'Inactivo']).count()
-
-    
-    total_dispositivos = Dispositivo.objects.count()
-    total_activos = total_dispositivos - total_baja  # Activos = todo menos baja
-    porcentaje_asignados = round((total_asignados / total_activos * 100) if total_activos > 0 else 0)
-    
-    # Métricas complementarias
-    total_colaboradores = Colaborador.objects.filter(esta_activo=True).count()
-    mantenimientos_recientes = BitacoraMantenimiento.objects.filter(
-        fecha__gte=timezone.now() - timedelta(days=30)
-    ).count()
-
     context = {
-        'total_disponibles': total_disponibles,
-        'total_asignados': total_asignados,
-        'total_mantenimiento': total_mantenimiento,
-        'total_baja': total_baja,
-        'total_dispositivos': total_dispositivos,
-        'total_colaboradores': total_colaboradores,
-        'porcentaje_asignados': porcentaje_asignados,
-        'mantenimientos_recientes': mantenimientos_recientes,
+        'mantenimientos_pendientes': mantenimientos_pendientes,
+        'asignaciones_sin_acta': asignaciones_sin_acta,
+        'total_dispositivos': Dispositivo.objects.count(),
     }
+
     return render(request, 'core/home.html', context)
+
+@login_required
+def dashboard_drill_down(request):
+    """View to return a detailed list of devices based on filters for a side-over."""
+    from django.db.models import Q
+    
+    filter_type = request.GET.get('filter_type')
+    filterset = DashboardFilterSet(request.GET, queryset=Dispositivo.objects.all())
+    qs = filterset.qs
+    
+    title = "Detalle de Activos"
+    
+    if filter_type == 'disponibles':
+        qs = qs.filter(estado__nombre__in=['Disponible', 'Reservado'])
+        title = "Equipos Disponibles"
+    elif filter_type == 'asignados':
+        qs = qs.filter(estado__nombre__in=['Asignado', 'En uso'])
+        title = "Equipos Asignados"
+    elif filter_type == 'mantenimiento':
+        qs = qs.filter(estado__nombre__icontains='Reparación')
+        title = "Equipos en Mantención"
+    elif filter_type == 'baja':
+        qs = qs.filter(estado__nombre__in=['Fuera de Inventario', 'De Baja', 'Inactivo'])
+        title = "Equipos Fuera de Inventario"
+    
+    context = {
+        'dispositivos': qs[:100],  # Limit to 100 for performance
+        'title': title,
+        'results_count': qs.count()
+    }
+    return render(request, 'core/partials/dashboard_drill_down.html', context)
 
 
 # --- FABRICANTES ---

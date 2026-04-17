@@ -141,13 +141,14 @@ def ajax_get_tech_fields(request):
         return HttpResponse("")
         
     tipo = get_object_or_404(TipoDispositivo, pk=tipo_id)
+    nombre = tipo.nombre.lower()
     form = None
     
-    if tipo.nombre == 'Notebook':
+    if 'notebook' in nombre or 'laptop' in nombre:
         form = NotebookTechForm()
-    elif tipo.nombre == 'Smartphone':
+    elif 'smartphone' in nombre or 'celular' in nombre:
         form = SmartphoneTechForm()
-    elif tipo.nombre == 'Monitor':
+    elif 'monitor' in nombre:
         form = MonitorTechForm()
         
     if form:
@@ -204,6 +205,8 @@ def mantenimiento_create(request, pk):
 
 # --- VISTAS DE TRAZABILIDAD (ÉPICA 4) ---
 
+from actas.services import ActaService
+
 @login_required
 @permission_required('dispositivos.add_historialasignacion', raise_exception=True)
 @transaction.atomic
@@ -223,9 +226,24 @@ def dispositivo_asignar(request, pk):
             dispositivo.estado = estado_asignado
             dispositivo.propietario_actual = movimiento.colaborador
             dispositivo.save()
+
+            # 3. Generar Acta automática si se solicita
+            acta = None
+            if form.cleaned_data.get('generar_acta'):
+                colaborador_admin = getattr(request.user, 'colaborador', None)
+                acta = ActaService.crear_acta(
+                    colaborador=movimiento.colaborador,
+                    tipo_acta='ENTREGA',
+                    asignacion_ids=[movimiento.pk],
+                    creado_por=colaborador_admin,
+                    observaciones=f"Acta generada automáticamente al asignar equipo {dispositivo.identificador_interno}."
+                )
             
             if request.headers.get('HX-Request'):
-                response = render(request, 'dispositivos/partials/trazabilidad_success.html', {'mensaje': 'Equipo asignado correctamente.'})
+                response = render(request, 'dispositivos/partials/trazabilidad_success.html', {
+                    'mensaje': 'Equipo asignado correctamente.',
+                    'acta': acta
+                })
                 response['HX-Trigger'] = 'asignacion-saved'
                 return response
             return redirect('dispositivos:dispositivo_detail', pk=pk)
@@ -261,9 +279,24 @@ def dispositivo_reasignar(request, pk):
             # 3. Actualizar dueño en dispositivo
             dispositivo.propietario_actual = nuevo_mov.colaborador
             dispositivo.save()
+
+            # 4. Generar Acta automática si se solicita
+            acta = None
+            if form.cleaned_data.get('generar_acta'):
+                colaborador_admin = getattr(request.user, 'colaborador', None)
+                acta = ActaService.crear_acta(
+                    colaborador=nuevo_mov.colaborador,
+                    tipo_acta='ENTREGA',
+                    asignacion_ids=[nuevo_mov.pk],
+                    creado_por=colaborador_admin,
+                    observaciones=f"Acta generada automáticamente al reasignar equipo {dispositivo.identificador_interno}."
+                )
             
             if request.headers.get('HX-Request'):
-                response = render(request, 'dispositivos/partials/trazabilidad_success.html', {'mensaje': 'Equipo reasignado correctamente.'})
+                response = render(request, 'dispositivos/partials/trazabilidad_success.html', {
+                    'mensaje': 'Equipo reasignado correctamente.',
+                    'acta': acta
+                })
                 response['HX-Trigger'] = 'asignacion-saved'
                 return response
             return redirect('dispositivos:dispositivo_detail', pk=pk)
@@ -287,6 +320,8 @@ def dispositivo_devolver(request, pk):
     if request.method == 'POST':
         form = DevolucionForm(request.POST)
         if form.is_valid():
+            colaborador_que_devuelve = ultimo_mov.colaborador if ultimo_mov else None
+            
             # 1. Cerrar asignación actual
             if ultimo_mov:
                 ultimo_mov.fecha_fin = timezone.now().date()
@@ -303,9 +338,24 @@ def dispositivo_devolver(request, pk):
             dispositivo.estado = nuevo_estado
             dispositivo.propietario_actual = None
             dispositivo.save()
+
+            # 3. Generar Acta de Devolución automática
+            acta = None
+            if form.cleaned_data.get('generar_acta') and colaborador_que_devuelve:
+                colaborador_admin = getattr(request.user, 'colaborador', None)
+                acta = ActaService.crear_acta(
+                    colaborador=colaborador_que_devuelve,
+                    tipo_acta='DEVOLUCION',
+                    asignacion_ids=[ultimo_mov.pk] if ultimo_mov else [],
+                    creado_por=colaborador_admin,
+                    observaciones=f"Acta de devolución generada automáticamente para equipo {dispositivo.identificador_interno}."
+                )
             
             if request.headers.get('HX-Request'):
-                response = render(request, 'dispositivos/partials/trazabilidad_success.html', {'mensaje': 'Devolución registrada correctamente.'})
+                response = render(request, 'dispositivos/partials/trazabilidad_success.html', {
+                    'mensaje': 'Devolución registrada correctamente.',
+                    'acta': acta
+                })
                 response['HX-Trigger'] = 'asignacion-saved'
                 return response
             return redirect('dispositivos:dispositivo_detail', pk=pk)
@@ -379,6 +429,9 @@ def dispositivo_update(request, pk):
         if form.is_valid():
             form.save()
             return redirect('dispositivos:dispositivo_detail', pk=pk)
+        else:
+            print("Form errors:", form.errors)
+            print("POST data:", request.POST)
     else:
         form = DispositivoFactory.create_form_instance(instance=dispositivo)
     

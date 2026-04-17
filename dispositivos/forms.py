@@ -5,7 +5,7 @@ from core.models import Fabricante, Modelo
 from core.forms import BaseStyledForm
 from colaboradores.models import Colaborador
 
-class DispositivoForm(forms.ModelForm):
+class DispositivoForm(BaseStyledForm):
     # Campo extra no persistido para filtrar por marca en la UI
     fabricante = forms.ModelChoiceField(
         queryset=Fabricante.objects.all(),
@@ -38,7 +38,7 @@ class DispositivoForm(forms.ModelForm):
             'estado': forms.Select(attrs={'class': 'w-full bg-surface-container-high border-[1px] border-white/5 rounded-lg px-4 py-3 text-on-background'}),
             'propietario_actual': forms.Select(attrs={'class': 'w-full bg-surface-container-high border-[1px] border-white/5 rounded-lg px-4 py-3 text-on-background'}),
             'centro_costo': forms.Select(attrs={'class': 'w-full bg-surface-container-high border-[1px] border-white/5 rounded-lg px-4 py-3 text-on-background'}),
-            'fecha_compra': forms.DateInput(attrs={'class': 'w-full bg-surface-container-high border-[1px] border-white/5 rounded-lg px-4 py-3 text-on-background', 'type': 'date'}),
+            'fecha_compra': forms.DateInput(format='%Y-%m-%d', attrs={'class': 'w-full bg-surface-container-high border-[1px] border-white/5 rounded-lg px-4 py-3 text-on-background', 'type': 'date'}),
             'valor_contable': forms.NumberInput(attrs={'class': 'w-full bg-surface-container-high border-[1px] border-white/5 rounded-lg px-4 py-3 text-on-background'}),
             'notas_condicion': forms.Textarea(attrs={'class': 'w-full bg-surface-container-high border-[1px] border-white/5 rounded-lg px-4 py-3 text-on-background', 'rows': 3}),
         }
@@ -70,15 +70,22 @@ class DispositivoForm(forms.ModelForm):
         else:
             self.fields['modelo'].queryset = Modelo.objects.none()
 
-class NotebookForm(forms.ModelForm):
-    class Meta:
+class NotebookForm(DispositivoForm):
+    class Meta(DispositivoForm.Meta):
         from .models import Notebook
         model = Notebook
-        fields = [
-            'numero_serie', 'tipo', 'modelo', 'estado', 
-            'propietario_actual', 'centro_costo', 'fecha_compra', 'valor_contable', 'notas_condicion',
+        fields = DispositivoForm.Meta.fields + [
             'procesador', 'ram_gb', 'almacenamiento', 'sistema_operativo', 'mac_address', 'ip_asignada'
         ]
+        widgets = {
+            **DispositivoForm.Meta.widgets,
+            'procesador': forms.TextInput(attrs={'class': 'w-full bg-surface-container-high border-[1px] border-white/5 rounded-lg px-4 py-3 text-on-background'}),
+            'ram_gb': forms.NumberInput(attrs={'class': 'w-full bg-surface-container-high border-[1px] border-white/5 rounded-lg px-4 py-3 text-on-background'}),
+            'almacenamiento': forms.TextInput(attrs={'class': 'w-full bg-surface-container-high border-[1px] border-white/5 rounded-lg px-4 py-3 text-on-background'}),
+            'sistema_operativo': forms.TextInput(attrs={'class': 'w-full bg-surface-container-high border-[1px] border-white/5 rounded-lg px-4 py-3 text-on-background'}),
+            'mac_address': forms.TextInput(attrs={'class': 'w-full bg-surface-container-high border-[1px] border-white/5 rounded-lg px-4 py-3 text-on-background'}),
+            'ip_asignada': forms.TextInput(attrs={'class': 'w-full bg-surface-container-high border-[1px] border-white/5 rounded-lg px-4 py-3 text-on-background'}),
+        }
 
 class NotebookTechForm(forms.ModelForm):
     """Solo para renderizado de UI mediante HTMX"""
@@ -94,25 +101,32 @@ class NotebookTechForm(forms.ModelForm):
             'mac_address': forms.TextInput(attrs={'class': 'w-full bg-surface-container-high border-[1px] border-white/5 rounded-lg px-4 py-3 text-on-background'}),
         }
 
-class SmartphoneForm(forms.ModelForm):
-    class Meta:
+class SmartphoneForm(DispositivoForm):
+    class Meta(DispositivoForm.Meta):
         from .models import Smartphone
         model = Smartphone
-        fields = [
-            'numero_serie', 'tipo', 'modelo', 'estado', 
-            'propietario_actual', 'centro_costo', 'fecha_compra', 'valor_contable', 'notas_condicion',
+        fields = DispositivoForm.Meta.fields + [
             'imei_1', 'imei_2', 'numero_telefono'
         ]
+        widgets = {
+            **DispositivoForm.Meta.widgets,
+            'imei_1': forms.TextInput(attrs={'class': 'w-full bg-surface-container-high border-[1px] border-white/5 rounded-lg px-4 py-3 text-on-background'}),
+            'imei_2': forms.TextInput(attrs={'class': 'w-full bg-surface-container-high border-[1px] border-white/5 rounded-lg px-4 py-3 text-on-background'}),
+            'numero_telefono': forms.TextInput(attrs={'class': 'w-full bg-surface-container-high border-[1px] border-white/5 rounded-lg px-4 py-3 text-on-background'}),
+        }
 
-class MonitorForm(forms.ModelForm):
-    class Meta:
+class MonitorForm(DispositivoForm):
+    class Meta(DispositivoForm.Meta):
         from .models import Monitor
         model = Monitor
-        fields = [
-            'numero_serie', 'tipo', 'modelo', 'estado', 
-            'propietario_actual', 'centro_costo', 'fecha_compra', 'valor_contable', 'notas_condicion',
+        fields = DispositivoForm.Meta.fields + [
             'pulgadas', 'resolucion'
         ]
+        widgets = {
+            **DispositivoForm.Meta.widgets,
+            'pulgadas': forms.NumberInput(attrs={'class': 'w-full bg-surface-container-high border-[1px] border-white/5 rounded-lg px-4 py-3 text-on-background', 'step': '0.1'}),
+            'resolucion': forms.TextInput(attrs={'class': 'w-full bg-surface-container-high border-[1px] border-white/5 rounded-lg px-4 py-3 text-on-background', 'placeholder': 'Ej: 1920x1080'}),
+        }
 
 class SmartphoneTechForm(forms.ModelForm):
     """Solo para renderizado de UI mediante HTMX"""
@@ -152,9 +166,16 @@ class MantenimientoForm(forms.ModelForm):
 
 
 class AsignacionForm(BaseStyledForm):
+    generar_acta = forms.BooleanField(
+        required=False, 
+        initial=True, 
+        label="Generar Acta de Entrega automáticamente",
+        widget=forms.CheckboxInput(attrs={'class': 'rounded border-white/10 bg-white/5 text-jmie-orange focus:ring-jmie-orange'})
+    )
+
     class Meta:
         model = HistorialAsignacion
-        fields = ['colaborador', 'condicion_fisica']
+        fields = ['colaborador', 'condicion_fisica', 'generar_acta']
         widgets = {
             'condicion_fisica': forms.Textarea(attrs={'rows': 3, 'placeholder': 'Descripción del estado físico actual del equipo...'}),
         }
@@ -166,9 +187,16 @@ class AsignacionForm(BaseStyledForm):
         self.fields['condicion_fisica'].label = 'Condición Física al Momento de la Entrega'
 
 class ReasignacionForm(BaseStyledForm):
+    generar_acta = forms.BooleanField(
+        required=False, 
+        initial=True, 
+        label="Generar Acta de Entrega automáticamente",
+        widget=forms.CheckboxInput(attrs={'class': 'rounded border-white/10 bg-white/5 text-jmie-orange focus:ring-jmie-orange'})
+    )
+
     class Meta:
         model = HistorialAsignacion
-        fields = ['colaborador', 'condicion_fisica']
+        fields = ['colaborador', 'condicion_fisica', 'generar_acta']
         widgets = {
             'condicion_fisica': forms.Textarea(attrs={'rows': 3, 'placeholder': 'Condición física al momento de la reasignación...'}),
         }
@@ -197,6 +225,12 @@ class DevolucionForm(forms.Form):
         choices=ESTADO_OPCIONES,
         widget=forms.RadioSelect(attrs={'class': 'text-jmie-orange'}),
         label='Estado del Equipo al Llegar'
+    )
+    generar_acta = forms.BooleanField(
+        required=False, 
+        initial=True, 
+        label="Generar Acta de Devolución automáticamente",
+        widget=forms.CheckboxInput(attrs={'class': 'rounded border-white/10 bg-white/5 text-jmie-orange focus:ring-jmie-orange'})
     )
 
 class AccesorioForm(BaseStyledForm):

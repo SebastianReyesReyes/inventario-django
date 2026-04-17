@@ -47,11 +47,15 @@
                     <button @click="open = !open" class="p-3 bg-jmie-blue/10 hover:bg-jmie-blue/20 text-jmie-blue rounded-xl border border-jmie-blue/20 transition-all group" title="Ver Código QR">
                         <span class="material-symbols-outlined text-[20px] group-hover:scale-110 transition-transform">qr_code_2</span>
                     </button>
-                    <!-- QR Modal -->
-                    <div x-show="open" @click.away="open = false" 
-                         class="absolute right-0 mt-3 p-6 bg-white rounded-2xl shadow-2xl z-50 border border-white/10 w-48 animate-in fade-in zoom-in-95 duration-200">
-                        <img src="{% url 'dispositivos:dispositivo_qr' d.pk %}" alt="QR Code" class="w-full h-auto">
-                        <p class="text-[10px] text-black font-black uppercase tracking-widest text-center mt-4">ID JMIE</p>
+                    <!-- QR Dropdown -->
+                    <div x-show="open" 
+                         x-cloak
+                         @click.away="open = false" 
+                         class="absolute right-0 mt-3 p-4 bg-white rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.5)] z-[100] border border-white/10 w-48 animate-in fade-in zoom-in-95 duration-200">
+                        <div class="relative bg-white p-2 rounded-lg">
+                            <img src="{% url 'dispositivos:dispositivo_qr' d.pk %}" alt="QR Code" class="w-full h-auto">
+                        </div>
+                        <p class="text-[10px] text-slate-900 font-black uppercase tracking-widest text-center mt-3">ID: {{ d.identificador_interno }}</p>
                     </div>
                 </div>
             </div>

@@ -4,12 +4,19 @@ from core.models import TipoDispositivo
 
 class DispositivoFactory:
     """Fábrica para resolver el formulario adecuado según el tipo de dispositivo."""
-    
-    FORM_MAP = {
-        'Notebook': NotebookForm,
-        'Smartphone': SmartphoneForm,
-        'Monitor': MonitorForm,
-    }
+
+    @classmethod
+    def get_form_class_for_tipo(cls, tipo):
+        if not tipo:
+            return DispositivoForm
+        nombre = tipo.nombre.lower()
+        if 'notebook' in nombre or 'laptop' in nombre:
+            return NotebookForm
+        elif 'smartphone' in nombre or 'celular' in nombre:
+            return SmartphoneForm
+        elif 'monitor' in nombre:
+            return MonitorForm
+        return DispositivoForm
 
     @classmethod
     def get_form_class(cls, tipo_id=None):
@@ -18,7 +25,7 @@ class DispositivoFactory:
             
         try:
             tipo = TipoDispositivo.objects.get(pk=tipo_id)
-            return cls.FORM_MAP.get(tipo.nombre, DispositivoForm)
+            return cls.get_form_class_for_tipo(tipo)
         except TipoDispositivo.DoesNotExist:
             return DispositivoForm
 
@@ -28,13 +35,20 @@ class DispositivoFactory:
         if instance:
             # Para edición, el tipo ya viene en la instancia
             tipo = getattr(instance, 'tipo', None)
-            FormClass = cls.FORM_MAP.get(tipo.nombre, DispositivoForm) if tipo else DispositivoForm
-            # Intentamos obtener la instancia de la clase hija si existe
+            FormClass = cls.get_form_class_for_tipo(tipo)
+            
             sub_instance = instance
-            if tipo:
-                sub_attr = tipo.nombre.lower()
-                if hasattr(instance, sub_attr):
-                    sub_instance = getattr(instance, sub_attr)
+            if FormClass != DispositivoForm:
+                model_name = FormClass.Meta.model.__name__.lower()
+                try:
+                    sub_instance = getattr(instance, model_name)
+                except ObjectDoesNotExist:
+                    # El registro base existe pero no la extensión especializada
+                    # Instanciamos la clase hija y enlazamos el puntero a la clase padre
+                    sub_instance = FormClass.Meta.model(dispositivo_ptr_id=instance.id)
+                    sub_instance.__dict__.update(instance.__dict__)
+                except Exception:
+                    pass
             
             if post_data is not None:
                 return FormClass(post_data, files_data, instance=sub_instance)

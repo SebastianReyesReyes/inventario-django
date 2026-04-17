@@ -9,10 +9,10 @@
     <!-- Header de la página -->
     <div class="flex items-center justify-between border-b border-white/5 pb-6">
         <div>
-            <h1 class="text-3xl font-black tracking-tighter">Registrar Nuevo Activo</h1>
+            <h1 class="text-3xl font-black tracking-tighter">{{ titulo }}</h1>
             <p class="text-jmie-gray mt-1 text-sm font-bold">Complete la información técnica y administrativa del equipo.</p>
         </div>
-        <a href="{% url 'home' %}" class="px-4 py-2 bg-white/5 hover:bg-white/10 text-on-background text-xs font-bold rounded-lg border border-white/10 transition-all flex items-center">
+        <a href="javascript:history.back()" class="px-4 py-2 bg-white/5 hover:bg-white/10 text-on-background text-xs font-bold rounded-lg border border-white/10 transition-all flex items-center">
             <span class="material-symbols-outlined text-sm mr-2 shadow-sm">arrow_back</span>
             Volver
         </a>
@@ -40,9 +40,14 @@
                         <span class="material-symbols-outlined text-jmie-blue text-lg">fingerprint</span>
                         <h3 class="text-xs uppercase font-black tracking-widest text-jmie-blue">Identificación Base</h3>
                     </div>
-                    {% if form.non_field_errors %}
+                    {% if form.errors %}
                         <div class="bg-error/10 border border-error/20 p-4 rounded-xl text-error text-xs font-bold mb-4">
-                            {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+                            {% for field, errors in form.errors.items %}
+                                <div><strong>{{ field|title }}:</strong> {% for error in errors %}{{ error }} {% endfor %}</div>
+                            {% endfor %}
+                            {% for error in form.non_field_errors %}
+                                <div>{{ error }}</div>
+                            {% endfor %}
                         </div>
                     {% endif %}
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -204,7 +209,7 @@
                     Resetear
                 </button>
                 <button type="submit" class="px-10 py-3 bg-jmie-orange text-white font-black rounded-xl hover:brightness-110 shadow-[0_4px_20px_rgba(237,139,0,0.4)] transition-all">
-                    Finalizar Registro
+                    {% if form.instance.pk %}Guardar Cambios{% else %}Finalizar Registro{% endif %}
                 </button>
             </div>
         </form>

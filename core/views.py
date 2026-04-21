@@ -1,17 +1,27 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse
-from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
-import json
 
 from .models import Fabricante, TipoDispositivo, Modelo, CentroCosto, EstadoDispositivo
-from .forms import FabricanteForm, TipoDispositivoForm, ModeloForm, CentroCostoForm, EstadoDispositivoForm
 from .filters import DashboardFilterSet
 from dispositivos.models import Dispositivo, BitacoraMantenimiento, HistorialAsignacion
-from colaboradores.models import Colaborador
-from django.utils import timezone
-from datetime import timedelta
-from django.db.models import Count, Sum
+from .htmx import htmx_trigger_response
+from .catalog_views import (
+    CentroCostoCreateView,
+    CentroCostoUpdateView,
+    EstadoCreateView,
+    EstadoDeleteView,
+    EstadoUpdateView,
+    FabricanteCreateView,
+    FabricanteDeleteView,
+    FabricanteUpdateView,
+    ModeloCreateView,
+    ModeloDeleteView,
+    ModeloUpdateView,
+    TipoCreateView,
+    TipoDeleteView,
+    TipoUpdateView,
+)
 
 @login_required
 def home(request):
@@ -70,47 +80,9 @@ def fabricante_list(request):
     fabricantes = Fabricante.objects.prefetch_related('modelos').all().order_by('nombre')
     return render(request, 'core/fabricante_list.html', {'fabricantes': fabricantes})
 
-@login_required
-@permission_required('core.add_fabricante', raise_exception=True)
-def fabricante_create(request):
-    if request.method == 'POST':
-        form = FabricanteForm(request.POST)
-        if form.is_valid():
-            form.save()
-            if request.headers.get('HX-Request'):
-                return HttpResponse(status=204, headers={'HX-Trigger': json.dumps({"fabricanteListChanged": True, "showNotification": "Fabricante creado con éxito"})})
-            return redirect('core:fabricante_list')
-    else:
-        form = FabricanteForm()
-
-    template = 'core/partials/fabricante_form.html'
-    return render(request, template, {'form': form})
-
-@login_required
-@permission_required('core.change_fabricante', raise_exception=True)
-def fabricante_edit(request, pk):
-    fabricante = get_object_or_404(Fabricante, pk=pk)
-    if request.method == 'POST':
-        form = FabricanteForm(request.POST, instance=fabricante)
-        if form.is_valid():
-            form.save()
-            if request.headers.get('HX-Request'):
-                return HttpResponse(status=204, headers={'HX-Trigger': json.dumps({"fabricanteListChanged": True, "showNotification": "Fabricante actualizado"})})
-            return redirect('core:fabricante_list')
-    else:
-        form = FabricanteForm(instance=fabricante)
-
-    return render(request, 'core/partials/fabricante_form.html', {'form': form, 'fabricante': fabricante})
-
-@login_required
-@permission_required('core.delete_fabricante', raise_exception=True)
-def fabricante_delete(request, pk):
-    fabricante = get_object_or_404(Fabricante, pk=pk)
-    if fabricante.modelos.exists():
-        return HttpResponse("No se puede eliminar: tiene modelos asociados", status=400)
-    
-    fabricante.delete()
-    return HttpResponse(status=204, headers={'HX-Trigger': json.dumps({"fabricanteListChanged": True, "showNotification": "Fabricante eliminado"})})
+fabricante_create = FabricanteCreateView.as_view()
+fabricante_edit = FabricanteUpdateView.as_view()
+fabricante_delete = FabricanteDeleteView.as_view()
 
 # --- MODELOS ---
 
@@ -129,50 +101,9 @@ def modelo_list(request):
         'selected_fabricante': int(fabricante_id) if fabricante_id else None
     })
 
-@login_required
-@permission_required('core.add_modelo', raise_exception=True)
-def modelo_create(request):
-    initial = {}
-    if request.GET.get('fabricante_id'):
-        initial['fabricante'] = request.GET.get('fabricante_id')
-        
-    if request.method == 'POST':
-        form = ModeloForm(request.POST)
-        if form.is_valid():
-            form.save()
-            if request.headers.get('HX-Request'):
-                return HttpResponse(status=204, headers={'HX-Trigger': json.dumps({"modeloListChanged": True, "fabricanteListChanged": True, "showNotification": "Modelo creado"})})
-            return redirect('core:modelo_list')
-    else:
-        form = ModeloForm(initial=initial)
-
-    return render(request, 'core/partials/modelo_form.html', {'form': form})
-
-@login_required
-@permission_required('core.change_modelo', raise_exception=True)
-def modelo_edit(request, pk):
-    modelo = get_object_or_404(Modelo, pk=pk)
-    if request.method == 'POST':
-        form = ModeloForm(request.POST, instance=modelo)
-        if form.is_valid():
-            form.save()
-            if request.headers.get('HX-Request'):
-                return HttpResponse(status=204, headers={'HX-Trigger': json.dumps({"modeloListChanged": True, "fabricanteListChanged": True, "showNotification": "Modelo actualizado"})})
-            return redirect('core:modelo_list')
-    else:
-        form = ModeloForm(instance=modelo)
-
-    return render(request, 'core/partials/modelo_form.html', {'form': form, 'modelo': modelo})
-
-@login_required
-@permission_required('core.delete_modelo', raise_exception=True)
-def modelo_delete(request, pk):
-    modelo = get_object_or_404(Modelo, pk=pk)
-    if Dispositivo.objects.filter(modelo=modelo).exists():
-        return HttpResponse("Protegido: Existen dispositivos de este modelo", status=400)
-    
-    modelo.delete()
-    return HttpResponse(status=204, headers={'HX-Trigger': json.dumps({"modeloListChanged": True, "fabricanteListChanged": True, "showNotification": "Modelo eliminado"})})
+modelo_create = ModeloCreateView.as_view()
+modelo_edit = ModeloUpdateView.as_view()
+modelo_delete = ModeloDeleteView.as_view()
 
 # --- TIPOS DE DISPOSITIVO ---
 
@@ -181,47 +112,9 @@ def tipo_list(request):
     tipos = TipoDispositivo.objects.all().order_by('nombre')
     return render(request, 'core/tipo_list.html', {'tipos': tipos})
 
-@login_required
-@permission_required('core.add_tipodispositivo', raise_exception=True)
-def tipo_create(request):
-    if request.method == 'POST':
-        form = TipoDispositivoForm(request.POST)
-        if form.is_valid():
-            form.save()
-            if request.headers.get('HX-Request'):
-                return HttpResponse(status=204, headers={'HX-Trigger': json.dumps({"tipoListChanged": True, "showNotification": "Tipo de dispositivo creado"})})
-            return redirect('core:tipo_list')
-    else:
-        form = TipoDispositivoForm()
-
-    return render(request, 'core/partials/tipo_form.html', {'form': form})
-
-@login_required
-@permission_required('core.change_tipodispositivo', raise_exception=True)
-def tipo_edit(request, pk):
-    tipo = get_object_or_404(TipoDispositivo, pk=pk)
-    if request.method == 'POST':
-        form = TipoDispositivoForm(request.POST, instance=tipo)
-        if form.is_valid():
-            form.save()
-            if request.headers.get('HX-Request'):
-                return HttpResponse(status=204, headers={'HX-Trigger': json.dumps({"tipoListChanged": True, "showNotification": "Tipo de dispositivo actualizado"})})
-            return redirect('core:tipo_list')
-    else:
-        form = TipoDispositivoForm(instance=tipo)
-
-    return render(request, 'core/partials/tipo_form.html', {'form': form, 'tipo': tipo})
-
-@login_required
-@permission_required('core.delete_tipodispositivo', raise_exception=True)
-def tipo_delete(request, pk):
-    tipo = get_object_or_404(TipoDispositivo, pk=pk)
-    # Verificar si hay dispositivos asociados
-    if Dispositivo.objects.filter(tipo=tipo).exists():
-        return HttpResponse(status=204, headers={'HX-Trigger': json.dumps({"showNotification": "Protegido: Existen dispositivos de este tipo"})})
-    
-    tipo.delete()
-    return HttpResponse(status=204, headers={'HX-Trigger': json.dumps({"tipoListChanged": True, "showNotification": "Tipo de dispositivo eliminado"})})
+tipo_create = TipoCreateView.as_view()
+tipo_edit = TipoUpdateView.as_view()
+tipo_delete = TipoDeleteView.as_view()
 
 # --- CENTROS DE COSTO ---
 
@@ -230,36 +123,8 @@ def cc_list(request):
     ccs = CentroCosto.objects.all().order_by('-activa', 'nombre')
     return render(request, 'core/cc_list.html', {'ccs': ccs})
 
-@login_required
-@permission_required('core.add_centrocosto', raise_exception=True)
-def cc_create(request):
-    if request.method == 'POST':
-        form = CentroCostoForm(request.POST)
-        if form.is_valid():
-            form.save()
-            if request.headers.get('HX-Request'):
-                return HttpResponse(status=204, headers={'HX-Trigger': json.dumps({"ccListChanged": True, "showNotification": "Centro de costo creado"})})
-            return redirect('core:centrocosto_list')
-    else:
-        form = CentroCostoForm()
-
-    return render(request, 'core/partials/cc_form.html', {'form': form})
-
-@login_required
-@permission_required('core.change_centrocosto', raise_exception=True)
-def cc_edit(request, pk):
-    cc = get_object_or_404(CentroCosto, pk=pk)
-    if request.method == 'POST':
-        form = CentroCostoForm(request.POST, instance=cc)
-        if form.is_valid():
-            form.save()
-            if request.headers.get('HX-Request'):
-                return HttpResponse(status=204, headers={'HX-Trigger': json.dumps({"ccListChanged": True, "showNotification": "Centro de costo actualizado"})})
-            return redirect('core:centrocosto_list')
-    else:
-        form = CentroCostoForm(instance=cc)
-
-    return render(request, 'core/partials/cc_form.html', {'form': form, 'cc': cc})
+cc_create = CentroCostoCreateView.as_view()
+cc_edit = CentroCostoUpdateView.as_view()
 
 @login_required
 @permission_required('core.change_centrocosto', raise_exception=True)
@@ -269,7 +134,7 @@ def cc_toggle_activa(request, pk):
     cc.save()
     
     # Retornar partial del badge o toda la fila? Por ahora, disparamos recarga de lista para simplicidad
-    return HttpResponse(status=204, headers={'HX-Trigger': json.dumps({"ccListChanged": True, "showNotification": f"Centro de costo {'activado' if cc.activa else 'desactivado'}"})})
+    return htmx_trigger_response({"ccListChanged": True, "showNotification": f"Centro de costo {'activado' if cc.activa else 'desactivado'}"})
 
 # --- ESTADOS DE DISPOSITIVO ---
 
@@ -278,46 +143,9 @@ def estado_list(request):
     estados = EstadoDispositivo.objects.all().order_by('nombre')
     return render(request, 'core/estado_list.html', {'estados': estados})
 
-@login_required
-@permission_required('core.add_estadodispositivo', raise_exception=True)
-def estado_create(request):
-    if request.method == 'POST':
-        form = EstadoDispositivoForm(request.POST)
-        if form.is_valid():
-            form.save()
-            if request.headers.get('HX-Request'):
-                return HttpResponse(status=204, headers={'HX-Trigger': json.dumps({"estadoListChanged": True, "showNotification": "Estado creado"})})
-            return redirect('core:estado_list')
-    else:
-        form = EstadoDispositivoForm()
-
-    return render(request, 'core/partials/estado_form.html', {'form': form})
-
-@login_required
-@permission_required('core.change_estadodispositivo', raise_exception=True)
-def estado_edit(request, pk):
-    estado = get_object_or_404(EstadoDispositivo, pk=pk)
-    if request.method == 'POST':
-        form = EstadoDispositivoForm(request.POST, instance=estado)
-        if form.is_valid():
-            form.save()
-            if request.headers.get('HX-Request'):
-                return HttpResponse(status=204, headers={'HX-Trigger': json.dumps({"estadoListChanged": True, "showNotification": "Estado actualizado"})})
-            return redirect('core:estado_list')
-    else:
-        form = EstadoDispositivoForm(instance=estado)
-
-    return render(request, 'core/partials/estado_form.html', {'form': form, 'estado': estado})
-
-@login_required
-@permission_required('core.delete_estadodispositivo', raise_exception=True)
-def estado_delete(request, pk):
-    estado = get_object_or_404(EstadoDispositivo, pk=pk)
-    if Dispositivo.objects.filter(estado=estado).exists():
-        return HttpResponse(status=204, headers={'HX-Trigger': json.dumps({"showNotification": "Protegido: Existen dispositivos en este estado"})})
-    
-    estado.delete()
-    return HttpResponse(status=204, headers={'HX-Trigger': json.dumps({"estadoListChanged": True, "showNotification": "Estado eliminado"})})
+estado_create = EstadoCreateView.as_view()
+estado_edit = EstadoUpdateView.as_view()
+estado_delete = EstadoDeleteView.as_view()
 
 def error_403(request, exception=None):
     """

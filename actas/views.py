@@ -3,16 +3,23 @@ from django.http import HttpResponse
 from django.contrib.auth.decorators import login_required, permission_required
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
+from django.template.loader import render_to_string
 
 from .models import Acta
 from .forms import ActaCrearForm
 from .services import ActaService
+from core.htmx import htmx_trigger_response
+
+
+def _render_acta_error(message):
+    """Renderiza el bloque OOB de errores para el modal de actas."""
+    return render_to_string("actas/partials/acta_error.html", {"message": message})
 
 @login_required
 @permission_required('actas.view_acta', raise_exception=True)
 def acta_list(request):
-    """Listado paginado de actas con filtrado básico."""
-    actas_list = Acta.objects.all().select_related('colaborador', 'creado_por').order_by('-fecha')
+    """Listado paginado de actas con filtrado básico y ordenamiento HTMX."""
+    actas_list = Acta.objects.all().select_related('colaborador', 'creado_por')
     
     q = request.GET.get('q')
     if q:
@@ -27,15 +34,41 @@ def acta_list(request):
     if tipo:
         actas_list = actas_list.filter(tipo_acta=tipo)
 
+    # Ordenamiento
+    sort = request.GET.get('sort', 'folio')
+    order = request.GET.get('order', 'asc')
+    
+    SORT_MAP = {
+        'folio': 'folio',
+        'colaborador': 'colaborador__first_name',
+        'tipo': 'tipo_acta',
+        'fecha': 'fecha',
+        'creado_por': 'creado_por__first_name',
+    }
+    
+    sort_field = SORT_MAP.get(sort, 'folio')
+    if order == 'desc':
+        sort_field = f'-{sort_field}'
+    actas_list = actas_list.order_by(sort_field)
+
     paginator = Paginator(actas_list, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
     template = 'actas/acta_list.html'
     if request.headers.get('HX-Request'):
-        template = 'actas/partials/acta_table_rows.html'
+        if 'sort' in request.GET or 'order' in request.GET:
+            template = 'actas/partials/acta_table.html'
+        else:
+            template = 'actas/partials/acta_table_rows.html'
 
-    return render(request, template, {'page_obj': page_obj})
+    return render(request, template, {
+        'page_obj': page_obj,
+        'query': q or '',
+        'tipo': tipo or '',
+        'current_sort': sort,
+        'current_order': order,
+    })
 
 @login_required
 @permission_required('actas.add_acta', raise_exception=True)
@@ -59,16 +92,14 @@ def acta_crear(request):
                     metodo_sanitizacion=form.cleaned_data.get('metodo_sanitizacion', 'N/A'),
                     ministro_de_fe=form.cleaned_data.get('ministro_de_fe')
                 )
-                
-                response = HttpResponse(status=204)
-                response['HX-Trigger'] = 'actaCreated'
-                return response
+
+                return htmx_trigger_response('actaCreated')
                 
             except ValidationError as e:
-                error_html = f'<div id="acta-errors" hx-swap-oob="true" class="bg-error/10 border border-error/20 text-error text-[11px] font-bold p-3 rounded-xl uppercase tracking-widest mb-4">{str(e.message if hasattr(e, "message") else e)}</div>'
+                error_html = _render_acta_error(str(e.message if hasattr(e, 'message') else e))
                 return HttpResponse(error_html)
             except Exception as e:
-                error_html = f'<div id="acta-errors" hx-swap-oob="true" class="bg-error/10 border border-error/20 text-error text-[11px] font-bold p-3 rounded-xl uppercase tracking-widest mb-4">Error: {str(e)}</div>'
+                error_html = _render_acta_error(f'Error: {str(e)}')
                 return HttpResponse(error_html)
 
     else:
@@ -108,11 +139,19 @@ def acta_firmar(request, pk):
     if request.method == 'POST':
         try:
             ActaService.firmar_acta(pk)
-            response = HttpResponse(status=204)
-            response['HX-Trigger'] = 'actaFirmada'
-            return response
-        except ValidationError as e:
-            return HttpResponse(str(e), status=400)
+        except ValidationError:
+            pass  # Si ya está firmada, no es un error
+        
+        # Devolvemos el botón en estado firmado (reemplaza el original via HTMX)
+        response = HttpResponse(
+            '<button disabled class="w-full py-3 bg-success/10 text-success text-xs font-black uppercase tracking-widest rounded-xl border border-success/20 transition-all flex items-center justify-center gap-2 opacity-60 cursor-not-allowed">'
+            '<span class="material-symbols-outlined text-sm">check_circle</span>'
+            'Acta Firmada'
+            '</button>',
+            status=200
+        )
+        response["HX-Trigger"] = "actaFirmada"
+        return response
     return HttpResponse("Método no permitido", status=405)
 
 @login_required

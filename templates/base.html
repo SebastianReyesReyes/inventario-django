@@ -379,6 +379,19 @@
         </template>
     </div>
 
+    <!-- Django Messages to Toast Notifications -->
+    {% if messages %}
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            {% for message in messages %}
+                window.dispatchEvent(new CustomEvent('show-notification', {
+                    detail: { value: "{{ message|escapejs }}" }
+                }));
+            {% endfor %}
+        });
+    </script>
+    {% endif %}
+
     <script>
         // Configurar CSRF Token para HTMX
         document.body.addEventListener('htmx:configRequest', (event) => {

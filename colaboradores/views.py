@@ -9,27 +9,47 @@ import secrets
 
 @login_required
 def colaborador_list(request):
-    """Listado de colaboradores con búsqueda en vivo (HTMX)."""
+    """Listado de colaboradores con búsqueda en vivo (HTMX) y ordenamiento."""
     query = request.GET.get('q', '')
+    sort = request.GET.get('sort', 'first_name')
+    order = request.GET.get('order', 'asc')
+
     # Solo mostrar los que están activos operativamente
     colaboradores = Colaborador.objects.filter(esta_activo=True).select_related('departamento', 'centro_costo')
-    
+
     if query:
         colaboradores = colaboradores.filter(
-            Q(first_name__icontains=query) | 
-            Q(last_name__icontains=query) | 
+            Q(first_name__icontains=query) |
+            Q(last_name__icontains=query) |
             Q(rut__icontains=query) |
             Q(username__icontains=query)
         )
-    
+
+    # Ordenamiento
+    SORT_MAP = {
+        'nombre': 'first_name',
+        'rut': 'rut',
+        'departamento': 'departamento__nombre',
+        'centro_costo': 'centro_costo__nombre',
+        'estado': 'esta_activo',
+    }
+    sort_field = SORT_MAP.get(sort, 'first_name')
+    if order == 'desc':
+        sort_field = f'-{sort_field}'
+    colaboradores = colaboradores.order_by(sort_field)
+
     context = {
         'colaboradores': colaboradores,
         'query': query,
+        'current_sort': sort,
+        'current_order': order,
     }
-    
+
     if request.headers.get('HX-Request'):
+        if request.GET.get('sort') or request.GET.get('order'):
+            return render(request, 'colaboradores/partials/colaborador_list_table.html', context)
         return render(request, 'colaboradores/partials/colaborador_list_results.html', context)
-    
+
     return render(request, 'colaboradores/colaborador_list.html', context)
 
 @login_required

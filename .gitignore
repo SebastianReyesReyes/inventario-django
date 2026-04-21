@@ -8,3 +8,6 @@ varios/
 .agents/
 .vscode/
 .pytest_cache/
+.coverage
+.github/
+.stitch/

@@ -29,7 +29,7 @@
     <!-- Panel de Filtros y Búsqueda -->
     <div class="bg-surface-container-low p-6 rounded-xl border border-white/5 space-y-6">
         <form hx-get="{% url 'dispositivos:dispositivo_list' %}" 
-              hx-target="#search-results" 
+              hx-target="#tabla-wrapper" 
               hx-trigger="change delay:200ms, keyup changed delay:500ms from:input[name='q']"
               hx-push-url="true"
               class="space-y-6">
@@ -82,21 +82,60 @@
         </div>
 
         <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse">
+            <div id="tabla-wrapper">
+                <table class="w-full text-left border-collapse">
                 <thead>
                     <tr class="bg-white/[0.02] border-b border-white/5 text-jmie-gray uppercase text-[10px] font-black tracking-widest">
-                        <th class="px-6 py-4">ID / Serie</th>
-                        <th class="px-6 py-4">Tipo</th>
-                        <th class="px-6 py-4">Marca & Modelo</th>
-                        <th class="px-6 py-4">Responsable & CC</th>
-                        <th class="px-6 py-4">Estado</th>
+                        <th class="px-6 py-4 cursor-pointer hover:text-jmie-orange transition-colors select-none"
+                            hx-get="{% url 'dispositivos:dispositivo_list' %}?{% if query %}q={{ query }}&{% endif %}{% if filter.form.centro_costo.value %}centro_costo={{ filter.form.centro_costo.value }}&{% endif %}{% if filter.form.estado.value %}estado={{ filter.form.estado.value }}&{% endif %}{% if filter.form.tipo.value %}tipo={{ filter.form.tipo.value }}&{% endif %}{% if filter.form.fabricante.value %}fabricante={{ filter.form.fabricante.value }}&{% endif %}sort=id&order={% if current_sort == 'id' and current_order == 'asc' %}desc{% else %}asc{% endif %}"
+                            hx-target="#tabla-wrapper"
+                            hx-push-url="true"
+                            hx-indicator=".htmx-indicator">
+                            ID / Serie {% if current_sort == 'id' %}{% if current_order == 'asc' %}↑{% else %}↓{% endif %}{% endif %}
+                        </th>
+                        <th class="px-6 py-4 cursor-pointer hover:text-jmie-orange transition-colors select-none"
+                            hx-get="{% url 'dispositivos:dispositivo_list' %}?{% if query %}q={{ query }}&{% endif %}{% if filter.form.centro_costo.value %}centro_costo={{ filter.form.centro_costo.value }}&{% endif %}{% if filter.form.estado.value %}estado={{ filter.form.estado.value }}&{% endif %}{% if filter.form.tipo.value %}tipo={{ filter.form.tipo.value }}&{% endif %}{% if filter.form.fabricante.value %}fabricante={{ filter.form.fabricante.value }}&{% endif %}sort=tipo&order={% if current_sort == 'tipo' and current_order == 'asc' %}desc{% else %}asc{% endif %}"
+                            hx-target="#tabla-wrapper"
+                            hx-push-url="true"
+                            hx-indicator=".htmx-indicator">
+                            Tipo {% if current_sort == 'tipo' %}{% if current_order == 'asc' %}↑{% else %}↓{% endif %}{% endif %}
+                        </th>
+                        <th class="px-6 py-4 cursor-pointer hover:text-jmie-orange transition-colors select-none"
+                            hx-get="{% url 'dispositivos:dispositivo_list' %}?{% if query %}q={{ query }}&{% endif %}{% if filter.form.centro_costo.value %}centro_costo={{ filter.form.centro_costo.value }}&{% endif %}{% if filter.form.estado.value %}estado={{ filter.form.estado.value }}&{% endif %}{% if filter.form.tipo.value %}tipo={{ filter.form.tipo.value }}&{% endif %}{% if filter.form.fabricante.value %}fabricante={{ filter.form.fabricante.value }}&{% endif %}sort=marca&order={% if current_sort == 'marca' and current_order == 'asc' %}desc{% else %}asc{% endif %}"
+                            hx-target="#tabla-wrapper"
+                            hx-push-url="true"
+                            hx-indicator=".htmx-indicator">
+                            Marca & Modelo {% if current_sort == 'marca' %}{% if current_order == 'asc' %}↑{% else %}↓{% endif %}{% endif %}
+                        </th>
+                        <th class="px-6 py-4 cursor-pointer hover:text-jmie-orange transition-colors select-none"
+                            hx-get="{% url 'dispositivos:dispositivo_list' %}?{% if query %}q={{ query }}&{% endif %}{% if filter.form.centro_costo.value %}centro_costo={{ filter.form.centro_costo.value }}&{% endif %}{% if filter.form.estado.value %}estado={{ filter.form.estado.value }}&{% endif %}{% if filter.form.tipo.value %}tipo={{ filter.form.tipo.value }}&{% endif %}{% if filter.form.fabricante.value %}fabricante={{ filter.form.fabricante.value }}&{% endif %}sort=responsable&order={% if current_sort == 'responsable' and current_order == 'asc' %}desc{% else %}asc{% endif %}"
+                            hx-target="#tabla-wrapper"
+                            hx-push-url="true"
+                            hx-indicator=".htmx-indicator">
+                            Responsable & CC {% if current_sort == 'responsable' %}{% if current_order == 'asc' %}↑{% else %}↓{% endif %}{% endif %}
+                        </th>
+                        <th class="px-6 py-4 cursor-pointer hover:text-jmie-orange transition-colors select-none"
+                            hx-get="{% url 'dispositivos:dispositivo_list' %}?{% if query %}q={{ query }}&{% endif %}{% if filter.form.centro_costo.value %}centro_costo={{ filter.form.centro_costo.value }}&{% endif %}{% if filter.form.estado.value %}estado={{ filter.form.estado.value }}&{% endif %}{% if filter.form.tipo.value %}tipo={{ filter.form.tipo.value }}&{% endif %}{% if filter.form.fabricante.value %}fabricante={{ filter.form.fabricante.value }}&{% endif %}sort=estado&order={% if current_sort == 'estado' and current_order == 'asc' %}desc{% else %}asc{% endif %}"
+                            hx-target="#tabla-wrapper"
+                            hx-push-url="true"
+                            hx-indicator=".htmx-indicator">
+                            Estado {% if current_sort == 'estado' %}{% if current_order == 'asc' %}↑{% else %}↓{% endif %}{% endif %}
+                        </th>
+                        <th class="px-6 py-4 cursor-pointer hover:text-jmie-orange transition-colors select-none"
+                            hx-get="{% url 'dispositivos:dispositivo_list' %}?{% if query %}q={{ query }}&{% endif %}{% if filter.form.centro_costo.value %}centro_costo={{ filter.form.centro_costo.value }}&{% endif %}{% if filter.form.estado.value %}estado={{ filter.form.estado.value }}&{% endif %}{% if filter.form.tipo.value %}tipo={{ filter.form.tipo.value }}&{% endif %}{% if filter.form.fabricante.value %}fabricante={{ filter.form.fabricante.value }}&{% endif %}sort=acta&order={% if current_sort == 'acta' and current_order == 'asc' %}desc{% else %}asc{% endif %}"
+                            hx-target="#tabla-wrapper"
+                            hx-push-url="true"
+                            hx-indicator=".htmx-indicator">
+                            Acta {% if current_sort == 'acta' %}{% if current_order == 'asc' %}↑{% else %}↓{% endif %}{% endif %}
+                        </th>
                         <th class="px-6 py-4 text-right">Acciones</th>
                     </tr>
                 </thead>
                 <tbody id="search-results" class="divide-y divide-white/5">
                     {% include "dispositivos/partials/dispositivo_list_results.html" %}
                 </tbody>
-            </table>
+                </table>
+            </div>
         </div>
 
         <!-- Footer de la tabla (Paginación futura) -->

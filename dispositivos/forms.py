@@ -18,13 +18,23 @@ class DispositivoForm(BaseStyledForm):
             'hx-trigger': 'change'
         })
     )
+    
+    generar_acta = forms.BooleanField(
+        required=False,
+        label="Generar Acta de Entrega automáticamente",
+        initial=False,
+        widget=forms.CheckboxInput(attrs={
+            'class': 'w-4 h-4 rounded border-white/10 bg-white/5 text-jmie-orange focus:ring-jmie-orange/20',
+        })
+    )
 
     class Meta:
         model = Dispositivo
         fields = [
             'numero_serie', 'tipo', 
             'fabricante', 'modelo', 'estado', 'propietario_actual', 
-            'centro_costo', 'fecha_compra', 'valor_contable', 'notas_condicion'
+            'centro_costo', 'fecha_compra', 'valor_contable', 'notas_condicion',
+            'generar_acta'
         ]
         widgets = {
 
@@ -79,7 +89,7 @@ class DispositivoForm(BaseStyledForm):
             HistorialAsignacion.objects.create(
                 dispositivo=dispositivo,
                 colaborador=dispositivo.propietario_actual,
-                notas="Asignación inicial directa desde el registro del equipo."
+                condicion_fisica="Asignación inicial directa desde el registro del equipo."
             )
             
         return dispositivo

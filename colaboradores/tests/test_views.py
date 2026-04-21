@@ -70,3 +70,47 @@ class TestColaboradorViews:
         
         colaborador.refresh_from_db()
         assert colaborador.esta_activo is False
+
+    def test_colaborador_list_sort_by_nombre_asc(self, client):
+        """Verificar ordenamiento ascendente por nombre"""
+        client.force_login(self.admin)
+        c1 = ColaboradorFactory(first_name="Ana")
+        c2 = ColaboradorFactory(first_name="Zoe")
+        response = client.get(self.url_list, {'sort': 'nombre', 'order': 'asc'})
+        assert response.status_code == 200
+        nombres = [c.first_name for c in response.context['colaboradores']]
+        assert nombres.index("Ana") < nombres.index("Zoe")
+
+    def test_colaborador_list_sort_by_nombre_desc(self, client):
+        """Verificar ordenamiento descendente por nombre"""
+        client.force_login(self.admin)
+        c1 = ColaboradorFactory(first_name="Ana")
+        c2 = ColaboradorFactory(first_name="Zoe")
+        response = client.get(self.url_list, {'sort': 'nombre', 'order': 'desc'})
+        assert response.status_code == 200
+        nombres = [c.first_name for c in response.context['colaboradores']]
+        assert nombres.index("Zoe") < nombres.index("Ana")
+
+    def test_colaborador_list_sort_by_departamento(self, client):
+        """Verificar ordenamiento por departamento"""
+        client.force_login(self.admin)
+        from colaboradores.tests.factories import DepartamentoFactory
+        d1 = DepartamentoFactory(nombre="Finanzas")
+        d2 = DepartamentoFactory(nombre="Tecnología")
+        ColaboradorFactory(departamento=d1)
+        ColaboradorFactory(departamento=d2)
+        response = client.get(self.url_list, {'sort': 'departamento', 'order': 'asc'})
+        assert response.status_code == 200
+        deptos = [c.departamento.nombre for c in response.context['colaboradores'] if c.departamento]
+        assert deptos.index("Finanzas") < deptos.index("Tecnología")
+
+    def test_colaborador_list_sort_preserves_search(self, client):
+        """Verificar que el ordenamiento preserva el parámetro de búsqueda"""
+        client.force_login(self.admin)
+        ColaboradorFactory(first_name="Pedro")
+        ColaboradorFactory(first_name="Pablo")
+        response = client.get(self.url_list, {'q': 'Pa', 'sort': 'nombre', 'order': 'asc'})
+        assert response.status_code == 200
+        assert response.context['query'] == 'Pa'
+        assert response.context['current_sort'] == 'nombre'
+        assert response.context['current_order'] == 'asc'

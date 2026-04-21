@@ -28,7 +28,7 @@
                        class="pl-10 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-xs font-bold text-on-background focus:outline-none focus:ring-2 focus:ring-jmie-blue/20 focus:border-jmie-blue/50 transition-all w-64 md:w-80"
                        hx-get="{% url 'actas:acta_list' %}"
                        hx-trigger="keyup changed delay:500ms, search, refresh from:body"
-                       hx-target="#search-results"
+                       hx-target="#tabla-wrapper"
                        hx-indicator=".htmx-indicator">
             </div>
             
@@ -53,14 +53,38 @@
             </div>
         </div>
 
-        <div class="overflow-x-auto">
+        <div id="tabla-wrapper" class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
                 <thead>
                     <tr class="bg-white/[0.02] border-b border-white/5 text-jmie-gray uppercase text-[10px] font-black tracking-widest">
-                        <th class="px-6 py-5">Folio</th>
-                        <th class="px-6 py-5">Colaborador / RUT</th>
-                        <th class="px-6 py-5">Fecha Emisión</th>
-                        <th class="px-6 py-5">Tipo</th>
+                        <th class="px-6 py-5 cursor-pointer hover:text-jmie-orange transition-colors select-none"
+                            hx-get="{% url 'actas:acta_list' %}?{% if query %}q={{ query }}&{% endif %}{% if tipo %}tipo={{ tipo }}&{% endif %}sort=folio&order={% if current_sort == 'folio' and current_order == 'asc' %}desc{% else %}asc{% endif %}"
+                            hx-target="#tabla-wrapper"
+                            hx-push-url="true"
+                            hx-indicator=".htmx-indicator">
+                            Folio {% if current_sort == 'folio' %}{% if current_order == 'asc' %}↑{% else %}↓{% endif %}{% endif %}
+                        </th>
+                        <th class="px-6 py-5 cursor-pointer hover:text-jmie-orange transition-colors select-none"
+                            hx-get="{% url 'actas:acta_list' %}?{% if query %}q={{ query }}&{% endif %}{% if tipo %}tipo={{ tipo }}&{% endif %}sort=colaborador&order={% if current_sort == 'colaborador' and current_order == 'asc' %}desc{% else %}asc{% endif %}"
+                            hx-target="#tabla-wrapper"
+                            hx-push-url="true"
+                            hx-indicator=".htmx-indicator">
+                            Colaborador / RUT {% if current_sort == 'colaborador' %}{% if current_order == 'asc' %}↑{% else %}↓{% endif %}{% endif %}
+                        </th>
+                        <th class="px-6 py-5 cursor-pointer hover:text-jmie-orange transition-colors select-none"
+                            hx-get="{% url 'actas:acta_list' %}?{% if query %}q={{ query }}&{% endif %}{% if tipo %}tipo={{ tipo }}&{% endif %}sort=fecha&order={% if current_sort == 'fecha' and current_order == 'asc' %}desc{% else %}asc{% endif %}"
+                            hx-target="#tabla-wrapper"
+                            hx-push-url="true"
+                            hx-indicator=".htmx-indicator">
+                            Fecha Emisión {% if current_sort == 'fecha' %}{% if current_order == 'asc' %}↑{% else %}↓{% endif %}{% endif %}
+                        </th>
+                        <th class="px-6 py-5 cursor-pointer hover:text-jmie-orange transition-colors select-none"
+                            hx-get="{% url 'actas:acta_list' %}?{% if query %}q={{ query }}&{% endif %}{% if tipo %}tipo={{ tipo }}&{% endif %}sort=tipo&order={% if current_sort == 'tipo' and current_order == 'asc' %}desc{% else %}asc{% endif %}"
+                            hx-target="#tabla-wrapper"
+                            hx-push-url="true"
+                            hx-indicator=".htmx-indicator">
+                            Tipo {% if current_sort == 'tipo' %}{% if current_order == 'asc' %}↑{% else %}↓{% endif %}{% endif %}
+                        </th>
                         <th class="px-6 py-5">Estado Legal</th>
                         <th class="px-6 py-5 text-right font-black">Acciones</th>
                     </tr>

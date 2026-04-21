@@ -97,3 +97,45 @@ class TestDashboardAnalytics:
         # Debe usar el partial, no el layout completo
         assert 'dashboard/partials/dashboard_content.html' in [t.name for t in response.templates]
         assert '<html' not in response.content.decode('utf-8')
+
+    def test_dashboard_context_keys_integrity(self, client, setup_data):
+        """Validar que las llaves de contexto críticas sigan disponibles."""
+        user = ColaboradorFactory(is_staff=True, is_superuser=True)
+        user.set_password('password')
+        user.save()
+        client.login(username=user.username, password='password')
+
+        url = reverse('dashboard:principal')
+        response = client.get(url)
+        assert response.status_code == 200
+
+        context = response.context
+        expected_keys = [
+            'total_dispositivos',
+            'total_disponibles',
+            'total_asignados',
+            'total_mantenimiento',
+            'total_baja',
+            'chart_tipo_labels',
+            'chart_tipo_values',
+            'chart_estado_labels',
+            'chart_estado_values',
+            'chart_cc_labels',
+            'chart_cc_values',
+            'chart_adq_labels',
+            'chart_adq_values',
+        ]
+        for key in expected_keys:
+            assert key in context
+
+    def test_dashboard_top10_metric_precio(self, client, setup_data):
+        """Validar cálculo de top10 por precio sin romper el contexto."""
+        user = ColaboradorFactory(is_staff=True, is_superuser=True)
+        user.set_password('password')
+        user.save()
+        client.login(username=user.username, password='password')
+
+        url = reverse('dashboard:principal')
+        response = client.get(url, {'top10_metric': 'precio'})
+        assert response.status_code == 200
+        assert response.context['top10_metric'] == 'precio'

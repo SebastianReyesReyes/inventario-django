@@ -4,12 +4,18 @@ def crear_grupos(apps, schema_editor):
     Group = apps.get_model('auth', 'Group')
     Permission = apps.get_model('auth', 'Permission')
     
-    # 1. Técnicos: Mantenimiento y registro básico
+    # 1. Técnicos: Mantenimiento, registro y trazabilidad completa
     tecnicos, _ = Group.objects.get_or_create(name='Técnicos')
     perms_tecnicos_codenames = [
         # Dispositivos
         'add_dispositivo', 'change_dispositivo', 'view_dispositivo',
         'add_bitacoramantenimiento', 'view_bitacoramantenimiento',
+        'change_bitacoramantenimiento',
+        # Trazabilidad (asignar, reasignar, devolver, accesorios)
+        'add_historialasignacion', 'view_historialasignacion',
+        'add_entregaaccesorio', 'view_entregaaccesorio',
+        # Actas (generar desde dispositivos)
+        'add_acta', 'view_acta',
         # Lectura necesaria para formularios
         'view_colaborador', 
         'view_centrocosto', 

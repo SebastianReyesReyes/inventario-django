@@ -3,7 +3,7 @@ from django.contrib.auth.models import AbstractUser
 from core.models import Departamento, CentroCosto
 
 class Colaborador(AbstractUser):
-    rut = models.CharField(max_length=12, unique=True, null=True, blank=True)
+    rut = models.CharField(max_length=15, unique=True, null=True, blank=True)
     cargo = models.CharField(max_length=100, null=True, blank=True)
     departamento = models.ForeignKey(Departamento, on_delete=models.SET_NULL, null=True, blank=True)
     centro_costo = models.ForeignKey(CentroCosto, on_delete=models.SET_NULL, null=True, blank=True)

@@ -35,7 +35,8 @@
             class="inline-block align-bottom bg-surface-container rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full border border-white/5"
         >
             <form 
-                hx-post="{% if cc %}{% url 'core:cc_edit' cc.pk %}{% else %}{% url 'core:cc_create' %}{% endif %}" 
+                hx-post="{% if cc %}{% url 'core:centrocosto_update' cc.pk %}{% else %}{% url 'core:centrocosto_create' %}{% endif %}"
+ 
                 hx-swap="none"
             >
                 {% csrf_token %}

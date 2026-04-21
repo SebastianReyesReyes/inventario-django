@@ -33,7 +33,7 @@
                 </button>
             </div>
 
-            <form hx-post="{% url 'actas:acta_crear' %}" 
+            <form hx-post="{% url 'actas:acta_create' %}" 
                   hx-target="this" 
                   hx-indicator="#form-indicator"
                   class="space-y-6">
@@ -115,11 +115,11 @@
                 const val = e.target.value;
                 if (val) {
                     // 1. Cargar equipos pendientes
-                    const urlAsignaciones = `{% url 'actas:asignaciones_pendientes' 0 %}`.replace('0', val);
+                    const urlAsignaciones = `{% url 'actas:acta_asignaciones_pendientes' 0 %}`.replace('0', val);
                     htmx.ajax('GET', urlAsignaciones, {target:'#asignaciones-container'});
                     
                     // 2. Cargar Ministros de Fe filtrados por obra (solo si estamos en devolución o para tenerlo listo)
-                    const urlMinistros = `{% url 'actas:ministros_por_colaborador' 0 %}`.replace('0', val);
+                    const urlMinistros = `{% url 'actas:acta_ministros_por_colaborador' 0 %}`.replace('0', val);
                     htmx.ajax('GET', urlMinistros, {target:'.htmx-ministro-select'});
                 } else {
                     document.getElementById('asignaciones-container').innerHTML = '<p class="text-xs text-jmie-gray italic text-center py-4">Seleccione un colaborador para ver los equipos.</p>';

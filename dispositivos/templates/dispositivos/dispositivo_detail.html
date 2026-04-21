@@ -171,10 +171,7 @@
                                 </tbody>
                             </table>
                         {% else %}
-                            <div class="p-12 text-center">
-                                <span class="material-symbols-outlined text-3xl text-white/10 mb-2">history</span>
-                                <p class="text-xs text-jmie-gray font-bold">Sin registros de mantenimiento preventivo o correctivo.</p>
-                            </div>
+                            {% include "partials/empty_state.html" with icon="history" title="Sin Mantenimientos" subtitle="No se registran eventos preventivos o correctivos para este activo." compact=True %}
                         {% endif %}
                     </div>
                 </div>

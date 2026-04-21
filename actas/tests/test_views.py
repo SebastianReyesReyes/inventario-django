@@ -42,7 +42,7 @@ class TestActaViews:
         colaborador = ColaboradorFactory()
         h_pendiente = HistorialAsignacionFactory(colaborador=colaborador, acta=None)
         
-        url = reverse('actas:asignaciones_pendientes', kwargs={'colaborador_pk': colaborador.pk})
+        url = reverse('actas:acta_asignaciones_pendientes', kwargs={'colaborador_pk': colaborador.pk})
         response = client.get(url)
         assert response.status_code == 200
         assert str(h_pendiente.dispositivo.numero_serie) in response.content.decode('utf-8')

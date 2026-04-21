@@ -1,0 +1,19 @@
+{% extends 'base_error.html' %}
+{% block title %}Error del Servidor{% endblock %}
+{% block error_code %}500{% endblock %}
+{% block bg_color_1 %}error{% endblock %}
+{% block border_color %}error/20{% endblock %}
+{% block icon_color %}error{% endblock %}
+{% block icon_animation %}animate-pulse{% endblock %}
+{% block icon_name %}settings_suggest{% endblock %}
+{% block main_title %}Error de <span class="text-error">Sistemas</span>{% endblock %}
+{% block subtitle %}Error 500 — Algo salió mal en el servidor{% endblock %}
+{% block description %}
+    Hubo un problema inesperado al procesar tu solicitud. Nuestro equipo técnico ha sido notificado automáticamente.
+{% endblock %}
+{% block actions %}
+    {{ block.super }}
+    <button onclick="location.reload()" class="w-full sm:w-auto px-10 py-5 bg-white/5 border border-white/10 text-on-background text-xs font-black uppercase tracking-[0.2em] rounded-2xl hover:bg-white/10 active:scale-95 transition-all backdrop-blur-sm">
+        Reintentar
+    </button>
+{% endblock %}

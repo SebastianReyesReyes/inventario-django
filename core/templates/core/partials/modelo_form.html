@@ -35,7 +35,7 @@
             class="inline-block align-bottom bg-surface-container rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full border border-white/5"
         >
             <form 
-                hx-post="{% if modelo %}{% url 'core:modelo_edit' modelo.pk %}{% else %}{% url 'core:modelo_create' %}{% endif %}" 
+                hx-post="{% if modelo %}{% url 'core:modelo_update' modelo.pk %}{% else %}{% url 'core:modelo_create' %}{% endif %}" 
                 hx-swap="none"
             >
                 {% csrf_token %}

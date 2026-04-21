@@ -41,8 +41,16 @@
         {% endif %}
     {% endif %}
 
-    <!-- Acción: Eliminar / Desactivar -->
-    {% if can_delete %}
+    <!-- Acción: Eliminar / Desactivar / Toggle -->
+    {% if can_change and url_toggle %}
+        <button hx-post="{{ url_toggle }}" 
+                hx-target="closest tr"
+                hx-swap="outerHTML swap:0.5s"
+                class="p-1.5 hover:bg-white/10 rounded-lg transition-colors {% if obj.activa %}text-success hover:text-jmie-gray{% else %}text-jmie-gray hover:text-success{% endif %}"
+                title="{% if obj.activa %}Desactivar{% else %}Activar{% endif %}">
+            <span class="material-symbols-outlined text-[20px]">{% if obj.activa %}toggle_on{% else %}toggle_off{% endif %}</span>
+        </button>
+    {% elif can_delete and url_delete %}
         {% if action_type == 'personnel' %}
             {# Para personal usamos icono de remover persona #}
             <button hx-delete="{{ url_delete }}" 

@@ -33,7 +33,7 @@
             </div>
             
             {% if perms.actas.add_acta %}
-            <button hx-get="{% url 'actas:acta_crear' %}" 
+            <button hx-get="{% url 'actas:acta_create' %}" 
                     hx-target="#modal-container"
                     class="px-5 py-3 bg-jmie-orange text-white text-xs font-black rounded-xl hover:brightness-110 shadow-[0_4px_25px_rgba(237,139,0,0.3)] hover:scale-[1.02] transition-all flex items-center uppercase tracking-widest">
                 <span class="material-symbols-outlined text-sm mr-2 leading-none">add</span>

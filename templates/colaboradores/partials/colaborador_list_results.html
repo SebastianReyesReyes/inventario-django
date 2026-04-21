@@ -28,13 +28,18 @@
         </div>
     </td>
     <td class="px-6 py-4 text-right">
-        <div class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-            <a href="{% url 'colaboradores:colaborador_detail' c.pk %}" class="p-2 text-jmie-gray hover:text-white transition-colors" title="Ver Perfil">
+        <div class="flex items-center justify-end gap-2 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+            <button hx-get="{% url 'colaboradores:colaborador_detail' c.pk %}" 
+                    hx-target="#side-over-container"
+                    class="p-2 text-jmie-gray hover:text-white transition-colors" title="Ver Perfil">
                 <span class="material-symbols-outlined text-lg">visibility</span>
-            </a>
+            </button>
+            {% if perms.colaboradores.change_colaborador %}
             <a href="{% url 'colaboradores:colaborador_update' c.pk %}" class="p-2 text-jmie-gray hover:text-jmie-blue transition-colors" title="Editar">
                 <span class="material-symbols-outlined text-lg">edit</span>
             </a>
+            {% endif %}
+            {% if perms.colaboradores.delete_colaborador %}
             <button hx-delete="{% url 'colaboradores:colaborador_delete' c.pk %}" 
                     hx-confirm="¿Está seguro de desactivar a {{ c.nombre_completo }}? Esta acción es irreversible operativamente."
                     hx-target="#colaborador-{{ c.id }}"
@@ -42,16 +47,14 @@
                     class="p-2 text-jmie-gray hover:text-error transition-colors" title="Desactivar">
                 <span class="material-symbols-outlined text-lg">person_remove</span>
             </button>
+            {% endif %}
         </div>
     </td>
 </tr>
 {% empty %}
 <tr>
-    <td colspan="6" class="px-6 py-12 text-center">
-        <div class="flex flex-col items-center gap-2 opacity-50">
-            <span class="material-symbols-outlined text-4xl">person_search</span>
-            <p class="text-xs font-bold uppercase tracking-widest">No se encontraron colaboradores</p>
-        </div>
+    <td colspan="6">
+        {% include "partials/empty_state.html" with icon="person_search" title="Sin Resultados" subtitle="No se encontraron colaboradores con los criterios de búsqueda actuales." action_url="/colaboradores/crear/" action_label="Añadir Personal" icon_color="jmie-blue" %}
     </td>
 </tr>
 {% endfor %}

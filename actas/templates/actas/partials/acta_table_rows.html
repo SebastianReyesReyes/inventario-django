@@ -62,11 +62,8 @@
 </tr>
 {% empty %}
 <tr>
-    <td colspan="6" class="px-6 py-12 text-center">
-        <div class="flex flex-col items-center justify-center space-y-3 opacity-40">
-            <span class="material-symbols-outlined text-5xl">description</span>
-            <p class="text-sm font-bold uppercase tracking-widest">No hay actas registradas</p>
-        </div>
+    <td colspan="6">
+        {% include "partials/empty_state.html" with icon="description" title="Sin Actas" subtitle="No se han generado actas para los criterios seleccionados." action_url="/actas/crear/" action_label="Generar Acta" action_htmx=True %}
     </td>
 </tr>
 {% endfor %}

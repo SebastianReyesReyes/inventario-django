@@ -31,6 +31,7 @@ def render_actions(context, obj, action_type='standard'):
         'url_view': get_url('detail'),
         'url_update': get_url('update') or get_url('edit'),
         'url_delete': get_url('delete'),
+        'url_toggle': get_url('toggle_activa') or get_url('toggle'),
         'can_change': can_change,
         'can_delete': can_delete,
         'can_view': can_view,

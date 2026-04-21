@@ -28,8 +28,10 @@
             </div>
 
             <script>
-                // Abrir automáticamente el PDF en una nueva pestaña al cargar el éxito
-                window.open("{% url 'actas:acta_pdf' acta.pk %}", "_blank");
+                // Retrasar ligeramente la apertura para dejar que HTMX termine su ciclo de vida
+                setTimeout(() => {
+                    window.open("{% url 'actas:acta_pdf' acta.pk %}", "_blank");
+                }, 100);
             </script>
             {% endif %}
 

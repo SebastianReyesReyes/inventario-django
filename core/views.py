@@ -218,7 +218,7 @@ def tipo_delete(request, pk):
     tipo = get_object_or_404(TipoDispositivo, pk=pk)
     # Verificar si hay dispositivos asociados
     if Dispositivo.objects.filter(tipo=tipo).exists():
-        return HttpResponse("Protegido: Existen dispositivos de este tipo", status=400)
+        return HttpResponse(status=204, headers={'HX-Trigger': json.dumps({"showNotification": "Protegido: Existen dispositivos de este tipo"})})
     
     tipo.delete()
     return HttpResponse(status=204, headers={'HX-Trigger': json.dumps({"tipoListChanged": True, "showNotification": "Tipo de dispositivo eliminado"})})
@@ -239,7 +239,7 @@ def cc_create(request):
             form.save()
             if request.headers.get('HX-Request'):
                 return HttpResponse(status=204, headers={'HX-Trigger': json.dumps({"ccListChanged": True, "showNotification": "Centro de costo creado"})})
-            return redirect('core:cc_list')
+            return redirect('core:centrocosto_list')
     else:
         form = CentroCostoForm()
 
@@ -255,7 +255,7 @@ def cc_edit(request, pk):
             form.save()
             if request.headers.get('HX-Request'):
                 return HttpResponse(status=204, headers={'HX-Trigger': json.dumps({"ccListChanged": True, "showNotification": "Centro de costo actualizado"})})
-            return redirect('core:cc_list')
+            return redirect('core:centrocosto_list')
     else:
         form = CentroCostoForm(instance=cc)
 
@@ -314,7 +314,7 @@ def estado_edit(request, pk):
 def estado_delete(request, pk):
     estado = get_object_or_404(EstadoDispositivo, pk=pk)
     if Dispositivo.objects.filter(estado=estado).exists():
-        return HttpResponse("Protegido: Existen dispositivos en este estado", status=400)
+        return HttpResponse(status=204, headers={'HX-Trigger': json.dumps({"showNotification": "Protegido: Existen dispositivos en este estado"})})
     
     estado.delete()
     return HttpResponse(status=204, headers={'HX-Trigger': json.dumps({"estadoListChanged": True, "showNotification": "Estado eliminado"})})
@@ -330,3 +330,9 @@ def error_404(request, exception=None):
     Vista para manejar errores 404 (Página no encontrada).
     """
     return render(request, '404.html', status=404)
+
+def error_500(request):
+    """
+    Vista para manejar errores 500 (Error de Servidor).
+    """
+    return render(request, '500.html', status=500)

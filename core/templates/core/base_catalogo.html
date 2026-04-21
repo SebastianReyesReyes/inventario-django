@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block title %}Catálogos | JMIE{% endblock %}
+
+{% block content %}
+<div class="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <!-- Page Header -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/5 pb-6">
+        <div>
+            <div class="flex items-center text-[10px] font-black text-jmie-orange uppercase tracking-[0.3em] mb-2">
+                <span>Catálogos</span>
+                <span class="material-symbols-outlined mx-2 text-[12px]">chevron_right</span>
+                <span class="text-on-background">{% block catalogo_nombre %}{% endblock %}</span>
+            </div>
+            <h1 class="font-sans text-4xl font-black tracking-tighter uppercase">{% block catalogo_titulo %}{% endblock %}</h1>
+            <p class="text-jmie-gray mt-1 text-sm font-bold">{% block catalogo_descripcion %}{% endblock %}</p>
+        </div>
+        <div class="flex items-center gap-3">
+            {% block header_actions %}{% endblock %}
+        </div>
+    </div>
+
+    <!-- Barra de Filtros Opcional (DRY) -->
+    {% block filter_bar %}{% endblock %}
+
+    <!-- Refrescador de lista HTMX (DRY) -->
+    <div 
+        hx-get="{% block refresh_url %}{% endblock %}"
+        hx-trigger="{% block refresh_trigger %}{% endblock %} from:body"
+        hx-target="#catalogo-list-container"
+        hx-select="#catalogo-list-container"
+        hx-swap="outerHTML"
+        class="hidden"
+    ></div>
+
+    <div 
+        id="catalogo-list-container"
+        class="bg-surface-container-low rounded-2xl border border-white/5 overflow-hidden shadow-2xl relative"
+    >
+        <!-- Indicador de Carga HTMX -->
+        <div class="htmx-indicator absolute inset-0 bg-background/50 backdrop-blur-[2px] z-10 flex items-center justify-center opacity-0 pointer-events-none transition-opacity">
+            <div class="flex items-center gap-3 px-4 py-2 bg-white/10 rounded-full border border-white/10">
+                <div class="w-4 h-4 border-2 border-jmie-blue border-t-transparent rounded-full animate-spin"></div>
+                <span class="text-[10px] font-black uppercase tracking-widest">Sincronizando...</span>
+            </div>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-white/5">
+                <thead class="bg-white/[0.02]">
+                    <tr class="text-left text-[10px] font-black text-jmie-gray uppercase tracking-[0.2em] border-b border-white/5">
+                        {% block table_head %}{% endblock %}
+                        <th class="px-6 py-5 text-right font-black">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-white/5 bg-transparent">
+                    {% block table_body %}{% endblock %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Footer -->
+        <div class="bg-white/[0.01] border-t border-white/5 px-6 py-4 flex items-center justify-between">
+            <span class="text-[10px] text-jmie-gray/50 font-black uppercase tracking-widest">JMIE Consola • Maestro de Datos</span>
+            <div class="flex gap-2">
+                {% block table_footer %}{% endblock %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .htmx-request.htmx-indicator {
+        opacity: 1;
+        pointer-events: auto;
+    }
+</style>
+{% endblock %}

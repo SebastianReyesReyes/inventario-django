@@ -75,6 +75,12 @@ def colaborador_detail(request, pk):
         'c': colaborador,
         'equipos': equipos,
     }
+    
+    # Si es HTMX, devolvemos la versión para el Side-Over
+    if request.headers.get('HX-Request'):
+        return render(request, 'colaboradores/colaborador_side_over.html', context)
+    
+    # Si es una carga normal, la página completa
     return render(request, 'colaboradores/colaborador_detail.html', context)
 
 @login_required

@@ -1,0 +1,93 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Error{% endblock %} | JMIE Consola</title>
+    
+    <!-- Material Symbols -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700&display=swap" rel="stylesheet">
+    
+    <!-- Scripts -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+    
+    <style>
+        @font-face {
+            font-family: 'Montserrat';
+            src: url('{% static "fonts/Montserrat-VariableFont_wght.ttf" %}') format('truetype');
+            font-weight: 100 900;
+            font-style: normal;
+            font-display: swap;
+        }
+        :root { color-scheme: dark; }
+        body { font-family: 'Montserrat', sans-serif; overflow-x: hidden; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 1, 'wght' 300, 'GRAD' 0, 'opsz' 48; }
+    </style>
+
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "jmie-blue": "#003594",
+                        "jmie-orange": "#ED8B00",
+                        "jmie-gray": "#7C878E",
+                        "background": "#0a0c14",
+                        "surface-container": "#171c28",
+                        "on-background": "#f0f3f8",
+                        "on-surface": "#c8cdd5",
+                        "error": "#ef4444",
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-background text-on-background min-h-screen flex items-center justify-center relative">
+    <!-- Decoración de fondo -->
+    <div class="absolute top-[-20%] right-[-10%] w-[60%] h-[60%] bg-{% block bg_color_1 %}jmie-blue{% endblock %}/5 rounded-full blur-[120px]"></div>
+    <div class="absolute bottom-[-20%] left-[-10%] w-[50%] h-[50%] bg-{% block bg_color_2 %}jmie-orange{% endblock %}/5 rounded-full blur-[100px]"></div>
+
+    <div class="max-w-2xl w-full px-6 relative z-10 text-center py-20">
+        <div class="mb-10 flex items-center justify-center">
+            <h2 class="text-[12rem] font-black text-white/5 leading-none select-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+                {% block error_code %}000{% endblock %}
+            </h2>
+            <div class="w-32 h-32 rounded-[2.5rem] bg-surface-container border border-{% block border_color %}white/10{% endblock %} flex items-center justify-center text-{% block icon_color %}on-background{% endblock %} relative z-10 shadow-2xl backdrop-blur-xl {% block icon_animation %}{% endblock %}">
+                <span class="material-symbols-outlined text-6xl">{% block icon_name %}info{% endblock %}</span>
+            </div>
+        </div>
+
+        <h1 class="text-6xl font-black tracking-tighter mb-4 text-on-background uppercase">
+            {% block main_title %}Algo pasó{% endblock %}
+        </h1>
+        
+        <p class="text-jmie-gray text-xs font-black uppercase tracking-[0.4em] mb-12 opacity-80">
+            {% block subtitle %}Error{% endblock %}
+        </p>
+        
+        <div class="bg-white/[0.03] backdrop-blur-md border border-white/10 rounded-3xl p-8 mb-12 shadow-[0_20px_50px_rgba(0,0,0,0.5)] max-w-lg mx-auto transform hover:scale-[1.01] transition-all">
+            <p class="text-on-surface text-lg font-medium leading-relaxed">
+                {% block description %}{% endblock %}
+            </p>
+            {% block extra_info %}{% endblock %}
+        </div>
+
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-5">
+            {% block actions %}
+            <a href="{% url 'home' %}" class="w-full sm:w-auto px-10 py-5 bg-jmie-orange text-white text-xs font-black uppercase tracking-[0.2em] rounded-2xl hover:brightness-110 active:scale-95 transition-all shadow-[0_15px_30px_rgba(237,139,0,0.3)]">
+                Volver al Panel
+            </a>
+            {% endblock %}
+        </div>
+
+        <!-- Footer Branding -->
+        <div class="mt-24 pt-8 border-t border-white/5 inline-block opacity-40">
+            <img src="{% static 'img/logoBlanco.png' %}" alt="JMIE Logo" class="h-6 mx-auto grayscale brightness-200">
+            <p class="mt-4 text-[9px] font-black uppercase tracking-[0.3em] text-jmie-gray">Consola de administración v2.0</p>
+        </div>
+    </div>
+</body>
+</html>

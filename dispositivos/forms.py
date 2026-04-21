@@ -70,6 +70,20 @@ class DispositivoForm(BaseStyledForm):
         else:
             self.fields['modelo'].queryset = Modelo.objects.none()
 
+    def save(self, commit=True):
+        is_new = self.instance.pk is None
+        dispositivo = super().save(commit=commit)
+        
+        # Si el equipo es nuevo, tiene propietario y se guardó en BD, registramos el historial
+        if is_new and dispositivo.propietario_actual and commit:
+            HistorialAsignacion.objects.create(
+                dispositivo=dispositivo,
+                colaborador=dispositivo.propietario_actual,
+                notas="Asignación inicial directa desde el registro del equipo."
+            )
+            
+        return dispositivo
+
 class NotebookForm(DispositivoForm):
     class Meta(DispositivoForm.Meta):
         from .models import Notebook

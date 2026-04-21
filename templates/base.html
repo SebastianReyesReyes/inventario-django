@@ -241,6 +241,7 @@
                 Actas
             </a>
 
+            {% if perms.dispositivos.add_dispositivo %}
             <p class="px-5 text-[10px] font-black text-jmie-gray uppercase tracking-widest mb-3 mt-4 opacity-50">
                 Administración</p>
             <div class="space-y-1 px-3">
@@ -250,25 +251,26 @@
                         class="material-symbols-outlined mr-3 text-[22px] group-hover:scale-110 transition-transform {% block nav_catalogos_icon %}{% endblock %}">category</span>
                     <span class="text-sm font-bold">Fabricantes</span>
                 </a>
-                <a href="{% url 'core:tipo_list' %}"
+                <a href="{% url 'core:tipodispositivo_list' %}"
                     class="flex items-center px-4 py-2.5 rounded-xl transition-all group {% block nav_tipos %}{% endblock %}">
                     <span
                         class="material-symbols-outlined mr-3 text-[22px] group-hover:scale-110 transition-transform {% block nav_tipos_icon %}{% endblock %}">devices</span>
                     <span class="text-sm font-bold">Tipos Equipos</span>
                 </a>
-                <a href="{% url 'core:cc_list' %}"
+                <a href="{% url 'core:centrocosto_list' %}"
                     class="flex items-center px-4 py-2.5 rounded-xl transition-all group {% block nav_ccs %}{% endblock %}">
                     <span
                         class="material-symbols-outlined mr-3 text-[22px] group-hover:scale-110 transition-transform {% block nav_ccs_icon %}{% endblock %}">payments</span>
                     <span class="text-sm font-bold">Centros Costo</span>
                 </a>
-                <a href="{% url 'core:estado_list' %}"
+                <a href="{% url 'core:estadodispositivo_list' %}"
                     class="flex items-center px-4 py-2.5 rounded-xl transition-all group {% block nav_estados %}{% endblock %}">
                     <span
                         class="material-symbols-outlined mr-3 text-[22px] group-hover:scale-110 transition-transform {% block nav_estados_icon %}{% endblock %}">label</span>
                     <span class="text-sm font-bold">Estados</span>
                 </a>
             </div>
+            {% endif %}
 
             <a href="{% url 'colaboradores:colaborador_list' %}"
                 class="flex items-center px-3 py-2 mt-4 text-sm font-bold uppercase tracking-wide rounded-lg transition-all group {% block nav_colaboradores %}text-jmie-gray hover:text-on-background hover:bg-white/5{% endblock %}">

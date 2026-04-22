@@ -1,4 +1,5 @@
 {% load static %}
+{% load nav_tags %}
 <!DOCTYPE html>
 <html lang="es" class="dark">
 
@@ -221,23 +222,23 @@
         <nav class="flex-1 px-4 space-y-1 overflow-y-auto">
             <!-- Activo (Naranja) -->
             <a href="{% url 'dashboard:principal' %}"
-                class="flex items-center px-3 py-2 text-sm font-bold uppercase tracking-wide rounded-lg transition-all group {% block nav_dashboard %}text-jmie-gray hover:text-on-background hover:bg-white/5{% endblock %}">
+                class="flex items-center px-3 py-2 text-sm font-bold uppercase tracking-wide rounded-lg transition-all group {% active_url 'dashboard:principal' 'text-jmie-orange bg-jmie-orange/10 border-r-2 border-jmie-orange' 'text-jmie-gray hover:text-on-background hover:bg-white/5' True %}">
                 <span
-                    class="material-symbols-outlined mr-3 {% block nav_dashboard_icon %}group-hover:text-jmie-orange{% endblock %}">dashboard</span>
+                    class="material-symbols-outlined mr-3 {% active_icon 'dashboard:principal' 'icon-filled text-jmie-orange' 'group-hover:text-jmie-orange' True %}">dashboard</span>
                 Panel de Control
             </a>
 
             <div class="pt-4 pb-2 px-3 text-[10px] font-bold text-jmie-gray uppercase tracking-widest">Inventario</div>
             <a href="{% url 'dispositivos:dispositivo_list' %}"
-                class="flex items-center px-3 py-2 text-sm font-bold uppercase tracking-wide rounded-lg transition-all group {% block nav_inventario %}text-jmie-gray hover:text-on-background hover:bg-white/5{% endblock %}">
+                class="flex items-center px-3 py-2 text-sm font-bold uppercase tracking-wide rounded-lg transition-all group {% active_url 'dispositivos:dispositivo_list' %}">
                 <span
-                    class="material-symbols-outlined mr-3 {% block nav_inventario_icon %}group-hover:text-jmie-orange{% endblock %}">inventory_2</span>
+                    class="material-symbols-outlined mr-3 {% active_icon 'dispositivos:dispositivo_list' %}">inventory_2</span>
                 Activos IT
             </a>
             <a href="{% url 'actas:acta_list' %}"
-                class="flex items-center px-3 py-2 text-sm font-bold uppercase tracking-wide rounded-lg transition-all group {% block nav_actas %}text-jmie-gray hover:text-on-background hover:bg-white/5{% endblock %}">
+                class="flex items-center px-3 py-2 text-sm font-bold uppercase tracking-wide rounded-lg transition-all group {% active_url 'actas:acta_list' %}">
                 <span
-                    class="material-symbols-outlined mr-3 {% block nav_actas_icon %}group-hover:text-jmie-orange{% endblock %}">description</span>
+                    class="material-symbols-outlined mr-3 {% active_icon 'actas:acta_list' %}">description</span>
                 Actas
             </a>
 
@@ -246,42 +247,42 @@
                 Administración</p>
             <div class="space-y-1 px-3">
                 <a href="{% url 'core:fabricante_list' %}"
-                    class="flex items-center px-4 py-2.5 rounded-xl transition-all group {% block nav_catalogos %}{% endblock %}">
+                    class="flex items-center px-4 py-2.5 rounded-xl transition-all group {% active_url 'core:fabricante_list' %}">
                     <span
-                        class="material-symbols-outlined mr-3 text-[22px] group-hover:scale-110 transition-transform {% block nav_catalogos_icon %}{% endblock %}">category</span>
+                        class="material-symbols-outlined mr-3 text-[22px] group-hover:scale-110 transition-transform {% active_icon 'core:fabricante_list' %}">category</span>
                     <span class="text-sm font-bold">Fabricantes</span>
                 </a>
                 <a href="{% url 'core:tipodispositivo_list' %}"
-                    class="flex items-center px-4 py-2.5 rounded-xl transition-all group {% block nav_tipos %}{% endblock %}">
+                    class="flex items-center px-4 py-2.5 rounded-xl transition-all group {% active_url 'core:tipodispositivo_list' %}">
                     <span
-                        class="material-symbols-outlined mr-3 text-[22px] group-hover:scale-110 transition-transform {% block nav_tipos_icon %}{% endblock %}">devices</span>
+                        class="material-symbols-outlined mr-3 text-[22px] group-hover:scale-110 transition-transform {% active_icon 'core:tipodispositivo_list' %}">devices</span>
                     <span class="text-sm font-bold">Tipos Equipos</span>
                 </a>
                 <a href="{% url 'core:centrocosto_list' %}"
-                    class="flex items-center px-4 py-2.5 rounded-xl transition-all group {% block nav_ccs %}{% endblock %}">
+                    class="flex items-center px-4 py-2.5 rounded-xl transition-all group {% active_url 'core:centrocosto_list' %}">
                     <span
-                        class="material-symbols-outlined mr-3 text-[22px] group-hover:scale-110 transition-transform {% block nav_ccs_icon %}{% endblock %}">payments</span>
+                        class="material-symbols-outlined mr-3 text-[22px] group-hover:scale-110 transition-transform {% active_icon 'core:centrocosto_list' %}">payments</span>
                     <span class="text-sm font-bold">Centros Costo</span>
                 </a>
                 <a href="{% url 'core:estadodispositivo_list' %}"
-                    class="flex items-center px-4 py-2.5 rounded-xl transition-all group {% block nav_estados %}{% endblock %}">
+                    class="flex items-center px-4 py-2.5 rounded-xl transition-all group {% active_url 'core:estadodispositivo_list' %}">
                     <span
-                        class="material-symbols-outlined mr-3 text-[22px] group-hover:scale-110 transition-transform {% block nav_estados_icon %}{% endblock %}">label</span>
+                        class="material-symbols-outlined mr-3 text-[22px] group-hover:scale-110 transition-transform {% active_icon 'core:estadodispositivo_list' %}">label</span>
                     <span class="text-sm font-bold">Estados</span>
                 </a>
             </div>
             {% endif %}
 
             <a href="{% url 'colaboradores:colaborador_list' %}"
-                class="flex items-center px-3 py-2 mt-4 text-sm font-bold uppercase tracking-wide rounded-lg transition-all group {% block nav_colaboradores %}text-jmie-gray hover:text-on-background hover:bg-white/5{% endblock %}">
+                class="flex items-center px-3 py-2 mt-4 text-sm font-bold uppercase tracking-wide rounded-lg transition-all group {% active_url 'colaboradores:colaborador_list' %}">
                 <span
-                    class="material-symbols-outlined mr-3 {% block nav_colaboradores_icon %}group-hover:text-jmie-orange{% endblock %}">badge</span>
+                    class="material-symbols-outlined mr-3 {% active_icon 'colaboradores:colaborador_list' %}">badge</span>
                 Personal
             </a>
             <a href="{% url 'dashboard:reportes' %}"
-                class="flex items-center px-3 py-2 text-sm font-bold uppercase tracking-wide rounded-lg transition-all group {% block nav_reportes %}text-jmie-gray hover:text-on-background hover:bg-white/5{% endblock %}">
+                class="flex items-center px-3 py-2 text-sm font-bold uppercase tracking-wide rounded-lg transition-all group {% active_url 'dashboard:reportes' %}">
                 <span
-                    class="material-symbols-outlined mr-3 {% block nav_reportes_icon %}group-hover:text-jmie-orange{% endblock %}">analytics</span>
+                    class="material-symbols-outlined mr-3 {% active_icon 'dashboard:reportes' %}">analytics</span>
                 Reportes
             </a>
         </nav>

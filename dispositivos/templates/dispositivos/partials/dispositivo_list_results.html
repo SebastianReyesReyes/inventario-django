@@ -1,3 +1,4 @@
+{% load ui_tags %}
 {% for d in dispositivos %}
 <tr class="group hover:bg-white/[0.02] border-b border-white/5 transition-colors">
     <td class="px-6 py-4">
@@ -24,30 +25,14 @@
         {% endif %}
     </td>
     <td class="px-6 py-4">
-        {% with e=d.estado.nombre.lower %}
-        <span class="px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-wider
-            {% if 'disponible' in e or 'bueno' in e %} bg-success/10 text-success border border-success/20
-            {% elif 'asignado' in e %} bg-jmie-blue/10 text-jmie-blue border border-jmie-blue/20
-            {% elif 'reparación' in e or 'falla' in e %} bg-jmie-orange/10 text-jmie-orange border border-jmie-orange/20
-            {% else %} bg-white/5 text-jmie-gray border border-white/10 {% endif %}">
+        <span class="px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-wider {% status_badge d.estado %}">
             {{ d.estado.nombre }}
         </span>
-        {% endwith %}
     </td>
     <td class="px-6 py-4">
-        {% if d.acta_firmada == True %}
-            <span class="px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-wider bg-success/10 text-success border border-success/20">
-                Firmada
-            </span>
-        {% elif d.acta_firmada == False %}
-            <span class="px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-wider bg-jmie-orange/10 text-jmie-orange border border-jmie-orange/20">
-                Pendiente
-            </span>
-        {% else %}
-            <span class="px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-wider bg-white/5 text-jmie-gray border border-white/10">
-                Sin Acta
-            </span>
-        {% endif %}
+        <span class="px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-wider {% acta_badge d.acta_firmada %}">
+            {% if d.acta_firmada == True %}Firmada{% elif d.acta_firmada == False %}Pendiente{% else %}Sin Acta{% endif %}
+        </span>
     </td>
     <td class="px-6 py-4 text-right">
         {% load action_tags %}

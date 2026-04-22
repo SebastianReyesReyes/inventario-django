@@ -29,11 +29,11 @@ class TestDispositivoModel:
         tipo = TipoDispositivoFactory(nombre="Desktop", sigla="DSK")
         # .create() sí llama a save() directamente
         d1 = DispositivoFactory.create(tipo=tipo)
-        assert d1.identificador_interno == "JMIE-DSK-00001"
+        assert d1.identificador_interno == "JMIE-DSK-0001"
         
         d2 = DispositivoFactory.create(tipo=tipo)
-        assert d2.identificador_interno == "JMIE-DSK-00002"
+        assert d2.identificador_interno == "JMIE-DSK-0002"
         
         tipo2 = TipoDispositivoFactory(nombre="Tablet", sigla="TAB")
         d3 = DispositivoFactory.create(tipo=tipo2)
-        assert d3.identificador_interno == "JMIE-TAB-00001"
+        assert d3.identificador_interno == "JMIE-TAB-0001"

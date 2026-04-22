@@ -170,7 +170,7 @@
                                 </tbody>
                             </table>
                         {% else %}
-                            {% include "partials/empty_state.html" with icon="history" title="Sin Mantenimientos" subtitle="No se registran eventos preventivos o correctivos para este activo." compact=True %}
+                            <c-empty-state icon="history" title="Sin Mantenimientos" subtitle="No se registran eventos preventivos o correctivos para este activo." compact="True" />
                         {% endif %}
                     </div>
                 </div>

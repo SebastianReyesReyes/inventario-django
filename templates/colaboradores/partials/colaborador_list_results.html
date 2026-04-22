@@ -54,7 +54,7 @@
 {% empty %}
 <tr>
     <td colspan="6">
-        {% include "partials/empty_state.html" with icon="person_search" title="Sin Resultados" subtitle="No se encontraron colaboradores con los criterios de búsqueda actuales." action_url="/colaboradores/crear/" action_label="Añadir Personal" icon_color="jmie-blue" %}
+        <c-empty-state icon="person_search" title="Sin Resultados" subtitle="No se encontraron colaboradores con los criterios de búsqueda actuales." action_url="/colaboradores/crear/" action_label="Añadir Personal" icon_color="jmie-blue" />
     </td>
 </tr>
 {% endfor %}

@@ -52,7 +52,7 @@ INSTALLED_APPS = [
     'dashboard',
     'imagekit',
     'django_filters',
-
+    'django_cotton',
 ]
 
 

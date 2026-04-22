@@ -11,81 +11,33 @@
      hx-on:actaCreated="window.dispatchEvent(new CustomEvent('modal-close'))"
      hx-on:actaFirmada="htmx.trigger('#search-results', 'refresh'); window.dispatchEvent(new CustomEvent('sideover-close'))">
     
-    <!-- Header y Buscador -->
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/5 pb-6">
-        <div>
-            <h1 class="text-3xl font-black tracking-tighter uppercase">Actas de Entrega</h1>
-            <p class="text-jmie-gray mt-1 text-sm font-bold">Respaldo legal de activos TI bajo normativas Ley 21.663 y 21.719.</p>
-        </div>
+    <c-page-header title="Actas de Entrega" subtitle="Respaldo legal de activos TI bajo normativas Ley 21.663 y 21.719." title_class="uppercase">
+        <c-search-input class="w-64 md:w-80" placeholder="Buscar por folio o colaborador..."
+            hx_get="{% url 'actas:acta_list' %}"
+            hx_trigger="keyup changed delay:500ms, search, refresh from:body"
+            hx_target="#tabla-wrapper"
+            hx_indicator=".htmx-indicator" />
         
-        <div class="flex items-center gap-3">
-            <!-- Buscador en Vivo -->
-            <div class="relative group">
-                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-jmie-gray group-focus-within:text-jmie-blue transition-colors text-sm">search</span>
-                <input type="text" 
-                       name="q" 
-                       placeholder="Buscar por folio o colaborador..."
-                       class="pl-10 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-xs font-bold text-on-background focus:outline-none focus:ring-2 focus:ring-jmie-blue/20 focus:border-jmie-blue/50 transition-all w-64 md:w-80"
-                       hx-get="{% url 'actas:acta_list' %}"
-                       hx-trigger="keyup changed delay:500ms, search, refresh from:body"
-                       hx-target="#tabla-wrapper"
-                       hx-indicator=".htmx-indicator">
-            </div>
-            
-            {% if perms.actas.add_acta %}
-            <button hx-get="{% url 'actas:acta_create' %}" 
-                    hx-target="#modal-container"
-                    class="px-5 py-3 bg-jmie-orange text-white text-xs font-black rounded-xl hover:brightness-110 shadow-[0_4px_25px_rgba(237,139,0,0.3)] hover:scale-[1.02] transition-all flex items-center uppercase tracking-widest">
-                <span class="material-symbols-outlined text-sm mr-2 leading-none">add</span>
-                Generar Acta
-            </button>
-            {% endif %}
-        </div>
-    </div>
+        {% if perms.actas.add_acta %}
+        <button hx-get="{% url 'actas:acta_create' %}" 
+                hx-target="#modal-container"
+                class="px-5 py-3 bg-jmie-orange text-white text-xs font-black rounded-xl hover:brightness-110 shadow-[0_4px_25px_rgba(237,139,0,0.3)] hover:scale-[1.02] transition-all flex items-center uppercase tracking-widest">
+            <span class="material-symbols-outlined text-sm mr-2 leading-none">add</span>
+            Generar Acta
+        </button>
+        {% endif %}
+    </c-page-header>
 
-    <!-- Tabla de Resultados -->
-    <div class="glass-panel rounded-2xl border border-white/5 overflow-hidden relative shadow-2xl">
-        <!-- Indicador de Carga HTMX -->
-        <div class="htmx-indicator absolute inset-0 bg-background/50 backdrop-blur-[2px] z-10 flex items-center justify-center opacity-0 pointer-events-none transition-opacity">
-            <div class="flex items-center gap-3 px-4 py-2 bg-white/10 rounded-full border border-white/10">
-                <div class="w-4 h-4 border-2 border-jmie-blue border-t-transparent rounded-full animate-spin"></div>
-                <span class="text-[10px] font-black uppercase tracking-widest">Sincronizando...</span>
-            </div>
-        </div>
-
+    <c-glass-panel loader_label="Sincronizando..." class="shadow-2xl">
         <div id="tabla-wrapper" class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
                 <thead>
                     <tr class="bg-white/[0.02] border-b border-white/5 text-jmie-gray uppercase text-[10px] font-black tracking-widest">
-                        <th class="px-6 py-5 cursor-pointer hover:text-jmie-orange transition-colors select-none"
-                            hx-get="{% url 'actas:acta_list' %}?{% if query %}q={{ query }}&{% endif %}{% if tipo %}tipo={{ tipo }}&{% endif %}sort=folio&order={% if current_sort == 'folio' and current_order == 'asc' %}desc{% else %}asc{% endif %}"
-                            hx-target="#tabla-wrapper"
-                            hx-push-url="true"
-                            hx-indicator=".htmx-indicator">
-                            Folio {% if current_sort == 'folio' %}{% if current_order == 'asc' %}↑{% else %}↓{% endif %}{% endif %}
-                        </th>
-                        <th class="px-6 py-5 cursor-pointer hover:text-jmie-orange transition-colors select-none"
-                            hx-get="{% url 'actas:acta_list' %}?{% if query %}q={{ query }}&{% endif %}{% if tipo %}tipo={{ tipo }}&{% endif %}sort=colaborador&order={% if current_sort == 'colaborador' and current_order == 'asc' %}desc{% else %}asc{% endif %}"
-                            hx-target="#tabla-wrapper"
-                            hx-push-url="true"
-                            hx-indicator=".htmx-indicator">
-                            Colaborador / RUT {% if current_sort == 'colaborador' %}{% if current_order == 'asc' %}↑{% else %}↓{% endif %}{% endif %}
-                        </th>
-                        <th class="px-6 py-5 cursor-pointer hover:text-jmie-orange transition-colors select-none"
-                            hx-get="{% url 'actas:acta_list' %}?{% if query %}q={{ query }}&{% endif %}{% if tipo %}tipo={{ tipo }}&{% endif %}sort=fecha&order={% if current_sort == 'fecha' and current_order == 'asc' %}desc{% else %}asc{% endif %}"
-                            hx-target="#tabla-wrapper"
-                            hx-push-url="true"
-                            hx-indicator=".htmx-indicator">
-                            Fecha Emisión {% if current_sort == 'fecha' %}{% if current_order == 'asc' %}↑{% else %}↓{% endif %}{% endif %}
-                        </th>
-                        <th class="px-6 py-5 cursor-pointer hover:text-jmie-orange transition-colors select-none"
-                            hx-get="{% url 'actas:acta_list' %}?{% if query %}q={{ query }}&{% endif %}{% if tipo %}tipo={{ tipo }}&{% endif %}sort=tipo&order={% if current_sort == 'tipo' and current_order == 'asc' %}desc{% else %}asc{% endif %}"
-                            hx-target="#tabla-wrapper"
-                            hx-push-url="true"
-                            hx-indicator=".htmx-indicator">
-                            Tipo {% if current_sort == 'tipo' %}{% if current_order == 'asc' %}↑{% else %}↓{% endif %}{% endif %}
-                        </th>
-                        <th class="px-6 py-5">Estado Legal</th>
+                        <c-th-sort sort="folio">Folio</c-th-sort>
+                        <c-th-sort sort="colaborador">Colaborador / RUT</c-th-sort>
+                        <c-th-sort sort="fecha">Fecha Emisión</c-th-sort>
+                        <c-th-sort sort="tipo">Tipo</c-th-sort>
+                        <c-th-sort sort="firmada">Estado Legal</c-th-sort>
                         <th class="px-6 py-5 text-right font-black">Acciones</th>
                     </tr>
                 </thead>
@@ -99,7 +51,6 @@
             </table>
         </div>
 
-        <!-- Footer -->
         <div class="px-6 py-4 bg-white/[0.01] border-t border-white/5 flex items-center justify-between">
             <div class="flex items-center gap-4 text-[10px] font-black text-jmie-gray uppercase tracking-tighter">
                 <div class="flex items-center gap-1.5">
@@ -113,7 +64,7 @@
             </div>
             <span class="text-[10px] font-bold text-jmie-gray/40 uppercase">JMIE Inventory Management • Legal Document Suite</span>
         </div>
-    </div>
+    </c-glass-panel>
 </div>
 
 <style>

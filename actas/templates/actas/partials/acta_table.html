@@ -2,35 +2,11 @@
 <table class="w-full text-left border-collapse">
     <thead>
         <tr class="bg-white/[0.02] border-b border-white/5 text-jmie-gray uppercase text-[10px] font-black tracking-widest">
-            <th class="px-6 py-5 cursor-pointer hover:text-jmie-orange transition-colors select-none"
-                hx-get="{% url 'actas:acta_list' %}?{% if query %}q={{ query }}&{% endif %}{% if tipo %}tipo={{ tipo }}&{% endif %}sort=folio&order={% if current_sort == 'folio' and current_order == 'asc' %}desc{% else %}asc{% endif %}"
-                hx-target="#tabla-wrapper"
-                hx-push-url="true"
-                hx-indicator=".htmx-indicator">
-                Folio {% if current_sort == 'folio' %}{% if current_order == 'asc' %}↑{% else %}↓{% endif %}{% endif %}
-            </th>
-            <th class="px-6 py-5 cursor-pointer hover:text-jmie-orange transition-colors select-none"
-                hx-get="{% url 'actas:acta_list' %}?{% if query %}q={{ query }}&{% endif %}{% if tipo %}tipo={{ tipo }}&{% endif %}sort=colaborador&order={% if current_sort == 'colaborador' and current_order == 'asc' %}desc{% else %}asc{% endif %}"
-                hx-target="#tabla-wrapper"
-                hx-push-url="true"
-                hx-indicator=".htmx-indicator">
-                Colaborador / RUT {% if current_sort == 'colaborador' %}{% if current_order == 'asc' %}↑{% else %}↓{% endif %}{% endif %}
-            </th>
-            <th class="px-6 py-5 cursor-pointer hover:text-jmie-orange transition-colors select-none"
-                hx-get="{% url 'actas:acta_list' %}?{% if query %}q={{ query }}&{% endif %}{% if tipo %}tipo={{ tipo }}&{% endif %}sort=fecha&order={% if current_sort == 'fecha' and current_order == 'asc' %}desc{% else %}asc{% endif %}"
-                hx-target="#tabla-wrapper"
-                hx-push-url="true"
-                hx-indicator=".htmx-indicator">
-                Fecha Emisión {% if current_sort == 'fecha' %}{% if current_order == 'asc' %}↑{% else %}↓{% endif %}{% endif %}
-            </th>
-            <th class="px-6 py-5 cursor-pointer hover:text-jmie-orange transition-colors select-none"
-                hx-get="{% url 'actas:acta_list' %}?{% if query %}q={{ query }}&{% endif %}{% if tipo %}tipo={{ tipo }}&{% endif %}sort=tipo&order={% if current_sort == 'tipo' and current_order == 'asc' %}desc{% else %}asc{% endif %}"
-                hx-target="#tabla-wrapper"
-                hx-push-url="true"
-                hx-indicator=".htmx-indicator">
-                Tipo {% if current_sort == 'tipo' %}{% if current_order == 'asc' %}↑{% else %}↓{% endif %}{% endif %}
-            </th>
-            <th class="px-6 py-5">Estado Legal</th>
+            <c-th-sort sort="folio">Folio</c-th-sort>
+            <c-th-sort sort="colaborador">Colaborador / RUT</c-th-sort>
+            <c-th-sort sort="fecha">Fecha Emisión</c-th-sort>
+            <c-th-sort sort="tipo">Tipo</c-th-sort>
+            <c-th-sort sort="firmada">Estado Legal</c-th-sort>
             <th class="px-6 py-5 text-right font-black">Acciones</th>
         </tr>
     </thead>

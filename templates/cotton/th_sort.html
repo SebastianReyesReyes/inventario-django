@@ -1,0 +1,13 @@
+{% load url_tags %}
+<th class="px-6 py-4 cursor-pointer hover:text-jmie-orange transition-colors select-none {{ class }}"
+    hx-get="{{ request.path }}?{% if current_sort == sort and current_order == 'asc' %}{% query_transform sort=sort order='desc' %}{% else %}{% query_transform sort=sort order='asc' %}{% endif %}"
+    hx-target="{{ hx_target|default:'#tabla-wrapper' }}"
+    hx-push-url="{{ hx_push_url|default:'true' }}"
+    hx-indicator="{{ hx_indicator|default:'.htmx-indicator' }}"
+    {{ attrs }}
+>
+    {{ slot }} 
+    {% if current_sort == sort %}
+        {% if current_order == 'asc' %}↑{% else %}↓{% endif %}
+    {% endif %}
+</th>

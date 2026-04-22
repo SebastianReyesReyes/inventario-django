@@ -44,11 +44,11 @@
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="space-y-2">
-                        <label class="text-[10px] font-black uppercase tracking-widest text-jmie-gray ml-1">Colaborador</label>
+                        <c-form-label>Colaborador</c-form-label>
                         {{ form.colaborador }}
                     </div>
                     <div class="space-y-2">
-                        <label class="text-[10px] font-black uppercase tracking-widest text-jmie-gray ml-1">Tipo de Documento</label>
+                        <c-form-label>Tipo de Documento</c-form-label>
                         {{ form.tipo_acta }}
                     </div>
                 </div>
@@ -71,14 +71,14 @@
                 </div>
 
                 <div class="space-y-2">
-                    <label class="text-[10px] font-black uppercase tracking-widest text-jmie-gray ml-1" x-text="tipoActa === 'ENTREGA' ? 'Equipos Pendientes de Entrega' : 'Equipos a Devolver'">Equipos Pendientes de Acta</label>
+                    <c-form-label><span x-text="tipoActa === 'ENTREGA' ? 'Equipos Pendientes de Entrega' : 'Equipos a Devolver'">Equipos Pendientes de Acta</span></c-form-label>
                     <div id="asignaciones-container" class="bg-surface-container-low rounded-2xl border border-white/5 p-4 min-h-[120px] max-h-[200px] overflow-y-auto custom-scrollbar">
                         <p class="text-xs text-jmie-gray italic text-center py-4">Seleccione un colaborador para ver los equipos.</p>
                     </div>
                 </div>
 
                 <div class="space-y-2">
-                    <label class="text-[10px] font-black uppercase tracking-widest text-jmie-gray ml-1">Observaciones</label>
+                    <c-form-label>Observaciones</c-form-label>
                     {{ form.observaciones }}
                 </div>
 

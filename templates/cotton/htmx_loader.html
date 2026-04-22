@@ -1,0 +1,7 @@
+<!-- Indicador de Carga HTMX Reutilizable -->
+<div class="htmx-indicator absolute inset-0 bg-background/50 backdrop-blur-[2px] z-10 flex items-center justify-center opacity-0 pointer-events-none transition-opacity">
+    <div class="flex items-center gap-3 px-4 py-2 bg-white/10 rounded-full border border-white/10">
+        <div class="w-4 h-4 border-2 border-jmie-blue border-t-transparent rounded-full animate-spin"></div>
+        <span class="text-[10px] font-black uppercase tracking-widest">{{ label|default:'Sincronizando...' }}</span>
+    </div>
+</div>

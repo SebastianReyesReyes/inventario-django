@@ -9,11 +9,11 @@
 {% block catalogo_descripcion %}Definición de estados operativos para el control de stock y mantenimiento.{% endblock %}
 
 {% block header_actions %}
-    {% if perms.core.add_estadodispositivo %}
-    <button hx-get="{% url 'core:estadodispositivo_create' %}" hx-target="#modal-container" class="px-5 py-3 bg-jmie-orange hover:brightness-110 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-[0_0_15px_rgba(237,139,0,0.3)]">
+    {% if perms.core.add_estado %}
+    <c-btn-primary hx-get="{% url 'core:estado_create' %}" hx-target="#modal-container">
         <span class="material-symbols-outlined mr-2 text-[18px]">add</span>
         Nuevo Estado
-    </button>
+    </c-btn-primary>
     {% endif %}
 {% endblock %}
 
@@ -21,7 +21,9 @@
 {% block refresh_trigger %}estadoListChanged{% endblock %}
 
 {% block table_head %}
-    <th class="px-6 py-5">Nombre del Estado</th>
+    <c-th>Ref.</c-th>
+    <c-th>Nombre</c-th>
+    <c-th>Desc. Breve</c-th>
 {% endblock %}
 
 {% block table_body %}
@@ -41,7 +43,7 @@
     {% empty %}
     <tr>
         <td colspan="2">
-            {% include "partials/empty_state.html" with icon="label" title="Sin Estados" subtitle="No hay estados de inventario definidos." %}
+            <c-empty-state icon="label" title="Sin Estados" subtitle="No hay estados de inventario definidos." />
         </td>
     </tr>
     {% endfor %}

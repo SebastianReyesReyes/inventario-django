@@ -44,6 +44,7 @@ def acta_list(request):
         'tipo': 'tipo_acta',
         'fecha': 'fecha',
         'creado_por': 'creado_por__first_name',
+        'firmada': 'firmada',
     }
     
     sort_field = SORT_MAP.get(sort, 'folio')
@@ -57,10 +58,7 @@ def acta_list(request):
 
     template = 'actas/acta_list.html'
     if request.headers.get('HX-Request'):
-        if 'sort' in request.GET or 'order' in request.GET:
-            template = 'actas/partials/acta_table.html'
-        else:
-            template = 'actas/partials/acta_table_rows.html'
+        template = 'actas/partials/acta_table.html'
 
     return render(request, template, {
         'page_obj': page_obj,

@@ -42,7 +42,7 @@
 {% empty %}
 <tr>
     <td colspan="7">
-        {% include "partials/empty_state.html" with icon="inventory_2" title="Sin Activos" subtitle="No se encontraron dispositivos que coincidan con los filtros seleccionados." action_url="/dispositivos/crear/" action_label="Registrar Equipo" %}
+        <c-empty-state icon="inventory_2" title="Sin Activos" subtitle="No se encontraron dispositivos que coincidan con los filtros seleccionados." action_url="/dispositivos/crear/" action_label="Registrar Equipo" />
     </td>
 </tr>
 {% endfor %}

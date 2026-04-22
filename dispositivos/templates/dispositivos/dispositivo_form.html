@@ -6,17 +6,12 @@
 {% block content %}
 <div class="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
     
-    <!-- Header de la página -->
-    <div class="flex items-center justify-between border-b border-white/5 pb-6">
-        <div>
-            <h1 class="text-3xl font-black tracking-tighter">{{ titulo }}</h1>
-            <p class="text-jmie-gray mt-1 text-sm font-bold">Complete la información técnica y administrativa del equipo.</p>
-        </div>
+    <c-page-header title="{{ titulo }}" subtitle="Complete la información técnica y administrativa del equipo.">
         <a href="javascript:history.back()" class="px-4 py-2 bg-white/5 hover:bg-white/10 text-on-background text-xs font-bold rounded-lg border border-white/10 transition-all flex items-center">
             <span class="material-symbols-outlined text-sm mr-2 shadow-sm">arrow_back</span>
             Volver
         </a>
-    </div>
+    </c-page-header>
     
     <!-- Formulario Principal -->
     <div x-data="{ 

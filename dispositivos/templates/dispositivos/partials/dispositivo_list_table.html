@@ -1,48 +1,12 @@
 <table class="w-full text-left border-collapse">
     <thead>
         <tr class="bg-white/[0.02] border-b border-white/5 text-jmie-gray uppercase text-[10px] font-black tracking-widest">
-            <th class="px-6 py-4 cursor-pointer hover:text-jmie-orange transition-colors select-none"
-                hx-get="{% url 'dispositivos:dispositivo_list' %}?{% if query %}q={{ query }}&{% endif %}{% if filter.form.centro_costo.value %}centro_costo={{ filter.form.centro_costo.value }}&{% endif %}{% if filter.form.estado.value %}estado={{ filter.form.estado.value }}&{% endif %}{% if filter.form.tipo.value %}tipo={{ filter.form.tipo.value }}&{% endif %}{% if filter.form.fabricante.value %}fabricante={{ filter.form.fabricante.value }}&{% endif %}sort=id&order={% if current_sort == 'id' and current_order == 'asc' %}desc{% else %}asc{% endif %}"
-                hx-target="#tabla-wrapper"
-                hx-push-url="true"
-                hx-indicator=".htmx-indicator">
-                ID / Serie {% if current_sort == 'id' %}{% if current_order == 'asc' %}↑{% else %}↓{% endif %}{% endif %}
-            </th>
-            <th class="px-6 py-4 cursor-pointer hover:text-jmie-orange transition-colors select-none"
-                hx-get="{% url 'dispositivos:dispositivo_list' %}?{% if query %}q={{ query }}&{% endif %}{% if filter.form.centro_costo.value %}centro_costo={{ filter.form.centro_costo.value }}&{% endif %}{% if filter.form.estado.value %}estado={{ filter.form.estado.value }}&{% endif %}{% if filter.form.tipo.value %}tipo={{ filter.form.tipo.value }}&{% endif %}{% if filter.form.fabricante.value %}fabricante={{ filter.form.fabricante.value }}&{% endif %}sort=tipo&order={% if current_sort == 'tipo' and current_order == 'asc' %}desc{% else %}asc{% endif %}"
-                hx-target="#tabla-wrapper"
-                hx-push-url="true"
-                hx-indicator=".htmx-indicator">
-                Tipo {% if current_sort == 'tipo' %}{% if current_order == 'asc' %}↑{% else %}↓{% endif %}{% endif %}
-            </th>
-            <th class="px-6 py-4 cursor-pointer hover:text-jmie-orange transition-colors select-none"
-                hx-get="{% url 'dispositivos:dispositivo_list' %}?{% if query %}q={{ query }}&{% endif %}{% if filter.form.centro_costo.value %}centro_costo={{ filter.form.centro_costo.value }}&{% endif %}{% if filter.form.estado.value %}estado={{ filter.form.estado.value }}&{% endif %}{% if filter.form.tipo.value %}tipo={{ filter.form.tipo.value }}&{% endif %}{% if filter.form.fabricante.value %}fabricante={{ filter.form.fabricante.value }}&{% endif %}sort=marca&order={% if current_sort == 'marca' and current_order == 'asc' %}desc{% else %}asc{% endif %}"
-                hx-target="#tabla-wrapper"
-                hx-push-url="true"
-                hx-indicator=".htmx-indicator">
-                Marca & Modelo {% if current_sort == 'marca' %}{% if current_order == 'asc' %}↑{% else %}↓{% endif %}{% endif %}
-            </th>
-            <th class="px-6 py-4 cursor-pointer hover:text-jmie-orange transition-colors select-none"
-                hx-get="{% url 'dispositivos:dispositivo_list' %}?{% if query %}q={{ query }}&{% endif %}{% if filter.form.centro_costo.value %}centro_costo={{ filter.form.centro_costo.value }}&{% endif %}{% if filter.form.estado.value %}estado={{ filter.form.estado.value }}&{% endif %}{% if filter.form.tipo.value %}tipo={{ filter.form.tipo.value }}&{% endif %}{% if filter.form.fabricante.value %}fabricante={{ filter.form.fabricante.value }}&{% endif %}sort=responsable&order={% if current_sort == 'responsable' and current_order == 'asc' %}desc{% else %}asc{% endif %}"
-                hx-target="#tabla-wrapper"
-                hx-push-url="true"
-                hx-indicator=".htmx-indicator">
-                Responsable & CC {% if current_sort == 'responsable' %}{% if current_order == 'asc' %}↑{% else %}↓{% endif %}{% endif %}
-            </th>
-            <th class="px-6 py-4 cursor-pointer hover:text-jmie-orange transition-colors select-none"
-                hx-get="{% url 'dispositivos:dispositivo_list' %}?{% if query %}q={{ query }}&{% endif %}{% if filter.form.centro_costo.value %}centro_costo={{ filter.form.centro_costo.value }}&{% endif %}{% if filter.form.estado.value %}estado={{ filter.form.estado.value }}&{% endif %}{% if filter.form.tipo.value %}tipo={{ filter.form.tipo.value }}&{% endif %}{% if filter.form.fabricante.value %}fabricante={{ filter.form.fabricante.value }}&{% endif %}sort=estado&order={% if current_sort == 'estado' and current_order == 'asc' %}desc{% else %}asc{% endif %}"
-                hx-target="#tabla-wrapper"
-                hx-push-url="true"
-                hx-indicator=".htmx-indicator">
-                Estado {% if current_sort == 'estado' %}{% if current_order == 'asc' %}↑{% else %}↓{% endif %}{% endif %}
-            </th>
-            <th class="px-6 py-4 cursor-pointer hover:text-jmie-orange transition-colors select-none"
-                hx-get="{% url 'dispositivos:dispositivo_list' %}?{% if query %}q={{ query }}&{% endif %}{% if filter.form.centro_costo.value %}centro_costo={{ filter.form.centro_costo.value }}&{% endif %}{% if filter.form.estado.value %}estado={{ filter.form.estado.value }}&{% endif %}{% if filter.form.tipo.value %}tipo={{ filter.form.tipo.value }}&{% endif %}{% if filter.form.fabricante.value %}fabricante={{ filter.form.fabricante.value }}&{% endif %}sort=acta&order={% if current_sort == 'acta' and current_order == 'asc' %}desc{% else %}asc{% endif %}"
-                hx-target="#tabla-wrapper"
-                hx-push-url="true"
-                hx-indicator=".htmx-indicator">
-                Acta {% if current_sort == 'acta' %}{% if current_order == 'asc' %}↑{% else %}↓{% endif %}{% endif %}
-            </th>
+            <c-th-sort sort="id">ID / Serie</c-th-sort>
+            <c-th-sort sort="tipo">Tipo</c-th-sort>
+            <c-th-sort sort="marca">Marca & Modelo</c-th-sort>
+            <c-th-sort sort="responsable">Responsable & CC</c-th-sort>
+            <c-th-sort sort="estado">Estado</c-th-sort>
+            <c-th-sort sort="acta">Acta</c-th-sort>
             <th class="px-6 py-4 text-right">Acciones</th>
         </tr>
     </thead>

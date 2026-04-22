@@ -31,7 +31,6 @@
 ### Seguridad
 - **Permisos granulares**: todos los views usan `@login_required` + `@permission_required`
 - **Modelo de usuario custom** desde el inicio (`colaboradores.Colaborador`)
-- **django-guardian** para permisos a nivel de objeto
 - **4 validadores de contraseña** configurados
 - **Sin SQL raw ni mark_safe** -- buena protección contra inyección
 
@@ -40,18 +39,16 @@
 ## DEBILIDADES (Internas)
 
 ### Críticas
-- **Modelos duplicados**: `inventario/models.py` (634 líneas) define modelos paralelos a `core/`, `colaboradores/`, `dispositivos/`, `actas/` -- riesgo de conflictos de migración
 - **Templates duplicados**: `templates/colaboradores/` sombrea `colaboradores/templates/colaboradores/` con versiones desactualizadas
-- **SECRET_KEY hardcodeada** con prefijo `django-insecure-` -- `settings.py` ignora completamente `.env`
+- **SECRET_KEY sin validación explícita**: si falta en entorno, el arranque puede fallar
 - **`ALLOWED_HOSTS = ['*']`** -- vulnerabilidad a host header poisoning
-- **`DEBUG = True`** hardcodeado -- exposición de stack traces en producción
+- **`DEBUG` depende de variable sin parseo booleano** -- riesgo de configuración ambigua
 
 ### Altas
 - **Service layer ausente** en `dashboard`, `core`, `colaboradores`. `dispositivos` tiene factory pero no service para operaciones de negocio
 - **Views sin transacciones**: `dispositivo_create` y `dispositivo_update` no usan `@transaction.atomic` pese a escribir multi-tabla
 - **Sin manejo de errores** en deletes (`dispositivo_delete`, `colaborador_delete`) -- IntegrityError no capturado
 - **Sin logging configurado** -- no hay auditoría de eventos de seguridad
-- **Sin variables de entorno** en settings pese a tener `.env.example` y `python-dotenv` instalado
 - **Race conditions** en generación de `identificador_interno` y `folio` (read-then-write sin locking)
 
 ### Medias
@@ -61,7 +58,6 @@
 - **Sin tests de dispositivos especializados**: Notebook, Smartphone, Monitor, etc. sin tests
 - **Código duplicado en `core/views.py`**: CRUD de 5 entidades es copy-paste (~150 líneas repetidas)
 - **Print statements en producción** en `dispositivo_update` (líneas 433-434)
-- **Crispy forms declarado pero no usado** -- dependencia muerta
 - **Tailwind CDN en producción** -- JIT compiler en runtime (~200KB+, sin tree-shaking)
 - **Sin `dispatch_uid` en signals** -- riesgo de receivers duplicados
 - **Sin validadores**: RUT, formato IMEI, MAC address, color hex
@@ -110,7 +106,6 @@
 - **Sin HSTS**: No hay HTTP Strict Transport Security
 
 ### Mantenimiento
-- **Modelos duplicados**: Si alguien migra o modifica `inventario/models.py` puede romper migraciones existentes
 - **Templates desactualizados**: Los templates root de colaboradores se usan en vez de los correctos del app -- bugs silenciosos
 - **Tailwind CDN**: Si el CDN cambia o se cae, el sitio pierde estilos completamente
 - **Sin CI/CD**: No hay pipeline automatizado de linting, tests, security scans
@@ -132,8 +127,8 @@
 
 | Prioridad | Acción | Impacto |
 |-----------|--------|---------|
-| **P0** | Usar variables de entorno para SECRET_KEY, DEBUG, ALLOWED_HOSTS | Seguridad crítica |
-| **P0** | Eliminar `inventario/models.py` duplicado o migrar su lógica | Integridad del proyecto |
+| **P0** | Parsear `DEBUG` y validar `SECRET_KEY` al inicio | Seguridad y estabilidad |
+| **P0** | Parametrizar `ALLOWED_HOSTS` por entorno | Seguridad crítica |
 | **P0** | Eliminar `templates/colaboradores/` duplicado | Bugs silenciosos |
 | **P1** | Agregar `@transaction.atomic` a dispositivo_create/update | Integridad de datos |
 | **P1** | Configurar logging de seguridad | Auditoría |

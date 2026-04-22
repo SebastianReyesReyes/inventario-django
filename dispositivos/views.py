@@ -17,7 +17,7 @@ from .forms import (
     AsignacionForm, ReasignacionForm, DevolucionForm, AccesorioForm
 )
 from .services import DispositivoFactory, TrazabilidadService
-from .htmx import htmx_success, htmx_delete_success
+from core.htmx import htmx_render_or_redirect, htmx_redirect_or_redirect
 
 @login_required
 @permission_required('dispositivos.add_dispositivo', raise_exception=True)
@@ -211,7 +211,7 @@ def ajax_get_tech_fields(request):
         form = MonitorTechForm()
         
     if form:
-        return render(request, 'dispositivos/partials/tech_fields.html', {'form': form})
+        return render(request, 'dispositivos/partials/tipo_especifico_fields.html', {'form': form})
     return HttpResponse("")
 
 @login_required
@@ -274,12 +274,12 @@ def dispositivo_asignar(request, pk):
         if form.is_valid():
             creado_por = getattr(request.user, 'colaborador', None)
             movimiento, acta = TrazabilidadService.asignar(dispositivo, form, creado_por=creado_por)
-            return htmx_success(
+            return htmx_render_or_redirect(
                 request,
                 'dispositivos/partials/trazabilidad_success.html',
                 {'mensaje': 'Equipo asignado correctamente.', 'acta': acta},
                 redirect_url=reverse('dispositivos:dispositivo_detail', kwargs={'pk': pk}),
-                trigger='asignacion-saved'
+                trigger='asignacion-saved',
             )
     else:
         form = AsignacionForm()
@@ -301,12 +301,12 @@ def dispositivo_reasignar(request, pk):
         if form.is_valid():
             creado_por = getattr(request.user, 'colaborador', None)
             nuevo_mov, acta = TrazabilidadService.reasignar(dispositivo, form, creado_por=creado_por)
-            return htmx_success(
+            return htmx_render_or_redirect(
                 request,
                 'dispositivos/partials/trazabilidad_success.html',
                 {'mensaje': 'Equipo reasignado correctamente.', 'acta': acta},
                 redirect_url=reverse('dispositivos:dispositivo_detail', kwargs={'pk': pk}),
-                trigger='asignacion-saved'
+                trigger='asignacion-saved',
             )
     else:
         form = ReasignacionForm()
@@ -329,12 +329,12 @@ def dispositivo_devolver(request, pk):
         if form.is_valid():
             creado_por = getattr(request.user, 'colaborador', None)
             ultimo_mov, acta = TrazabilidadService.devolver(dispositivo, form, creado_por=creado_por)
-            return htmx_success(
+            return htmx_render_or_redirect(
                 request,
                 'dispositivos/partials/trazabilidad_success.html',
                 {'mensaje': 'Devolución registrada correctamente.', 'acta': acta},
                 redirect_url=reverse('dispositivos:dispositivo_detail', kwargs={'pk': pk}),
-                trigger='asignacion-saved'
+                trigger='asignacion-saved',
             )
     else:
         form = DevolucionForm()
@@ -363,12 +363,12 @@ def colaborador_entrega_accesorio(request, pk):
         form = AccesorioForm(request.POST)
         if form.is_valid():
             entrega = TrazabilidadService.entregar_accesorio(colaborador, form)
-            return htmx_success(
+            return htmx_render_or_redirect(
                 request,
                 'dispositivos/partials/accesorio_success.html',
                 {'accesorio': entrega.tipo},
                 redirect_url=reverse('colaboradores:colaborador_detail', kwargs={'pk': pk}),
-                trigger='accesorio-saved'
+                trigger='accesorio-saved',
             )
     else:
         form = AccesorioForm()
@@ -450,8 +450,7 @@ def dispositivo_update(request, pk):
             messages.success(request, "Equipo actualizado correctamente.")
             return redirect('dispositivos:dispositivo_detail', pk=pk)
         else:
-            print("Form errors:", form.errors)
-            print("POST data:", request.POST)
+            return
     else:
         form = DispositivoFactory.create_form_instance(instance=dispositivo)
     
@@ -468,9 +467,9 @@ def dispositivo_delete(request, pk):
     dispositivo = get_object_or_404(Dispositivo, pk=pk)
     if request.method in ['POST', 'DELETE']:
         dispositivo.delete()
-        return htmx_delete_success(
+        return htmx_redirect_or_redirect(
             request,
-            redirect_url=reverse('dispositivos:dispositivo_list')
+            redirect_url=reverse('dispositivos:dispositivo_list'),
         )
 
     return render(request, 'dispositivos/partials/dispositivo_confirm_delete.html', {

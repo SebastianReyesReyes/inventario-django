@@ -17,22 +17,14 @@ Django==6.0.2
 django-appconf==1.2.0
 django-constance==4.3.5
 django-crispy-forms==2.6
+# Dev/local diagnostics
 django-debug-toolbar==6.3.0
-django-extensions==4.1
 django-filter==25.2
-django-guardian==3.3.1
 django-htmx==1.27.0
+# Optional roadmap: image processing / scan flows
 django-imagekit==6.1.0
 django-import-export==4.4.0
-django-lifecycle==1.2.7
 django-mcp-server==0.5.7
-django-polymorphic==4.11.2
-django-simple-history==3.11.0
-django-template-partials==25.3
-django-treebeard==5.0.5
-django-unfold==0.89.0
-django-viewflow==2.2.15
-django-widget-tweaks==1.5.1
 djangorestframework==3.16.1
 freetype-py==2.5.1
 h11==0.16.0
@@ -67,7 +59,6 @@ python-multipart==0.0.22
 pywin32==311
 PyYAML==6.0.3
 qrcode==8.2
-redis==7.4.0
 referencing==0.37.0
 reportlab==4.4.10
 requests==2.32.5

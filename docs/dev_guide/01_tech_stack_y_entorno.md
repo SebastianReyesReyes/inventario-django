@@ -11,7 +11,7 @@ Bienvenido al proyecto **Inventario JMIE**. Este documento te ayudará a entende
 ### Frontend
 - **HTMX (`django-htmx`):** Este proyecto adopta activamente la filosofía *hypermedia*. En lugar de utilizar React, Angular, o construir una SPA completa, insertamos atributos HTMX directamente en las plantillas de Django para lograr reactividad y actualizaciones de porciones de la interfaz web (DOM).
 - **Alpine.js:** Se encarga del comportamiento de UI puro (Modales, tooltips, estados visuales sin ir al servidor). Maneja eventos del lado del cliente.
-- **Tailwind CSS (`crispy-tailwind`):** Todo el sistema "Consola de Precisión" está estilizado utilizado componentes y utilitarios de Tailwind CSS acoplados a Django Crispy Forms, para una renderización automática de nuestros formularios web.
+- **Tailwind CSS:** El proyecto usa utilitarios Tailwind en templates y formularios estilizados con `BaseStyledForm`.
 
 ### Pruebas y Aseguramiento de Calidad (QA)
 - **Pytest:** Como *test runner* por defecto, usando librerías adjuntas como `pytest-django`, y soporte de *mocking* con `factory-boy`.
@@ -44,3 +44,8 @@ Bienvenido al proyecto **Inventario JMIE**. Este documento te ayudará a entende
 
 > [!NOTE]
 > Siempre que se deban añadir bibliotecas nuevas, prioriza las utilidades que refuercen HTMX o el ecosistema nativo de Django, para no generar sobrecargas con tecnologías de SPA (Evitar React o Vue.js).
+
+## Política de dependencias
+
+Para mantener el stack limpio, revisa la guía de higiene de dependencias:
+- [`docs/dev_guide/dependency_hygiene.md`](dependency_hygiene.md)

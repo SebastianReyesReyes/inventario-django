@@ -4,15 +4,15 @@ Este proyecto enfatiza un código limpio y acoplado a las características de la
 
 ## Diseño de Vistas (Views)
 
-Preferimos las **vistas basadas en clases (CBV - Class Based Views)** o funciones modulares decoradas. 
+Preferimos **funciones modulares decoradas (FBV)** para mantener consistencia con la base actual del proyecto. CBV se usan en algunos catálogos, pero el patrón dominante hoy es FBV + helpers reutilizables.
 Todo desarrollador debe limitar lo que su vista procesa. Una vista Django solo debe enfocarse en:
 1. Validar las políticas de Permisos (Quien tiene acceso).
 2. Procesar el Request y recuperar datos requeridos (Desde GET o POST vía `Forms`).
 3. Retornar el `Template`.
 
-### Manejo de Formularios y Crispy Tailwind
-1. **Delegar el pintado HTML en Crispy:** Todos los formularios Django (Ej: `ActaModelForm`) deben configurarse utilizando un helper: `self.helper = FormHelper()`. 
-2. **Widgets consistentes:** Deberías asignar atributos específicos que facilitan las interacciones desde los constructores del Form:
+### Manejo de Formularios
+1. **Base única de estilos:** Los formularios del proyecto deben heredar de `core.forms.BaseStyledForm` para mantener consistencia visual.
+2. **Widgets consistentes:** Asignar atributos que facilitan interacciones HTMX/Alpine desde el constructor del Form:
     ```python
     self.fields['colaborador'].widget.attrs.update({'x-data': 'autocomplete()'})
     ```

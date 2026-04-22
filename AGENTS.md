@@ -1,70 +1,66 @@
 # AGENTS.md - Inventario JMIE
 
-## Stack
-- **Django 6.0.2** with Django REST Framework
-- **HTMX + Alpine.js** for frontend reactivity (no SPA frameworks)
-- **Tailwind CSS** via crispy-tailwind for forms
-- **pytest** with pytest-django, pytest-playwright, factory-boy
-- **Playwright** for E2E browser tests
-- **SQLite** by default (`db.sqlite3`)
+## Stack real (actual)
+- Django 6.0.2 + HTMX + Alpine.js + Tailwind (SSR, sin SPA).
+- Pruebas con `pytest`, `pytest-django`, `factory-boy`, `pytest-playwright`.
+- Base de datos local: SQLite (`db.sqlite3`).
 
-## Project Structure
+## Estructura del proyecto
 ```
-inventario_jmie/     # Django project settings
-core/                # Base templates, layouts, global utilities
-colaboradores/       # Staff model (AUTH_USER_MODEL) and management
-dispositivos/        # Inventory: hardware, types, maintenance
-actas/               # Legal documents (delivery/return), services layer
-dashboard/           # Statistics and metrics views
-tests_e2e/           # Playwright E2E tests
+inventario_jmie/     # settings, urls, arranque del proyecto
+core/                # utilidades globales, catálogos base, helpers HTMX
+colaboradores/       # AUTH_USER_MODEL (Colaborador)
+dispositivos/        # inventario, mantenimientos, asignaciones, accesorios
+actas/               # lógica legal/documental (service layer)
+dashboard/           # métricas, filtros y exportación
+tests_e2e/           # E2E Playwright + Page Objects
 ```
 
-## Key Commands
+## Setup rápido (Windows)
+- `python -m venv venv && .\venv\Scripts\Activate.ps1`
+- `pip install -r requirements.txt`
+- Copiar `.env.example` a `.env` (el `SECRET_KEY` se lee desde entorno).
+- `python manage.py makemigrations && python manage.py migrate`
+- `python manage.py runserver`
+
+## Comandos clave
 ```bash
-# Setup
-python -m venv venv && .\venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-python manage.py makemigrations && python manage.py migrate
-
-# Run dev server
-python manage.py runserver
-
-# Tests
-pytest                              # All tests
-pytest -m "not e2e"                # Fast tests only (no browser)
-pytest -m e2e --headed --browser chromium  # E2E with visual inspection
-pytest --cov=. --cov-report=term-missing   # With coverage
+pytest
+pytest -m "not e2e"
+pytest -m e2e --headed --browser chromium
+pytest path\to\test.py::test_name
 ```
 
-## Architecture Conventions
-- **Service Layer**: Complex business logic goes in `services.py`, not views. Example: `actas/services.py`
-- **Models**: Use `clean()` for validation, signals only for cache/notifications
-- **HTMX responses**: Return HTML partials, not JSON. Use `TemplateResponse` or `HttpResponse`
-- **N+1 prevention**: Always use `select_related()` or `prefetch_related()` for related objects
-- **Atomic transactions**: Wrap multi-model writes in `transaction.atomic()`
+## Convenciones críticas
+- **Service Layer**: lógica de negocio compleja en `services.py`, no en views.
+- **ORM performance**: usar `select_related()` / `prefetch_related()` en listados con relaciones.
+- **Transacciones**: envolver escrituras multi-modelo en `transaction.atomic()`.
+- **Soft delete de usuarios**: `Colaborador.delete()` desactiva (`esta_activo`/`is_active`), no borra fila.
 
-## Forms
-- Use Crispy `FormHelper` for all forms: `self.helper = FormHelper()`
-- HTMX attributes on widgets: `self.fields['field'].widget.attrs.update({'x-data': 'autocomplete()'})`
+## HTMX
+- Responder con HTML parcial (no JSON para flujos de UI).
+- Reutilizar helpers de `core/htmx.py` (`htmx_trigger_response`, `htmx_render_or_redirect`, `htmx_success_or_redirect`, `htmx_redirect_or_redirect`).
+- En mutaciones, preferir `204 + HX-Trigger` para refrescar tabla/toast cuando aplique.
 
-## Tests
-- **Factories**: Use `core/tests/factories.py` for test data, not manual `.objects.create()`
-- **E2E selectors**: Wait for HTMX renders with `.wait_for_selector()` before asserting
-- **Markers**: `@pytest.mark.e2e`, `@pytest.mark.integration`, `@pytest.mark.unit`
+## Naming de URLs (obligatorio)
+- CRUD debe seguir: `[modelname]_[action]` usando `model_name` real en minúscula.
+- Esto es requerido por `core/templatetags/action_tags.py` (`reverse(f"{app_label}:{model_name}_{action}", ...)`).
+- Si no se respeta, se rompe `{% render_actions %}` con `NoReverseMatch`.
 
-## Settings Notes
-- `AUTH_USER_MODEL = 'colaboradores.Colaborador'`
-- `LOGIN_URL = '/login/'`
-- Language: Spanish Chile (`LANGUAGE_CODE = 'es-cl'`)
-- Secret key is hardcoded (dev only) - do not commit production secrets
+## Formularios
+- Patrón base: heredar de `core.forms.BaseStyledForm` para consistencia visual.
+- Atributos HTMX/Alpine van definidos en el `__init__` del form/widget.
 
-## Config Files
-| File | Purpose |
-|------|---------|
-| `.env.example` | Environment variables template |
-| `pytest.ini` | Pytest configuration |
-| `inventario_jmie/settings.py` | Django settings |
+## Testing
+- Usar `core/tests/factories.py` como fuente principal de datos de prueba.
+- Marcadores disponibles: `e2e`, `integration`, `unit`.
+- E2E usa `live_server` y `tests_e2e/pages/` (Page Object Model).
 
-## Docs
-- Full dev guide: `docs/dev_guide/` (tech stack, patterns, testing, frontend)
-- Testing guide: `.agents/notes/testing_guide.md`
+## Higiene de dependencias
+- Si una dependencia no tiene uso verificable en código/flujo actual, se elimina de `requirements.txt`.
+- Dependencias opcionales deben tener caso de uso concreto y referencia de roadmap.
+- Revisar dependencias cada 4–6 semanas.
+
+## Referencias útiles
+- Guía dev: `docs/dev_guide/`
+- Guía de pruebas: `.agents/notes/testing_guide.md`

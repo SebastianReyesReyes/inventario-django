@@ -4,6 +4,7 @@ from core.models import TipoDispositivo, EstadoDispositivo, Modelo, CentroCosto
 from colaboradores.models import Colaborador
 from django.core.exceptions import ValidationError
 from django.utils import timezone
+from constance import config
 
 class DispositivoQuerySet(models.QuerySet):
     def activos(self):
@@ -45,7 +46,7 @@ class Dispositivo(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.identificador_interno:
-            prefix = "JMIE"
+            prefix = getattr(config, 'CLI_PREFIX_ID', 'JMIE')
             # Obtenemos la sigla del tipo de dispositivo
             sigla = self.tipo.sigla if self.tipo and self.tipo.sigla else "EQUIP"
             
@@ -64,7 +65,7 @@ class Dispositivo(models.Model):
             else:
                 new_num = 1
             
-            self.identificador_interno = f"{prefix}-{sigla}-{new_num:05d}"
+            self.identificador_interno = f"{prefix}-{sigla}-{new_num:04d}"
             
         super().save(*args, **kwargs)
 

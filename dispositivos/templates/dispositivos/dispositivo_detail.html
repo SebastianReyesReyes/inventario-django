@@ -9,9 +9,11 @@
 <div class="max-w-5xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
     
     <!-- Header / Resumen -->
-    <div class="bg-surface-container-low p-8 rounded-2xl border border-white/5 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-xl relative overflow-hidden">
+    <div class="bg-surface-container-low p-8 rounded-2xl border border-white/5 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-xl relative">
         <!-- Decoración de fondo -->
-        <div class="absolute top-0 right-0 w-64 h-64 bg-jmie-blue/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl"></div>
+        <div class="absolute inset-0 overflow-hidden rounded-2xl pointer-events-none">
+            <div class="absolute top-0 right-0 w-64 h-64 bg-jmie-blue/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl"></div>
+        </div>
         
         <div class="relative z-10">
             <div class="flex items-center gap-3 mb-2">
@@ -322,12 +324,12 @@
 {% endif %}
 
 <script>
-    // Listener para recargar la página si se guarda un movimiento o mantenimiento exitoso
-    document.body.addEventListener('asignacion-saved', function() {
-        location.reload();
-    });
+    // Listener para recargar la página al guardar un mantenimiento.
+    // (asignacion-saved no recarga la página aquí porque el modal trazabilidad_success.html lo hace al cerrarse)
     document.body.addEventListener('mantenimiento-saved', function() {
-        location.reload();
+        setTimeout(function() {
+            location.reload();
+        }, 1500);
     });
 </script>
 {% endblock %}

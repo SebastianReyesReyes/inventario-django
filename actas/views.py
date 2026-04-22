@@ -72,7 +72,7 @@ def acta_list(request):
 
 @login_required
 @permission_required('actas.add_acta', raise_exception=True)
-def acta_crear(request):
+def acta_create(request):
     """Crea una nueva acta vinculando asignaciones seleccionadas usando ActaService."""
     if request.method == 'POST':
         form = ActaCrearForm(request.POST)

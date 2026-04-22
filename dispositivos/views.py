@@ -86,7 +86,7 @@ def dispositivo_list(request):
         dispositivo=OuterRef('pk')
     ).order_by('-fecha_inicio').values('acta__firmada')[:1]
     
-    dispositivos = Dispositivo.objects.select_related('tipo', 'modelo__fabricante', 'estado', 'propietario_actual', 'centro_costo').annotate(
+    dispositivos = Dispositivo.objects.select_related('tipo', 'modelo', 'modelo__fabricante', 'estado', 'propietario_actual', 'centro_costo').annotate(
         acta_firmada=Subquery(ultima_acta_firmada)
     )
     
@@ -450,7 +450,11 @@ def dispositivo_update(request, pk):
             messages.success(request, "Equipo actualizado correctamente.")
             return redirect('dispositivos:dispositivo_detail', pk=pk)
         else:
-            return
+            return render(request, 'dispositivos/dispositivo_form.html', {
+                'form': form,
+                'tech_forms': tech_forms,
+                'titulo': f'Editar {dispositivo.identificador_interno}'
+            })
     else:
         form = DispositivoFactory.create_form_instance(instance=dispositivo)
     

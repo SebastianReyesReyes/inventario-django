@@ -19,7 +19,7 @@
             <div class="flex-1 text-center lg:text-left">
                 <div class="inline-flex items-center px-4 py-1.5 rounded-full bg-jmie-orange/10 text-jmie-orange text-[10px] font-black tracking-[0.2em] uppercase mb-8 border border-jmie-orange/20">
                     <span class="w-2 h-2 rounded-full bg-jmie-orange mr-3 animate-pulse shadow-[0_0_8px_#ED8B00]"></span>
-                    Sistema Activo • JMIE Precision Console
+                    Sistema Activo
                 </div>
                 <h1 class="text-5xl lg:text-7xl font-black text-on-background mb-6 tracking-tighter leading-none">
                     Gestión Inteligente de <span class="text-transparent bg-clip-text bg-gradient-to-r from-jmie-orange to-amber-400">Activos IT</span>
@@ -107,15 +107,15 @@
                 <span class="w-1.5 h-1.5 rounded-full bg-jmie-orange mr-3"></span>
                 Operaciones Técnicas
             </h4>
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid  gap-4">
                 <a href="{% url 'dispositivos:dispositivo_create' %}" class="p-6 rounded-2xl bg-background border border-white/5 hover:bg-white/5 transition-all flex flex-col gap-4 group">
                     <span class="material-symbols-outlined text-jmie-orange group-hover:scale-110 transition-transform">add_box</span>
                     <span class="text-[10px] font-black uppercase tracking-widest leading-tight">Registrar Nuevo Equipo</span>
                 </a>
-                <button @click="alert('Abrir escáner QR...')" class="p-6 rounded-2xl bg-background border border-white/5 hover:bg-white/5 transition-all flex flex-col gap-4 group text-left">
+                <!-- <button @click="alert('Abrir escáner QR...')" class="p-6 rounded-2xl bg-background border border-white/5 hover:bg-white/5 transition-all flex flex-col gap-4 group text-left">
                     <span class="material-symbols-outlined text-jmie-gray group-hover:scale-110 transition-transform">qr_code_scanner</span>
                     <span class="text-[10px] font-black uppercase tracking-widest leading-tight">Escanear Código QR</span>
-                </button>
+                </button> -->
             </div>
         </div>
 

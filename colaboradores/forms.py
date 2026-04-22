@@ -1,5 +1,6 @@
 from django import forms
 from .models import Colaborador
+from core.forms import BaseStyledForm
 import re
 
 def validar_rut(rut):
@@ -33,7 +34,7 @@ def validar_rut(rut):
     except (ValueError, TypeError):
         return False
 
-class ColaboradorForm(forms.ModelForm):
+class ColaboradorForm(BaseStyledForm):
     class Meta:
         model = Colaborador
         fields = [
@@ -41,35 +42,8 @@ class ColaboradorForm(forms.ModelForm):
             'rut', 'cargo', 'departamento', 'centro_costo', 'azure_id'
         ]
         widgets = {
-            'username': forms.TextInput(attrs={
-                'class': 'w-full bg-surface-container-high border border-white/10 rounded-xl px-4 py-2 text-sm text-on-background focus:ring-2 focus:ring-jmie-blue/50 outline-none',
-                'placeholder': 'Ej: jdoe'
-            }),
-            'first_name': forms.TextInput(attrs={
-                'class': 'w-full bg-surface-container-high border border-white/10 rounded-xl px-4 py-2 text-sm text-on-background focus:ring-2 focus:ring-jmie-blue/50 outline-none'
-            }),
-            'last_name': forms.TextInput(attrs={
-                'class': 'w-full bg-surface-container-high border border-white/10 rounded-xl px-4 py-2 text-sm text-on-background focus:ring-2 focus:ring-jmie-blue/50 outline-none'
-            }),
-            'email': forms.EmailInput(attrs={
-                'class': 'w-full bg-surface-container-high border border-white/10 rounded-xl px-4 py-2 text-sm text-on-background focus:ring-2 focus:ring-jmie-blue/50 outline-none'
-            }),
-            'rut': forms.TextInput(attrs={
-                'class': 'w-full bg-surface-container-high border border-white/10 rounded-xl px-4 py-2 text-sm text-on-background focus:ring-2 focus:ring-jmie-blue/50 outline-none',
-                'placeholder': '12.345.678-k'
-            }),
-            'cargo': forms.TextInput(attrs={
-                'class': 'w-full bg-surface-container-high border border-white/10 rounded-xl px-4 py-2 text-sm text-on-background focus:ring-2 focus:ring-jmie-blue/50 outline-none',
-            }),
-            'departamento': forms.Select(attrs={
-                'class': 'w-full bg-surface-container-high border border-white/10 rounded-xl px-4 py-2 text-sm text-on-background focus:ring-2 focus:ring-jmie-blue/50 outline-none h-10'
-            }),
-            'centro_costo': forms.Select(attrs={
-                'class': 'w-full bg-surface-container-high border border-white/10 rounded-xl px-4 py-2 text-sm text-on-background focus:ring-2 focus:ring-jmie-blue/50 outline-none h-10'
-            }),
-            'azure_id': forms.TextInput(attrs={
-                'class': 'w-full bg-surface-container-high border border-white/10 rounded-xl px-4 py-2 text-sm text-on-background focus:ring-2 focus:ring-jmie-blue/50 outline-none'
-            }),
+            'username': forms.TextInput(attrs={'placeholder': 'Ej: jdoe'}),
+            'rut': forms.TextInput(attrs={'placeholder': '12.345.678-k'}),
         }
 
     def clean_rut(self):

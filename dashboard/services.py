@@ -42,11 +42,11 @@ class DashboardMetricsService:
         total_activos = total_dispositivos - total_baja
         porcentaje_asignados = round((total_asignados / total_activos * 100) if total_activos > 0 else 0)
 
-        total_notebooks_disponibles = Dispositivo.objects.filter(
+        total_notebooks_disponibles = filtered_qs.filter(
             tipo__nombre__icontains="Notebook",
             estado__nombre__in=["Disponible", "Reservado"],
         ).count()
-        total_smartphones_disponibles = Dispositivo.objects.filter(
+        total_smartphones_disponibles = filtered_qs.filter(
             tipo__nombre__icontains="Smartphone",
             estado__nombre__in=["Disponible", "Reservado"],
         ).count()

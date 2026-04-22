@@ -20,11 +20,10 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib.auth import views as auth_views
 
-from core.views import home, error_403
+from core.views import home
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('mcp/', include('mcp_server.urls')),
     path('', home, name='home'),
     path('catalogos/', include('core.urls')),
     path('dispositivos/', include('dispositivos.urls', namespace='dispositivos')),

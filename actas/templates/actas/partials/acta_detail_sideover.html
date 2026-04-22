@@ -40,7 +40,7 @@
                             <div class="flex items-center gap-2">
                                 <span class="w-1.5 h-1.5 rounded-full {% if acta.firmada %}bg-emerald-500{% else %}bg-amber-500{% endif %}"></span>
                                 <span class="text-[10px] font-black uppercase tracking-widest {% if acta.firmada %}text-emerald-400{% else %}text-amber-400{% endif %}">
-                                    {{ acta.firmada|yesno:"FIRMADA & BLINDADA,PENDIENTE DE FIRMA" }}
+                                    {{ acta.firmada|yesno:"FIRMADA,PENDIENTE DE FIRMA" }}
                                 </span>
                             </div>
                         </div>

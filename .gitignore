@@ -9,7 +9,6 @@ varios/
 .vscode/
 .pytest_cache/
 .coverage
-.github/
 .stitch/
 scratch/
 pytest_output.txt

@@ -23,6 +23,7 @@ Las actas no son solo registros; son documentos legales vinculados a movimientos
 
 *   **Flujo**: `Vistas de Dispositivo` -> `ActaService` -> `Generación PDF`.
 *   **Generación Automática**: Al realizar una asignación, se dispara el método `ActaService.crear_acta`. Este centraliza la lógica para asegurar que el folio sea correlativo y se vinculen los IDs de historial correctos.
+*   **Aislamiento Transaccional**: La creación o edición del dispositivo y la generación del acta se ejecutan en bloques `transaction.atomic()` separados. Si la generación del acta falla, el registro del dispositivo no se revierte.
 *   **Frontend**: La vista `trazabilidad_success.html` detecta la presencia de un objeto `acta` y gatilla un `window.open()` para entregar el PDF inmediatamente al usuario.
 
 ## 4. Manejo de Fechas
@@ -30,5 +31,8 @@ Los inputs de tipo `<input type="date">` de HTML5 requieren estrictamente el for
 *   **Solución**: Todos los formularios que usen fechas deben forzar el formato en el widget:
     `forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'})`.
 
+## 5. Logging y Trazabilidad
+El sistema configura loggers por aplicación (`dispositivos`, `actas`, `colaboradores`, `core`) que escriben en `inventario.log` en la raíz del proyecto. Esto permite auditar operaciones críticas (creación de equipos, generación de actas, cambios de asignación) sin depender de `print()`.
+
 ---
-*Documentación generada el 17 de abril de 2026.*
+*Documentación actualizada el 24 de abril de 2026.*

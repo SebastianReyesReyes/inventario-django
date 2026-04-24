@@ -14,8 +14,11 @@ El sistema está dividido en módulos o 'apps' según los principios de Django e
 
 ### 1. Patrón Layered / Services Pattern (Patrón Servicios)
 En Django, es usual pecar de vistas obesas ("Fat Views"). En este proyecto derivamos lógica transaccional y compleja a una **Capa de Servicios**:
-* Ejemplo: Para asignar múltiples dispositivos, cambiar el estado del mismo, e incrementar los conteos, esta orquestación reside en clases agrupadas como `ActaService` (`actas/services.py`).
+* Ejemplo: Para asignar múltiples dispositivos, cambiar el estado del mismo, e incrementar los conteos, esta orquestación reside en clases agrupadas como `ActaService` (`actas/services.py`) y `DispositivoFactory` / `TrazabilidadService` (`dispositivos/services.py`).
 * Favorece la "separación de preocupaciones" (*Separation of Concerns*). La vista de Django sólo se encarga de recibir HTTP, procesarlo en la capa servicio y retornar `TemplateResponse` o una respuesta HTMX.
+
+### Transacciones anidadas y aislamiento de fallos
+Cuando una vista realiza una escritura principal (ej. crear un `Dispositivo`) y luego una operación secundaria que puede fallar (ej. generar un acta legal), se utilizan **bloques `transaction.atomic()` separados**. De este modo, el fallo de la operación secundaria no revierte la escritura principal.
 
 ### 2. Patrón Repositorio (vía Django ORM)
 Django automáticamente funciona con el patrón de Active Record bajo su ORM. Extendemos `models.Manager` y `models.QuerySet` para agregar lógica específica de la base de datos (por ejemplo, buscar dispositivos filtrados por centro de costos específicos de un proyecto).

@@ -30,4 +30,13 @@ El dicho estándar suele ser *Fat Models, Thin Views*. Recomendamos situar las r
 
 ## Reglas de Control de Errores y Seguridad (Actas / CRUD)
 1. **Aislamiento Semántico (Select_related / prefetch_related):** Es inmensamente vital utilizar `.select_related()` o `.prefetch_related()` para colecciones en listados con N+1 *Queries*, comúnmente utilizados en vistas de tabla de Catálogo y dashboard de Inventario.
-2. **Protección de Transacciones:** Usa siempre transaccionalidad `with transaction.atomic():` en la creación masiva de asignaciones de objetos que requieran coherencia atómica (Todo o nada).
+2. **Protección de Transacciones:** Usa siempre transaccionalidad `with transaction.atomic():` en la creación masiva de asignaciones de objetos que requieran coherencia atómica (Todo o nada). Si una operación secundaria (como generar un acta) puede fallar por motivos independientes, envuélvela en su propio bloque atómico para no revertir la operación principal.
+3. **Manejo de `ProtectedError` / `IntegrityError` en eliminaciones:** Si un modelo tiene relaciones `PROTECT`, la eliminación lanzará excepciones. Las vistas deben capturarlas y devolver una respuesta amigable (renderizando el modal con un mensaje de error o disparando un toast vía `HX-Trigger`).
+
+## Validadores compartidos
+Evita duplicar lógica de validación entre forms y modelos. Utiliza funciones centralizadas en `core/utils.py`:
+- **`validar_rut_chileno(rut)`** — Valida un RUT chileno usando Módulo 11. Acepta formatos con/sin puntos y guion.
+- **`RUTChilenoValidator`** — Validador de Django (`deconstructible`) reutilizable en modelos y forms.
+
+## Logging
+El proyecto configura loggers por aplicación (`dispositivos`, `actas`, `colaboradores`, `core`) que escriben en `inventario.log` en la raíz del proyecto. Usa `import logging; logger = logging.getLogger(__name__)` en vez de `print()` para facilitar la trazabilidad en producción.

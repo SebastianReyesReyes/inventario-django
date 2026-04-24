@@ -1,3 +1,4 @@
+import json
 import qrcode
 import io
 from django.shortcuts import render, redirect, get_object_or_404
@@ -5,8 +6,8 @@ from django.urls import reverse
 from django.http import HttpResponse, FileResponse
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib import messages
-from django.db import transaction
-from django.db.models import Q, OuterRef, Subquery
+from django.db import transaction, IntegrityError
+from django.db.models import Q, OuterRef, Subquery, ProtectedError
 from django.utils import timezone
 
 from core.models import TipoDispositivo, Modelo, Fabricante, EstadoDispositivo
@@ -17,7 +18,7 @@ from .forms import (
     AsignacionForm, ReasignacionForm, DevolucionForm, AccesorioForm
 )
 from .services import DispositivoFactory, TrazabilidadService
-from core.htmx import htmx_render_or_redirect, htmx_redirect_or_redirect
+from core.htmx import htmx_render_or_redirect, htmx_redirect_or_redirect, is_htmx
 
 @login_required
 @permission_required('dispositivos.add_dispositivo', raise_exception=True)
@@ -34,23 +35,28 @@ def dispositivo_create(request):
         form = DispositivoFactory.create_form_instance(request.POST, request.FILES, tipo_id)
 
         if form.is_valid():
-            dispositivo = form.save()
-            
-            # Si se solicitó generar acta y hay propietario asignado
+            # Aislamos transaccionalmente la creación del dispositivo base
+            with transaction.atomic():
+                dispositivo = form.save()
+
+            # Si se solicitó generar acta y hay propietario asignado,
+            # ejecutamos la generación del acta en un bloque atómico separado
+            # para no revertir el registro del equipo en caso de fallo.
             if form.cleaned_data.get('generar_acta') and dispositivo.propietario_actual:
                 from actas.services import ActaService
                 movimiento = dispositivo.historial.filter(
                     colaborador=dispositivo.propietario_actual
                 ).order_by('-fecha_inicio').first()
-                
+
                 if movimiento:
-                    acta = ActaService.crear_acta(
-                        colaborador=dispositivo.propietario_actual,
-                        tipo_acta='ENTREGA',
-                        asignacion_ids=[movimiento.pk],
-                        creado_por=request.user,
-                        observaciones=f"Acta generada automáticamente al registrar equipo {dispositivo.identificador_interno}."
-                    )
+                    with transaction.atomic():
+                        acta = ActaService.crear_acta(
+                            colaborador=dispositivo.propietario_actual,
+                            tipo_acta='ENTREGA',
+                            asignacion_ids=[movimiento.pk],
+                            creado_por=request.user,
+                            observaciones=f"Acta generada automáticamente al registrar equipo {dispositivo.identificador_interno}."
+                        )
                     messages.success(
                         request,
                         f"Equipo registrado y acta {acta.folio} generada correctamente."
@@ -60,12 +66,12 @@ def dispositivo_create(request):
                         'show_acta_modal': True,
                         'acta': acta,
                     })
-            
+
             messages.success(request, "Equipo registrado correctamente.")
             return redirect('dispositivos:dispositivo_detail', pk=dispositivo.pk)
     else:
         form = DispositivoFactory.create_form_instance()
-    
+
     return render(request, 'dispositivos/dispositivo_form.html', {
         'form': form,
         'tech_forms': tech_forms,
@@ -391,7 +397,7 @@ def dispositivo_update(request, pk):
     """Actualiza la información de un dispositivo."""
     dispositivo = get_object_or_404(Dispositivo, pk=pk)
     propietario_anterior = dispositivo.propietario_actual
-    
+
     tech_forms = {
         'notebook': NotebookTechForm(request.POST if request.method == 'POST' else None, instance=getattr(dispositivo, 'notebook', None) if hasattr(dispositivo, 'notebook') else None),
         'smartphone': SmartphoneTechForm(request.POST if request.method == 'POST' else None, instance=getattr(dispositivo, 'smartphone', None) if hasattr(dispositivo, 'smartphone') else None),
@@ -401,40 +407,47 @@ def dispositivo_update(request, pk):
     if request.method == 'POST':
         form = DispositivoFactory.create_form_instance(request.POST, request.FILES, instance=dispositivo)
         if form.is_valid():
-            dispositivo = form.save()
-            
-            nuevo_propietario = dispositivo.propietario_actual
-            cambio_propietario = (propietario_anterior != nuevo_propietario)
-            
-            # Si cambió el propietario y se solicitó generar acta
-            if cambio_propietario and form.cleaned_data.get('generar_acta') and nuevo_propietario:
-                # Cerrar asignación anterior si existe
-                ultimo_mov = dispositivo.historial.filter(fecha_fin__isnull=True).first()
-                if ultimo_mov and cambio_propietario:
-                    ultimo_mov.fecha_fin = timezone.now().date()
-                    ultimo_mov.save()
-                
-                # Crear nueva asignación
-                movimiento = HistorialAsignacion.objects.create(
-                    dispositivo=dispositivo,
-                    colaborador=nuevo_propietario,
-                    condicion_fisica="Asignación generada desde edición del equipo."
-                )
-                
-                # Actualizar estado del dispositivo
-                estado_asignado, _ = EstadoDispositivo.objects.get_or_create(nombre='Asignado')
-                dispositivo.estado = estado_asignado
-                dispositivo.save()
-                
-                # Generar acta
+            cambio_propietario = False
+            nuevo_propietario = None
+            movimiento = None
+
+            # Bloque atómico para la edición del dispositivo base + trazabilidad
+            with transaction.atomic():
+                dispositivo = form.save()
+
+                nuevo_propietario = dispositivo.propietario_actual
+                cambio_propietario = (propietario_anterior != nuevo_propietario)
+
+                # Si cambió el propietario y se solicitó generar acta,
+                # actualizamos la trazabilidad dentro del mismo bloque base.
+                if cambio_propietario and form.cleaned_data.get('generar_acta') and nuevo_propietario:
+                    ultimo_mov = dispositivo.historial.filter(fecha_fin__isnull=True).first()
+                    if ultimo_mov and cambio_propietario:
+                        ultimo_mov.fecha_fin = timezone.now().date()
+                        ultimo_mov.save()
+
+                    movimiento = HistorialAsignacion.objects.create(
+                        dispositivo=dispositivo,
+                        colaborador=nuevo_propietario,
+                        condicion_fisica="Asignación generada desde edición del equipo."
+                    )
+
+                    estado_asignado, _ = EstadoDispositivo.objects.get_or_create(nombre='Asignado')
+                    dispositivo.estado = estado_asignado
+                    dispositivo.save()
+
+            # Generación del acta en un bloque atómico separado para no revertir
+            # la edición del equipo si falla la creación del acta.
+            if cambio_propietario and form.cleaned_data.get('generar_acta') and nuevo_propietario and movimiento:
                 from actas.services import ActaService
-                acta = ActaService.crear_acta(
-                    colaborador=nuevo_propietario,
-                    tipo_acta='ENTREGA',
-                    asignacion_ids=[movimiento.pk],
-                    creado_por=request.user,
-                    observaciones=f"Acta generada automáticamente al editar asignación de {dispositivo.identificador_interno}."
-                )
+                with transaction.atomic():
+                    acta = ActaService.crear_acta(
+                        colaborador=nuevo_propietario,
+                        tipo_acta='ENTREGA',
+                        asignacion_ids=[movimiento.pk],
+                        creado_por=request.user,
+                        observaciones=f"Acta generada automáticamente al editar asignación de {dispositivo.identificador_interno}."
+                    )
                 messages.success(
                     request,
                     f"Equipo actualizado y acta {acta.folio} generada correctamente."
@@ -444,7 +457,7 @@ def dispositivo_update(request, pk):
                     'show_acta_modal': True,
                     'acta': acta,
                 })
-            
+
             messages.success(request, "Equipo actualizado correctamente.")
             return redirect('dispositivos:dispositivo_detail', pk=pk)
         else:
@@ -455,7 +468,7 @@ def dispositivo_update(request, pk):
             })
     else:
         form = DispositivoFactory.create_form_instance(instance=dispositivo)
-    
+
     return render(request, 'dispositivos/dispositivo_form.html', {
         'form': form,
         'tech_forms': tech_forms,
@@ -468,11 +481,32 @@ def dispositivo_delete(request, pk):
     """Elimina un dispositivo (confirmación vía modal)."""
     dispositivo = get_object_or_404(Dispositivo, pk=pk)
     if request.method in ['POST', 'DELETE']:
-        dispositivo.delete()
-        return htmx_redirect_or_redirect(
-            request,
-            redirect_url=reverse('dispositivos:dispositivo_list'),
-        )
+        try:
+            dispositivo.delete()
+            return htmx_redirect_or_redirect(
+                request,
+                redirect_url=reverse('dispositivos:dispositivo_list'),
+            )
+        except (ProtectedError, IntegrityError):
+            error_msg = (
+                "No se puede eliminar este equipo porque tiene un historial de "
+                "asignaciones, actas o mantenimientos asociados."
+            )
+            if is_htmx(request):
+                # Devolvemos el modal actualizado con el mensaje de error
+                # y disparámos el Toast vía HX-Trigger.
+                response = render(
+                    request,
+                    'dispositivos/partials/dispositivo_confirm_delete.html',
+                    {'dispositivo': dispositivo, 'error': error_msg},
+                )
+                response['HX-Trigger'] = json.dumps(
+                    {'show-notification': {'value': error_msg}}
+                )
+                return response
+
+            messages.error(request, error_msg)
+            return redirect('dispositivos:dispositivo_list')
 
     return render(request, 'dispositivos/partials/dispositivo_confirm_delete.html', {
         'dispositivo': dispositivo

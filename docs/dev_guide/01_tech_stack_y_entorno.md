@@ -30,20 +30,42 @@ Bienvenido al proyecto **Inventario JMIE**. Este documento te ayudará a entende
    .\venv\Scripts\Activate.ps1
    ```
 
-2. **Instalar Dependencias:**
-   ```bash
-   pip install -r requirements.txt
-   ```
+ 2. **Instalar Dependencias:**
+    ```bash
+    pip install -r requirements.txt
+    ```
 
-3. **Migraciones e Inicio:**
-   ```bash
-   python manage.py makemigrations
-   python manage.py migrate
-   python manage.py runserver
-   ```
+ 3. **Configurar Variables de Entorno:**
+    ```bash
+    cp .env.example .env
+    # Editar .env: rellenar DJANGO_SECRET_KEY con un valor seguro (>30 chars).
+    # Opcional: definir DB_PATH si deseas ubicar la base de datos fuera de la raíz.
+    ```
+
+ 4. **Migraciones e Inicio:**
+    ```bash
+    python manage.py makemigrations
+    python manage.py migrate
+    python manage.py runserver
+    ```
 
 > [!NOTE]
 > Siempre que se deban añadir bibliotecas nuevas, prioriza las utilidades que refuercen HTMX o el ecosistema nativo de Django, para no generar sobrecargas con tecnologías de SPA (Evitar React o Vue.js).
+
+## Comandos de utilidad
+
+### Importación masiva de dispositivos
+El proyecto incluye un comando de administración para importar dispositivos desde CSV:
+
+```bash
+# Ejecución normal
+python manage.py import_devices ruta/al/archivo.csv
+
+# Modo simulación (sin guardar en base de datos)
+python manage.py import_devices ruta/al/archivo.csv --dry-run
+```
+
+El comando detecta automáticamente múltiples variantes de nombres de columna, normaliza números de serie vacíos como `AUTO-XXXXXXXX`, genera siglas para nuevos tipos de dispositivo y reporta un resumen de filas creadas, actualizadas o con error.
 
 ## Política de dependencias
 

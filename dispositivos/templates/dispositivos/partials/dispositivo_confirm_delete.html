@@ -9,6 +9,12 @@
         </div>
     </div>
 
+    {% if error %}
+    <div class="bg-error/10 border border-error/20 rounded-xl p-4 mb-4">
+        <p class="text-sm text-error font-medium leading-relaxed">{{ error }}</p>
+    </div>
+    {% endif %}
+
     <div class="bg-surface-container-high/50 border border-white/5 rounded-2xl p-4 mb-6">
         <p class="text-sm text-on-background font-medium leading-relaxed">
             ¿Estás seguro de que deseas eliminar este dispositivo? Esta acción <span class="text-error font-bold">no se puede deshacer</span> y el equipo quedará fuera del inventario.

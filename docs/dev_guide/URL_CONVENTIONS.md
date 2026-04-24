@@ -44,12 +44,35 @@ El tag de acciones soporta inteligentemente dos tipos de "Borrado":
     Si la URL se llama `[modelo]_toggle_activa` o `[modelo]_toggle`, el tag **ignora el basurero** y renderiza un **Interruptor (Switch)** verde/gris. Al hacer clic, hace un `hx-post` (o patch) para cambiar el estado. (Ej: `centrocosto_toggle_activa`).
 
 ## 4. Buenas Prácticas y Toasts
-Al programar las vistas de `delete` o `toggle` con HTMX, **nunca devuelvas un Error 400 silenciado** si la acción está protegida (ej: intentar borrar un tipo de equipo que ya tiene dispositivos asociados).
+Al programar las vistas de `delete` o `toggle` con HTMX, **nunca devuelvas un Error 400 silenciado** si la acción está protegida (ej: intentar borrar un dispositivo que tiene historial de asignaciones, actas o mantenimientos).
 
-En su lugar, devuelve un `HTTP 200` o `204` y utiliza el encabezado `HX-Trigger` para notificar al usuario mediante un Toast visual:
+En su lugar, captura `ProtectedError` o `IntegrityError` y devuelve una respuesta que actualice el modal con el mensaje de error, además de disparar un toast vía `HX-Trigger`:
 
 ```python
-# Ejemplo Correcto
-if Dispositivo.objects.filter(tipo=tipo).exists():
-    return HttpResponse(status=204, headers={'HX-Trigger': json.dumps({"showNotification": "Protegido: Existen dispositivos de este tipo"})})
+# Ejemplo Correcto (basado en dispositivos/views.py)
+from django.db import IntegrityError
+from django.db.models import ProtectedError
+from core.htmx import is_htmx
+
+try:
+    dispositivo.delete()
+    return htmx_redirect_or_redirect(request, redirect_url=reverse('dispositivos:dispositivo_list'))
+except (ProtectedError, IntegrityError):
+    error_msg = (
+        "No se puede eliminar este equipo porque tiene un historial de "
+        "asignaciones, actas o mantenimientos asociados."
+    )
+    if is_htmx(request):
+        response = render(
+            request,
+            'dispositivos/partials/dispositivo_confirm_delete.html',
+            {'dispositivo': dispositivo, 'error': error_msg},
+        )
+        response['HX-Trigger'] = json.dumps(
+            {'show-notification': {'value': error_msg}}
+        )
+        return response
+
+    messages.error(request, error_msg)
+    return redirect('dispositivos:dispositivo_list')
 ```

@@ -19,9 +19,15 @@ tests_e2e/           # E2E Playwright + Page Objects
 ## Setup rápido (Windows)
 - `python -m venv venv && .\venv\Scripts\Activate.ps1`
 - `pip install -r requirements.txt`
-- Copiar `.env.example` a `.env` (el `SECRET_KEY` se lee desde entorno).
+- Copiar `.env.example` a `.env` y rellenar al menos `DJANGO_SECRET_KEY` (el sistema falla al arrancar si está vacía o usa placeholder).
 - `python manage.py makemigrations && python manage.py migrate`
 - `python manage.py runserver`
+
+### Variables de entorno importantes
+- `DJANGO_SECRET_KEY` — Obligatoria. Debe ser una clave segura (>30 chars, sin prefijos inseguros).
+- `DEBUG` — `True`/`False`. En producción se fuerzan validaciones adicionales (ej. `ALLOWED_HOSTS` sin `*`).
+- `ALLOWED_HOSTS` — Lista separada por comas. No puede estar vacía cuando `DEBUG=False`.
+- `DB_PATH` — Opcional. Permite cambiar la ubicación de `db.sqlite3` (útil para Docker).
 
 ## Comandos clave
 ```bash
@@ -34,8 +40,9 @@ pytest path\to\test.py::test_name
 ## Convenciones críticas
 - **Service Layer**: lógica de negocio compleja en `services.py`, no en views.
 - **ORM performance**: usar `select_related()` / `prefetch_related()` en listados con relaciones.
-- **Transacciones**: envolver escrituras multi-modelo en `transaction.atomic()`.
+- **Transacciones**: envolver escrituras multi-modelo en `transaction.atomic()`. Si una operación secundaria (ej. generación de acta) puede fallar independientemente, usar un bloque atómico separado para no revertir la escritura principal.
 - **Soft delete de usuarios**: `Colaborador.delete()` desactiva (`esta_activo`/`is_active`), no borra fila.
+- **Logging**: El proyecto configura loggers por app (`dispositivos`, `actas`, `colaboradores`, `core`) hacia `inventario.log`. Revisar este archivo para trazabilidad.
 
 ## HTMX
 - Responder con HTML parcial (no JSON para flujos de UI).

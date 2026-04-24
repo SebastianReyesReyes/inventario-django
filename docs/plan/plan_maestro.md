@@ -26,6 +26,7 @@ El sistema está operativo y sirve correctamente en desarrollo. Las 28 HUs del b
 **Problema**: Existen templates en `templates/colaboradores/` (root) que sombrean los de `colaboradores/templates/colaboradores/`. Django usa los del root primero por la configuración de `DIRS` en settings, lo que puede servir versiones desactualizadas.
 
 **Archivos en root** (`templates/colaboradores/`):
+
 - `colaborador_detail.html`
 - `colaborador_form.html`
 - `colaborador_list.html`
@@ -45,6 +46,7 @@ El sistema está operativo y sirve correctamente en desarrollo. Las 28 HUs del b
 **Problema**: `dispositivos/signals.py` no usa `dispatch_uid`. Si la app se carga más de una vez (hot-reload, testing), los receivers se registran duplicados.
 
 **Acción**:
+
 ```python
 # dispositivos/apps.py → ready()
 post_save.connect(handle_dispositivo_save, sender=Dispositivo, dispatch_uid='dispositivo_post_save')
@@ -57,6 +59,7 @@ post_save.connect(handle_dispositivo_save, sender=Dispositivo, dispatch_uid='dis
 ### 0.3 Consolidar factories de testing
 
 **Problema**: Existen 3 archivos de factories dispersos:
+
 - `core/tests/factories.py`
 - `colaboradores/tests/factories.py`
 - `dispositivos/tests/factories.py`
@@ -70,6 +73,7 @@ Pueden tener defaults inconsistentes entre sí.
 ### 0.4 Agregar entradas a `.gitignore`
 
 **Acción**: Asegurar que estos patrones estén presentes:
+
 ```
 scratch/
 pytest_output.txt
@@ -90,6 +94,7 @@ skills-lock.json
 **Problema verificado**: `dispositivo_create` y `dispositivo_update` en `dispositivos/views.py` NO usan `transaction.atomic()`. Dado que la herencia multi-tabla (Dispositivo → Notebook/Smartphone/Monitor) implica escritura en 2+ tablas, un fallo parcial deja datos inconsistentes.
 
 **Acción**: Envolver el bloque `if form.is_valid()` con `transaction.atomic()`:
+
 ```python
 from django.db import transaction
 
@@ -114,6 +119,7 @@ def dispositivo_create(request):
 **Problema**: `dispositivo_delete` y `colaborador_delete` no capturan `IntegrityError`. Si un dispositivo tiene historial protegido con `PROTECT`, el delete crashea con 500 en vez de mostrar un mensaje amigable.
 
 **Acción**:
+
 ```python
 from django.db import IntegrityError
 
@@ -148,6 +154,7 @@ def dispositivo_delete(request, pk):
 **Problema**: `dashboard`, `core` y `colaboradores` no tienen `services.py`. La lógica de negocio vive directamente en las views.
 
 **Acción prioritaria** (solo lo crítico):
+
 - `dashboard/services.py` — Ya existe pero tiene bug: queries de notebooks/smartphones disponibles ignoran `filtered_qs` (usan `Dispositivo.objects` directo). **Fix**: Cambiar a `filtered_qs.filter(...)`.
 - `colaboradores/services.py` — Opcional por ahora, la lógica de baja lógica está en el modelo.
 
@@ -162,6 +169,7 @@ def dispositivo_delete(request, pk):
 **Problema verificado**: No existe `LOGGING` en `settings.py`. Para un sistema que maneja actas legales y trazabilidad de activos, la falta de logging es crítica.
 
 **Acción**: Agregar a `settings.py`:
+
 ```python
 LOGGING = {
     'version': 1,
@@ -215,6 +223,7 @@ Luego reemplazar `print()` statements por `logger.info()`/`logger.error()` en vi
 **Problema**: `SESSION_COOKIE_SECURE` y `CSRF_COOKIE_SECURE` están en `False`. Sin HSTS.
 
 **Acción** (condicional a producción):
+
 ```python
 if not DEBUG:
     SESSION_COOKIE_SECURE = True
@@ -232,6 +241,7 @@ if not DEBUG:
 **Problema**: Si `SECRET_KEY` no está en `.env`, Django arranca con `None` como key.
 
 **Acción**:
+
 ```python
 SECRET_KEY = os.getenv('SECRET_KEY')
 if not SECRET_KEY:
@@ -267,6 +277,7 @@ if not SECRET_KEY:
 **Problema**: El CRUD de 5 catálogos (Fabricantes, Modelos, Tipos, CCs, Estados) es copy-paste de ~150 líneas repetidas.
 
 **Acción**: Crear un mixin o vista genérica en `core/views.py`:
+
 ```python
 class CatalogCRUDMixin:
     """Mixin genérico para CRUD de catálogos con HTMX."""
@@ -284,13 +295,14 @@ class CatalogCRUDMixin:
 
 **Problema**: Sin validación de RUT, IMEI, MAC address.
 
-| Validador | Ubicación | Prioridad |
-|-----------|-----------|-----------|
+| Validador   | Ubicación                      | Prioridad                 |
+| ----------- | ------------------------------- | ------------------------- |
 | RUT chileno | `colaboradores/validators.py` | Alta (documentos legales) |
-| IMEI | `dispositivos/validators.py` | Media |
-| MAC address | `dispositivos/validators.py` | Baja |
+| IMEI        | `dispositivos/validators.py`  | Media                     |
+| MAC address | `dispositivos/validators.py`  | Baja                      |
 
 **Acción RUT** (prioritaria):
+
 ```python
 # colaboradores/validators.py
 from django.core.exceptions import ValidationError
@@ -310,6 +322,7 @@ def validar_rut(value):
 ### 3.4 Ampliar cobertura de tests
 
 **Estado actual**: ~10 de ~25+ views testeadas. Faltan:
+
 - CRUD completo de dispositivos (create, update, delete)
 - Dispositivos especializados (Notebook, Smartphone, Monitor)
 - Exportación Excel
@@ -335,6 +348,7 @@ tests/
 **Problema**: Los markers `@pytest.mark.unit` e `@pytest.mark.integration` están definidos pero nunca se usan en tests.
 
 **Acción**: Agregar markers a todos los tests existentes. Ejemplo:
+
 ```python
 @pytest.mark.unit
 def test_dispositivo_str():
@@ -358,6 +372,7 @@ Esto permite ejecutar `pytest -m unit` para feedback rápido.
 **Problema verificado**: La respuesta de `/dispositivos/listado/` pesa **479KB**. Esto sugiere que la tabla carga todos los dispositivos sin paginación y/o sin `select_related`.
 
 **Acción**:
+
 ```python
 dispositivos = Dispositivo.objects.select_related(
     'tipo', 'modelo', 'modelo__fabricante', 'estado',
@@ -372,6 +387,7 @@ dispositivos = Dispositivo.objects.select_related(
 **Problema**: Listados grandes sin paginación degradarán el rendimiento con miles de dispositivos.
 
 **Acción**: Implementar paginación HTMX:
+
 - Server: `Paginator(queryset, 25)` en views
 - Client: `hx-get` con `?page=N` en botón "Cargar más" o scroll infinito
 - Alternativa: Paginación clásica con números de página
@@ -381,11 +397,13 @@ dispositivos = Dispositivo.objects.select_related(
 ### 4.3 Build step de Tailwind CSS
 
 **Problema**: Tailwind se carga vía CDN Play (~200KB+ sin tree-shaking). En producción:
+
 - Payload innecesariamente grande
 - Dependencia de CDN externo (si se cae, el sitio pierde estilos)
 - Sin purge de clases no usadas
 
 **Acción**:
+
 ```bash
 npm init -y
 npm install -D tailwindcss
@@ -405,6 +423,7 @@ npx tailwindcss init
 **Problema**: Las queries del dashboard se ejecutan en cada request sin caché.
 
 **Acción** (ligera):
+
 ```python
 from django.views.decorators.cache import cache_page
 
@@ -423,19 +442,20 @@ O usar `django.core.cache` con invalidación manual en signals de dispositivo.
 
 ### 5.1 Por qué migrar
 
-| Problema SQLite | Solución PostgreSQL |
-|-----------------|---------------------|
-| Sin escrituras concurrentes | Soporte multi-writer |
-| Race condition en folios | `select_for_update()` con row-level locking |
-| Sin índices parciales | Índices condicionales para queries optimizadas |
-| Sin full-text search | `SearchVector` + `SearchRank` nativo |
-| Sin backup incremental | `pg_dump` + WAL archiving |
+| Problema SQLite             | Solución PostgreSQL                            |
+| --------------------------- | ----------------------------------------------- |
+| Sin escrituras concurrentes | Soporte multi-writer                            |
+| Race condition en folios    | `select_for_update()` con row-level locking   |
+| Sin índices parciales      | Índices condicionales para queries optimizadas |
+| Sin full-text search        | `SearchVector` + `SearchRank` nativo        |
+| Sin backup incremental      | `pg_dump` + WAL archiving                     |
 
 ### 5.2 Pasos
 
 1. Instalar PostgreSQL y `psycopg[binary]`
 2. Crear base de datos: `CREATE DATABASE inventario_jmie;`
 3. Configurar `settings.py`:
+
 ```python
 DATABASES = {
     'default': {
@@ -448,8 +468,9 @@ DATABASES = {
     }
 }
 ```
-4. Migrar datos: `python manage.py dumpdata > backup.json` → `python manage.py loaddata backup.json`
-5. Agregar `select_for_update()` en generación de folios y IDs
+
+1. Migrar datos: `python manage.py dumpdata > backup.json` → `python manage.py loaddata backup.json`
+2. Agregar `select_for_update()` en generación de folios y IDs
 
 ---
 
@@ -460,6 +481,7 @@ DATABASES = {
 ### 6.1 Estado actual (HU-26)
 
 Los gráficos base (Chart.js + Alpine.js) están implementados con drill-down interactivo. Falta:
+
 - Drill-down más granular (click en barra → filtrar tabla)
 - Toggle entre vista por Centro de Costo y por Departamento
 - Exportación de métricas filtradas
@@ -500,17 +522,17 @@ Los gráficos base (Chart.js + Alpine.js) están implementados con drill-down in
 
 ## Cronograma Sugerido
 
-| Semana | Fase | Esfuerzo |
-|--------|------|----------|
-| 1 | Fase 0 (Limpieza) + Fase 2.1-2.3 (Seguridad) | ~5h |
-| 1-2 | Fase 1 (Robustez backend) | ~5h |
-| 2 | Fase 3.1-3.3 (Calidad código) | ~4h |
-| 3 | Fase 4.1-4.2 (Performance) | ~4h |
-| 3 | Fase 6 (Dashboard) | ~3h |
-| 4 | Fase 3.4-3.5 (Testing) | ~5h |
-| 4-5 | Fase 5 (PostgreSQL) | ~3h |
-| 5 | Fase 4.3 (Tailwind build) | ~2h |
-| 6 | Fase 7 (Producción) | ~5h |
+| Semana | Fase                                         | Esfuerzo |
+| ------ | -------------------------------------------- | -------- |
+| 1      | Fase 0 (Limpieza) + Fase 2.1-2.3 (Seguridad) | ~5h      |
+| 1-2    | Fase 1 (Robustez backend)                    | ~5h      |
+| 2      | Fase 3.1-3.3 (Calidad código)               | ~4h      |
+| 3      | Fase 4.1-4.2 (Performance)                   | ~4h      |
+| 3      | Fase 6 (Dashboard)                           | ~3h      |
+| 4      | Fase 3.4-3.5 (Testing)                       | ~5h      |
+| 4-5    | Fase 5 (PostgreSQL)                          | ~3h      |
+| 5      | Fase 4.3 (Tailwind build)                    | ~2h      |
+| 6      | Fase 7 (Producción)                         | ~5h      |
 
 **Total estimado**: ~36 horas de trabajo
 
@@ -548,16 +570,16 @@ Los gráficos base (Chart.js + Alpine.js) están implementados con drill-down in
 
 ## Relación con Documentos Existentes
 
-| Documento | Relación con este plan |
-|-----------|----------------------|
-| `FODA.md` | Este plan implementa las acciones priorizadas del FODA |
-| `product_backlog.md` | Las 28 HUs están al 95%. Solo HU-26 requiere trabajo |
-| `hu_verification_status.md` | Confirma el estado de completitud por épica |
+| Documento                                    | Relación con este plan                                                                               |
+| -------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `FODA.md`                                  | Este plan implementa las acciones priorizadas del FODA                                                |
+| `product_backlog.md`                       | Las 28 HUs están al 95%. Solo HU-26 requiere trabajo                                                 |
+| `hu_verification_status.md`                | Confirma el estado de completitud por épica                                                          |
 | `plan/Plan de Corrección Post-Auditoría` | Muchos items ya resueltos (DEBUG, ALLOWED_HOSTS, MCP/DRF removidos). Este plan actualiza lo pendiente |
-| `plan/refactor_fat_views.md` | Se incorpora como Fase 1.3 de este plan |
-| `plan/refactor_dispositivos_views.md` | Detalle granular de la Fase 1.3 |
-| `STYLE_GUIDE.md` | Referencia para cualquier cambio de frontend |
-| `ARQUITECTURA_TECNICA.md` | Referencia para entender decisiones de diseño |
+| `plan/refactor_fat_views.md`               | Se incorpora como Fase 1.3 de este plan                                                               |
+| `plan/refactor_dispositivos_views.md`      | Detalle granular de la Fase 1.3                                                                       |
+| `STYLE_GUIDE.md`                           | Referencia para cualquier cambio de frontend                                                          |
+| `ARQUITECTURA_TECNICA.md`                  | Referencia para entender decisiones de diseño                                                        |
 
 ---
 

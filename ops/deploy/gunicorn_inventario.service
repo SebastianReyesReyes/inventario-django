@@ -1,0 +1,31 @@
+[Unit]
+Description=Inventario JMIE Gunicorn Daemon
+After=network.target
+
+[Service]
+Type=notify
+User=www-data
+Group=www-data
+RuntimeDirectory=gunicorn
+WorkingDirectory=/var/www/inventario-django
+Environment="PATH=/var/www/inventario-django/venv/bin"
+Environment="PYTHONDONTWRITEBYTECODE=1"
+Environment="PYTHONUNBUFFERED=1"
+ExecStart=/var/www/inventario-django/venv/bin/gunicorn inventario_jmie.wsgi:application \
+    --name inventario \
+    --workers 3 \
+    --worker-class sync \
+    --bind unix:/run/gunicorn/inventario.sock \
+    --access-logfile /var/log/gunicorn/inventario-access.log \
+    --error-logfile /var/log/gunicorn/inventario-error.log \
+    --capture-output \
+    --enable-stdio-inheritance
+ExecReload=/bin/kill -s HUP $MAINPID
+KillMode=mixed
+TimeoutStopSec=5
+PrivateTmp=true
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target

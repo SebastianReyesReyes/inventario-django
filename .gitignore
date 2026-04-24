@@ -17,3 +17,7 @@ stitch_*.html
 query_test.py
 skills-lock.json
 .stitch/
+.github/
+.opencode/
+.stitch/
+node_modules/

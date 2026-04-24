@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 import os
 from pathlib import Path
+from django.core.exceptions import ImproperlyConfigured
 from dotenv import load_dotenv  # <-- 1. Importa load_dotenv
 
 # 2. Carga el archivo .env
@@ -30,6 +31,30 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 DEBUG = os.getenv('DEBUG', 'False').lower() in ('true', '1', 'yes')
 
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+
+# Confianza en headers de proxy (Nginx en Docker)
+USE_X_FORWARDED_HOST = True
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# ─────────────────────────────────────────────────────
+# Validación fail-fast de variables críticas de seguridad
+# ─────────────────────────────────────────────────────
+
+# SECRET_KEY
+if not SECRET_KEY or not str(SECRET_KEY).strip():
+    raise ImproperlyConfigured("SECRET_KEY no está definida o está vacía.")
+
+_secret_key_lower = str(SECRET_KEY).lower()
+_insecure_prefixes = ('change-me', 'your-secret-key', 'django-insecure-')
+if any(_secret_key_lower.startswith(p) for p in _insecure_prefixes) or _secret_key_lower in ('change-me', 'your-secret-key'):
+    raise ImproperlyConfigured("SECRET_KEY tiene un valor placeholder inseguro.")
+
+# ALLOWED_HOSTS
+if not ALLOWED_HOSTS or (len(ALLOWED_HOSTS) == 1 and not ALLOWED_HOSTS[0].strip()):
+    raise ImproperlyConfigured("ALLOWED_HOSTS no puede estar vacío.")
+
+if not DEBUG and '*' in ALLOWED_HOSTS:
+    raise ImproperlyConfigured("ALLOWED_HOSTS no puede contener '*' cuando DEBUG es False.")
 
 
 # Application definition
@@ -102,10 +127,11 @@ WSGI_APPLICATION = 'inventario_jmie.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
+DB_PATH = os.getenv('DB_PATH', BASE_DIR / 'db.sqlite3')
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'NAME': DB_PATH,
     }
 }
 
@@ -158,3 +184,59 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/login/'
+
+
+# ─────────────────────────────────────────────────────
+# Logging
+# ─────────────────────────────────────────────────────
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'standard': {
+            'format': '%(asctime)s [%(levelname)s] %(name)s: %(message)s',
+            'datefmt': '%Y-%m-%d %H:%M:%S',
+        },
+    },
+    'handlers': {
+        'file': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': BASE_DIR / 'inventario.log',
+            'formatter': 'standard',
+        },
+    },
+    'loggers': {
+        'django.security': {
+            'handlers': ['file'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+        'django.request': {
+            'handlers': ['file'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+        'dispositivos': {
+            'handlers': ['file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'actas': {
+            'handlers': ['file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'colaboradores': {
+            'handlers': ['file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'core': {
+            'handlers': ['file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+    },
+}

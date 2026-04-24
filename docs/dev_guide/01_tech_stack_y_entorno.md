@@ -5,8 +5,13 @@ Bienvenido al proyecto **Inventario JMIE**. Este documento te ayudará a entende
 ## Stack Tecnológico Principal
 
 ### Backend
-- **Python 3.12+ / Django 6.x:** Utilizamos el framework web más maduro de Python para gestionar nuestra base de datos, autenticación y vistas seguras.
-- **Django REST Framework (DRF):** Utilizado para proveer conectividad REST en las áreas donde necesitamos consumir datos desde herramientas de terceros o asíncronas no gestionadas por HTMX.
+- **Python 3.12+ / Django 6.0.2:** Utilizamos el framework web más maduro de Python para gestionar nuestra base de datos, autenticación y vistas seguras.
+- **Django REST Framework (DRF 3.16.1):** Utilizado para proveer conectividad REST en las áreas donde necesitamos consumir datos desde herramientas de terceros o asíncronas no gestionadas por HTMX.
+- **django-constance:** Configuración dinámica (ej: prefijo de IDs de equipos) editable desde Django admin.
+- **django-cotton:** Componentes HTML reutilizables tipo Web Components para templates Django.
+- **django-filter:** Filtrado avanzado en listados y dashboard analítico.
+- **django-import-export:** Importación y exportación de datos (CSV, Excel).
+- **django-imagekit:** Procesamiento de imágenes (thumbnails para fotos de equipos).
 
 ### Frontend
 - **HTMX (`django-htmx`):** Este proyecto adopta activamente la filosofía *hypermedia*. En lugar de utilizar React, Angular, o construir una SPA completa, insertamos atributos HTMX directamente en las plantillas de Django para lograr reactividad y actualizaciones de porciones de la interfaz web (DOM).
@@ -19,6 +24,8 @@ Bienvenido al proyecto **Inventario JMIE**. Este documento te ayudará a entende
 
 ### Reportes
 - **xHtml2Pdf / ReportLab:** Dedicado a la rasterización y diseño de plantillas HTML para exportar documentos PDF (Actas, Entregas, Inventario seriado).
+- **pyHanko:** Firma digital de documentos PDF con certificado.
+- **qrcode:** Generación de códigos QR para cada dispositivo.
 
 ## Flujo Básico de Configuración del Entorno de Desarrollo (Local)
 

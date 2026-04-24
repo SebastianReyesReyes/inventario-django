@@ -32,20 +32,7 @@
             {{ fabricante.nombre }}
         </td>
         <td class="px-6 py-4">
-            <div class="flex flex-col gap-2">
-                <span class="text-[10px] font-black uppercase tracking-widest text-jmie-gray opacity-50">
-                    {{ fabricante.modelos.count }} Modelos registrados:
-                </span>
-                <div class="flex flex-wrap gap-1.5">
-                    {% for modelo in fabricante.modelos.all %}
-                    <span class="inline-flex items-center px-2 py-0.5 rounded bg-white/5 text-[10px] font-bold text-on-background border border-white/5">
-                        {{ modelo.nombre }}
-                    </span>
-                    {% empty %}
-                    <span class="text-[10px] text-white/20 italic font-medium">Sin modelos registrados</span>
-                    {% endfor %}
-                </div>
-            </div>
+            {% include "core/partials/fabricante_modelos_inline.html" with fabricante=fabricante %}
         </td>
         <td class="px-6 py-4 text-right">
             {% load action_tags %}

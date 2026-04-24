@@ -6,6 +6,7 @@ app_name = 'dispositivos'
 urlpatterns = [
     path('crear/', views.dispositivo_create, name='dispositivo_create'),
     path('ajax/get-modelos/', views.ajax_get_modelos, name='ajax_get_modelos'),
+    path('ajax/crear-modelo/', views.ajax_crear_modelo, name='ajax_crear_modelo'),
     path('ajax/get-tipo-fields/', views.ajax_get_tech_fields, name='ajax_get_tipo_fields'),
     path('listado/', views.dispositivo_list, name='dispositivo_list'),
     path('detalle/<int:pk>/', views.dispositivo_detail, name='dispositivo_detail'),

@@ -1,0 +1,33 @@
+<div id="fabricante-modelos-{{ fabricante.pk }}" class="flex flex-col gap-2">
+    <span class="text-[10px] font-black uppercase tracking-widest text-jmie-gray opacity-50">
+        {{ fabricante.modelos.count }} Modelos registrados:
+    </span>
+    <div class="flex flex-wrap gap-1.5">
+        {% for modelo in fabricante.modelos.all %}
+        <span class="inline-flex items-center px-2 py-0.5 rounded bg-white/5 text-[10px] font-bold text-on-background border border-white/5">
+            {{ modelo.nombre }}
+        </span>
+        {% empty %}
+        <span class="text-[10px] text-white/20 italic font-medium">Sin modelos registrados</span>
+        {% endfor %}
+    </div>
+    <div class="flex gap-2 mt-1">
+        <input 
+            type="text" 
+            id="nuevo-modelo-{{ fabricante.pk }}"
+            name="nuevo_modelo_nombre" 
+            placeholder="Nuevo modelo..." 
+            class="flex-1 bg-surface-container-high border-[1px] border-white/5 rounded-lg px-3 py-1.5 text-[10px] text-on-background placeholder:text-jmie-gray focus:outline-none focus:border-jmie-blue transition-all"
+        >
+        <button 
+            type="button"
+            class="px-2.5 py-1.5 bg-jmie-blue/20 hover:bg-jmie-blue/30 text-jmie-blue text-[10px] font-black rounded-lg border border-jmie-blue/20 transition-all"
+            hx-post="{% url 'core:fabricante_modelo_inline' fabricante.pk %}"
+            hx-include="#nuevo-modelo-{{ fabricante.pk }}"
+            hx-target="#fabricante-modelos-{{ fabricante.pk }}"
+            hx-swap="outerHTML"
+        >
+            +
+        </button>
+    </div>
+</div>

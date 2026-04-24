@@ -196,6 +196,35 @@ def ajax_get_modelos(request):
     
     return render(request, 'dispositivos/partials/modelo_options.html', {'modelos': modelos})
 
+
+@login_required
+@permission_required('dispositivos.add_dispositivo', raise_exception=True)
+def ajax_crear_modelo(request):
+    """Crea un modelo nuevo para un fabricante desde el formulario de dispositivos."""
+    fabricante_id = request.POST.get('fabricante')
+    nombre = request.POST.get('nuevo_modelo_nombre', '').strip()
+
+    if not fabricante_id or not nombre:
+        modelos = Modelo.objects.filter(fabricante_id=fabricante_id).order_by('nombre') if fabricante_id else Modelo.objects.none()
+        return render(request, 'dispositivos/partials/modelo_options.html', {'modelos': modelos})
+
+    fabricante = get_object_or_404(Fabricante, pk=fabricante_id)
+
+    # Normalización: evitar duplicados por diferencia de mayúsculas
+    modelo = Modelo.objects.filter(fabricante=fabricante, nombre__iexact=nombre).first()
+
+    if not modelo:
+        try:
+            modelo = Modelo.objects.create(nombre=nombre, fabricante=fabricante)
+        except IntegrityError:
+            modelo = Modelo.objects.get(fabricante=fabricante, nombre__iexact=nombre)
+
+    modelos = Modelo.objects.filter(fabricante=fabricante).order_by('nombre')
+    return render(request, 'dispositivos/partials/modelo_options.html', {
+        'modelos': modelos,
+        'selected_modelo_id': modelo.id
+    })
+
 @login_required
 def ajax_get_tech_fields(request):
     """Retorna los campos técnicos específicos según el tipo de dispositivo."""

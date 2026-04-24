@@ -15,7 +15,8 @@ class DispositivoForm(BaseStyledForm):
             'class': 'w-full bg-surface-container-high border-[1px] border-white/5 rounded-lg px-4 py-3 text-on-background focus:border-jmie-blue transition-all',
             'hx-get': reverse_lazy('dispositivos:ajax_get_modelos'),
             'hx-target': '#id_modelo',
-            'hx-trigger': 'change'
+            'hx-trigger': 'change',
+            '@change': 'fabricanteId = $event.target.value'
         })
     )
     

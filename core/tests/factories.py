@@ -21,6 +21,26 @@ class EstadoDispositivoFactory(factory.django.DjangoModelFactory):
     nombre = factory.Sequence(lambda n: f"Estado {n}")
     color = "#6B7280"
 
+
+class EstadoDisponibleFactory(EstadoDispositivoFactory):
+    nombre = "Disponible"
+    color = "#10B981"
+
+
+class EstadoAsignadoFactory(EstadoDispositivoFactory):
+    nombre = "Asignado"
+    color = "#3B82F6"
+
+
+class EstadoReparacionFactory(EstadoDispositivoFactory):
+    nombre = "En Reparación"
+    color = "#F59E0B"
+
+
+class EstadoFueraInventarioFactory(EstadoDispositivoFactory):
+    nombre = "Fuera de Inventario"
+    color = "#EF4444"
+
 class FabricanteFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Fabricante

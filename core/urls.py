@@ -9,6 +9,7 @@ urlpatterns = [
     path('fabricantes/crear/', views.fabricante_create, name='fabricante_create'),
     path('fabricantes/<int:pk>/editar/', views.fabricante_edit, name='fabricante_update'),
     path('fabricantes/<int:pk>/eliminar/', views.fabricante_delete, name='fabricante_delete'),
+    path('fabricantes/<int:pk>/modelos/inline/', views.ajax_modelo_create_inline, name='fabricante_modelo_inline'),
     
     path('modelos/', views.modelo_list, name='modelo_list'),
     path('modelos/crear/', views.modelo_create, name='modelo_create'),

@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse
 from django.contrib.auth.decorators import login_required, permission_required
+from django.db import IntegrityError
 
 from .models import Fabricante, TipoDispositivo, Modelo, CentroCosto, EstadoDispositivo
 from .filters import DashboardFilterSet
@@ -83,6 +84,24 @@ def fabricante_list(request):
 fabricante_create = FabricanteCreateView.as_view()
 fabricante_edit = FabricanteUpdateView.as_view()
 fabricante_delete = FabricanteDeleteView.as_view()
+
+
+@login_required
+@permission_required('dispositivos.add_dispositivo', raise_exception=True)
+def ajax_modelo_create_inline(request, pk):
+    """Crea un modelo nuevo asociado a un fabricante desde la lista de fabricantes."""
+    fabricante = get_object_or_404(Fabricante, pk=pk)
+    nombre = request.POST.get('nuevo_modelo_nombre', '').strip()
+
+    if nombre:
+        modelo = Modelo.objects.filter(fabricante=fabricante, nombre__iexact=nombre).first()
+        if not modelo:
+            try:
+                Modelo.objects.create(nombre=nombre, fabricante=fabricante)
+            except IntegrityError:
+                pass
+
+    return render(request, 'core/partials/fabricante_modelos_inline.html', {'fabricante': fabricante})
 
 # --- MODELOS ---
 

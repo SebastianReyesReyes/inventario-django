@@ -4,11 +4,11 @@ El sistema está dividido en módulos o 'apps' según los principios de Django e
 
 ## Arquitectura de Aplicaciones (Apps)
 
-1. **`core`:** Toda la infraestructura global del sistema. Incluye los *templates* base, layouts (sidebar, navbars) y utilidades transversales vinculadas al diseño de "Consola de Precisión" (El diseño general de la marca JMIE).
-2. **`dispositivos`:** Maneja el núcleo del sistema, la gestión de inventario, incluyendo fabricantes, tipo de dispositivo, hardware, software instalable y mantenimientos.
-3. **`colaboradores`:** Módulo aislado para la asignación y gestión del personal relacionado de la organización y sus roles.
-4. **`actas`:** Centraliza la lógica (Servicio) sobre la asignación o devolución de dispositivos del personal, generador de responsabilidad y emisiones de folios legales/PDFs.
-5. **`dashboard`:** Proveedor de vistas estadísticas u operativa global, métricas y contadores.
+1. **`core`:** Toda la infraestructura global del sistema. Incluye los *templates* base, layouts (sidebar, navbars), utilidades transversales, helpers HTMX (`core/htmx.py`), componentes Cotton reutilizables, templatetags (`ui_tags`, `nav_tags`, `url_tags`, `action_tags`), y comando de importación masiva (`import_devices`).
+2. **`dispositivos`:** Maneja el núcleo del sistema: gestión de inventario con 6 tipos especializados (Notebook, Smartphone, Impresora, Servidor, EquipoRed, Monitor), mantenimientos, asignaciones, devoluciones, reasignaciones, accesorios, generación de QR, y trazabilidad completa.
+3. **`colaboradores`:** Módulo aislado para la asignación y gestión del personal. Define el `AUTH_USER_MODEL` (`Colaborador`), con soporte para RUT chileno, centros de costo, cargos, y soft delete (`esta_activo`).
+4. **`actas`:** Centraliza la lógica de actas legales (ENTREGA, DEVOLUCIÓN, DESTRUCCIÓN), generación de folios correlativos, firma digital con pyHanko, exportación PDF con xhtml2pdf, y gestión de ministros de fe.
+5. **`dashboard`:** Proveedor de vistas estadísticas y operativa global, métricas, contadores, filtros analíticos (`django-filter`), gráficos Chart.js con drill-down a listados filtrados, y exportación de reportes.
 
 ## Patrones de Diseño Utilizados
 

@@ -17,6 +17,8 @@
     <div x-data="{ 
         tipoEquipoId: '{{ form.tipo.value|default:'' }}',
         tipoNombre: '',
+        fabricanteId: '{{ form.fabricante.value|default:'' }}',
+        nuevoModeloNombre: '',
         propietarioSeleccionado: {% if form.propietario_actual.value %}true{% else %}false{% endif %},
         updateTipoEquipo() {
             const select = document.getElementById('id_tipo');
@@ -80,6 +82,26 @@
                         <div class="space-y-1.5">
                             <label class="text-[10px] font-black uppercase text-jmie-gray tracking-tighter ml-1">Modelo Específico</label>
                             {{ form.modelo }}
+                            <div x-show="fabricanteId" x-transition class="flex gap-2 mt-2" x-cloak>
+                                <input 
+                                    type="text" 
+                                    name="nuevo_modelo_nombre" 
+                                    x-model="nuevoModeloNombre"
+                                    placeholder="Nuevo modelo..." 
+                                    class="flex-1 bg-surface-container-high border-[1px] border-white/5 rounded-lg px-3 py-2 text-xs text-on-background placeholder:text-jmie-gray focus:outline-none focus:border-jmie-blue transition-all"
+                                >
+                                <button 
+                                    type="button"
+                                    class="px-3 py-2 bg-jmie-blue/20 hover:bg-jmie-blue/30 text-jmie-blue text-xs font-black rounded-lg border border-jmie-blue/20 transition-all"
+                                    hx-post="{% url 'dispositivos:ajax_crear_modelo' %}"
+                                    hx-include="#id_fabricante, [name='nuevo_modelo_nombre']"
+                                    hx-target="#id_modelo"
+                                    hx-swap="innerHTML"
+                                    @htmx:after-request="nuevoModeloNombre = ''"
+                                >
+                                    +
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

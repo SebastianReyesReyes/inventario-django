@@ -1,4 +1,4 @@
 <option value="">Seleccione un modelo</option>
 {% for modelo in modelos %}
-    <option value="{{ modelo.id }}">{{ modelo.nombre }}</option>
+    <option value="{{ modelo.id }}" {% if selected_modelo_id == modelo.id %}selected{% endif %}>{{ modelo.nombre }}</option>
 {% endfor %}

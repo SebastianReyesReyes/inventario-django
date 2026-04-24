@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% load static %}
 {% load humanize %}
+{% load ui_tags %}
 
 {% block title %}Detalle de Equipo: {{ d.identificador_interno }} | JMIE{% endblock %}
 {% block section_name %}Activos IT / Detalle{% endblock %}
@@ -20,11 +21,7 @@
                 <span class="px-3 py-1 bg-jmie-blue/10 text-jmie-blue text-[10px] font-black uppercase tracking-widest rounded-lg border border-jmie-blue/20">
                     {{ d.tipo.nombre }}
                 </span>
-                <span class="px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider
-                    {% if 'disponible' in d.estado.nombre.lower or 'bueno' in d.estado.nombre.lower %} bg-success/10 text-success border border-success/20
-                    {% elif 'asignado' in d.estado.nombre.lower %} bg-jmie-blue/10 text-jmie-blue border border-jmie-blue/20
-                    {% elif 'reparación' in d.estado.nombre.lower or 'falla' in d.estado.nombre.lower %} bg-jmie-orange/10 text-jmie-orange border border-jmie-orange/20
-                    {% else %} bg-white/5 text-jmie-gray border border-white/10 {% endif %}">
+                <span class="px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider {% status_badge d.estado %}">
                     {{ d.estado.nombre }}
                 </span>
             </div>
@@ -173,7 +170,7 @@
                                 </tbody>
                             </table>
                         {% else %}
-                            {% include "partials/empty_state.html" with icon="history" title="Sin Mantenimientos" subtitle="No se registran eventos preventivos o correctivos para este activo." compact=True %}
+                            <c-empty-state icon="history" title="Sin Mantenimientos" subtitle="No se registran eventos preventivos o correctivos para este activo." compact="True" />
                         {% endif %}
                     </div>
                 </div>

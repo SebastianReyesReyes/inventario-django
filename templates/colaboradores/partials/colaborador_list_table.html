@@ -1,41 +1,11 @@
 <table class="w-full text-left border-collapse">
     <thead>
         <tr class="bg-white/[0.02] border-b border-white/5 text-jmie-gray uppercase text-[10px] font-black tracking-widest">
-            <th class="px-6 py-5 cursor-pointer hover:text-jmie-orange transition-colors select-none"
-                hx-get="{% url 'colaboradores:colaborador_list' %}?{% if query %}q={{ query }}&{% endif %}sort=nombre&order={% if current_sort == 'nombre' and current_order == 'asc' %}desc{% else %}asc{% endif %}"
-                hx-target="#tabla-wrapper"
-                hx-push-url="true"
-                hx-indicator=".htmx-indicator">
-                Colaborador {% if current_sort == 'nombre' %}{% if current_order == 'asc' %}↑{% else %}↓{% endif %}{% endif %}
-            </th>
-            <th class="px-6 py-5 cursor-pointer hover:text-jmie-orange transition-colors select-none"
-                hx-get="{% url 'colaboradores:colaborador_list' %}?{% if query %}q={{ query }}&{% endif %}sort=rut&order={% if current_sort == 'rut' and current_order == 'asc' %}desc{% else %}asc{% endif %}"
-                hx-target="#tabla-wrapper"
-                hx-push-url="true"
-                hx-indicator=".htmx-indicator">
-                RUT {% if current_sort == 'rut' %}{% if current_order == 'asc' %}↑{% else %}↓{% endif %}{% endif %}
-            </th>
-            <th class="px-6 py-5 cursor-pointer hover:text-jmie-orange transition-colors select-none"
-                hx-get="{% url 'colaboradores:colaborador_list' %}?{% if query %}q={{ query }}&{% endif %}sort=departamento&order={% if current_sort == 'departamento' and current_order == 'asc' %}desc{% else %}asc{% endif %}"
-                hx-target="#tabla-wrapper"
-                hx-push-url="true"
-                hx-indicator=".htmx-indicator">
-                Cargo / Depto {% if current_sort == 'departamento' %}{% if current_order == 'asc' %}↑{% else %}↓{% endif %}{% endif %}
-            </th>
-            <th class="px-6 py-5 cursor-pointer hover:text-jmie-orange transition-colors select-none"
-                hx-get="{% url 'colaboradores:colaborador_list' %}?{% if query %}q={{ query }}&{% endif %}sort=centro_costo&order={% if current_sort == 'centro_costo' and current_order == 'asc' %}desc{% else %}asc{% endif %}"
-                hx-target="#tabla-wrapper"
-                hx-push-url="true"
-                hx-indicator=".htmx-indicator">
-                Centro de Costo {% if current_sort == 'centro_costo' %}{% if current_order == 'asc' %}↑{% else %}↓{% endif %}{% endif %}
-            </th>
-            <th class="px-6 py-5 cursor-pointer hover:text-jmie-orange transition-colors select-none"
-                hx-get="{% url 'colaboradores:colaborador_list' %}?{% if query %}q={{ query }}&{% endif %}sort=estado&order={% if current_sort == 'estado' and current_order == 'asc' %}desc{% else %}asc{% endif %}"
-                hx-target="#tabla-wrapper"
-                hx-push-url="true"
-                hx-indicator=".htmx-indicator">
-                Estado {% if current_sort == 'estado' %}{% if current_order == 'asc' %}↑{% else %}↓{% endif %}{% endif %}
-            </th>
+            <c-th-sort sort="nombre">Colaborador</c-th-sort>
+            <c-th-sort sort="rut">RUT</c-th-sort>
+            <c-th-sort sort="departamento">Cargo / Depto</c-th-sort>
+            <c-th-sort sort="centro_costo">Centro de Costo</c-th-sort>
+            <c-th-sort sort="estado">Estado</c-th-sort>
             <th class="px-6 py-5 text-right font-black">Acciones</th>
         </tr>
     </thead>

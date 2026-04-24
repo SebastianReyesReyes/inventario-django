@@ -3,28 +3,20 @@
 {% block title %}Inventario de Dispositivos | JMIE{% endblock %}
 {% block section_name %}Activos IT{% endblock %}
 
-{% block nav_inventario %}text-on-background bg-white/5 border-l-2 border-jmie-orange rounded-none{% endblock %}
-{% block nav_inventario_icon %}text-jmie-orange{% endblock %}
+
+
 
 {% block content %}
 <div class="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
     
-    <!-- Header y Buscador -->
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/5 pb-6">
-        <div>
-            <h1 class="text-3xl font-black tracking-tighter">Control de Inventario</h1>
-            <p class="text-jmie-gray mt-1 text-sm font-bold">Gestione y monitoree todos los activos tecnológicos de la empresa.</p>
-        </div>
-        
-        <div class="flex items-center gap-3">
-            {% if perms.dispositivos.add_dispositivo %}
-            <a href="{% url 'dispositivos:dispositivo_create' %}" class="px-4 py-2.5 bg-jmie-orange text-white text-xs font-black rounded-xl hover:brightness-110 shadow-[0_4px_20px_rgba(237,139,0,0.2)] transition-all flex items-center">
-                <span class="material-symbols-outlined text-sm mr-2 leading-none">add</span>
-                Nuevo Registro
-            </a>
-            {% endif %}
-        </div>
-    </div>
+    <c-page-header title="Control de Inventario" subtitle="Gestione y monitoree todos los activos tecnológicos de la empresa.">
+        {% if perms.dispositivos.add_dispositivo %}
+        <a href="{% url 'dispositivos:dispositivo_create' %}" class="px-4 py-2.5 bg-jmie-orange text-white text-xs font-black rounded-xl hover:brightness-110 shadow-[0_4px_20px_rgba(237,139,0,0.2)] transition-all flex items-center">
+            <span class="material-symbols-outlined text-sm mr-2 leading-none">add</span>
+            Nuevo Registro
+        </a>
+        {% endif %}
+    </c-page-header>
 
     <!-- Panel de Filtros y Búsqueda -->
     <div class="bg-surface-container-low p-6 rounded-xl border border-white/5 space-y-6">
@@ -36,98 +28,43 @@
             
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <!-- Buscador Principal -->
-                <div class="lg:col-span-2 space-y-2">
-                    <label class="text-[10px] font-black uppercase text-jmie-gray ml-1">Búsqueda Rápida</label>
-                    <div class="relative group">
-                        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-jmie-gray group-focus-within:text-jmie-blue transition-colors text-sm">search</span>
-                        <input type="text" 
-                               name="q" 
-                               value="{{ query }}"
-                               placeholder="Buscar por serie, ID o modelo..."
-                               class="w-full pl-10 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-xs font-bold text-on-background focus:outline-none focus:ring-2 focus:ring-jmie-blue/20 focus:border-jmie-blue/50 transition-all">
-                    </div>
-                </div>
+                <c-search-input label="Búsqueda Rápida" wrapper_class="lg:col-span-2" value="{{ query }}" placeholder="Buscar por serie, ID o modelo..." />
 
                 <div class="space-y-2">
-                    <label class="text-[10px] font-black uppercase text-jmie-gray ml-1">Centro de Costo</label>
+                    <c-form-label>Centro de Costo</c-form-label>
                     {{ filter.form.centro_costo }}
                 </div>
 
                 <div class="space-y-2">
-                    <label class="text-[10px] font-black uppercase text-jmie-gray ml-1">Estado</label>
+                    <c-form-label>Estado</c-form-label>
                     {{ filter.form.estado }}
                 </div>
 
                 <div class="space-y-2">
-                    <label class="text-[10px] font-black uppercase text-jmie-gray ml-1">Tipo de Equipo</label>
+                    <c-form-label>Tipo de Equipo</c-form-label>
                     {{ filter.form.tipo }}
                 </div>
 
                 <div class="space-y-2">
-                    <label class="text-[10px] font-black uppercase text-jmie-gray ml-1">Fabricante</label>
+                    <c-form-label>Fabricante</c-form-label>
                     {{ filter.form.fabricante }}
                 </div>
             </div>
         </form>
     </div>
 
-    <!-- Tabla de Resultados -->
-    <div class="glass-panel rounded-2xl border border-white/5 overflow-hidden relative">
-        <!-- Indicador de Carga HTMX -->
-        <div class="htmx-indicator absolute inset-0 bg-background/50 backdrop-blur-[2px] z-10 flex items-center justify-center opacity-0 pointer-events-none transition-opacity">
-            <div class="flex items-center gap-3 px-4 py-2 bg-white/10 rounded-full border border-white/10">
-                <div class="w-4 h-4 border-2 border-jmie-blue border-t-transparent rounded-full animate-spin"></div>
-                <span class="text-[10px] font-black uppercase tracking-widest">Buscando...</span>
-            </div>
-        </div>
-
+    <c-glass-panel loader_label="Buscando...">
         <div class="overflow-x-auto">
             <div id="tabla-wrapper">
                 <table class="w-full text-left border-collapse">
                 <thead>
                     <tr class="bg-white/[0.02] border-b border-white/5 text-jmie-gray uppercase text-[10px] font-black tracking-widest">
-                        <th class="px-6 py-4 cursor-pointer hover:text-jmie-orange transition-colors select-none"
-                            hx-get="{% url 'dispositivos:dispositivo_list' %}?{% if query %}q={{ query }}&{% endif %}{% if filter.form.centro_costo.value %}centro_costo={{ filter.form.centro_costo.value }}&{% endif %}{% if filter.form.estado.value %}estado={{ filter.form.estado.value }}&{% endif %}{% if filter.form.tipo.value %}tipo={{ filter.form.tipo.value }}&{% endif %}{% if filter.form.fabricante.value %}fabricante={{ filter.form.fabricante.value }}&{% endif %}sort=id&order={% if current_sort == 'id' and current_order == 'asc' %}desc{% else %}asc{% endif %}"
-                            hx-target="#tabla-wrapper"
-                            hx-push-url="true"
-                            hx-indicator=".htmx-indicator">
-                            ID / Serie {% if current_sort == 'id' %}{% if current_order == 'asc' %}↑{% else %}↓{% endif %}{% endif %}
-                        </th>
-                        <th class="px-6 py-4 cursor-pointer hover:text-jmie-orange transition-colors select-none"
-                            hx-get="{% url 'dispositivos:dispositivo_list' %}?{% if query %}q={{ query }}&{% endif %}{% if filter.form.centro_costo.value %}centro_costo={{ filter.form.centro_costo.value }}&{% endif %}{% if filter.form.estado.value %}estado={{ filter.form.estado.value }}&{% endif %}{% if filter.form.tipo.value %}tipo={{ filter.form.tipo.value }}&{% endif %}{% if filter.form.fabricante.value %}fabricante={{ filter.form.fabricante.value }}&{% endif %}sort=tipo&order={% if current_sort == 'tipo' and current_order == 'asc' %}desc{% else %}asc{% endif %}"
-                            hx-target="#tabla-wrapper"
-                            hx-push-url="true"
-                            hx-indicator=".htmx-indicator">
-                            Tipo {% if current_sort == 'tipo' %}{% if current_order == 'asc' %}↑{% else %}↓{% endif %}{% endif %}
-                        </th>
-                        <th class="px-6 py-4 cursor-pointer hover:text-jmie-orange transition-colors select-none"
-                            hx-get="{% url 'dispositivos:dispositivo_list' %}?{% if query %}q={{ query }}&{% endif %}{% if filter.form.centro_costo.value %}centro_costo={{ filter.form.centro_costo.value }}&{% endif %}{% if filter.form.estado.value %}estado={{ filter.form.estado.value }}&{% endif %}{% if filter.form.tipo.value %}tipo={{ filter.form.tipo.value }}&{% endif %}{% if filter.form.fabricante.value %}fabricante={{ filter.form.fabricante.value }}&{% endif %}sort=marca&order={% if current_sort == 'marca' and current_order == 'asc' %}desc{% else %}asc{% endif %}"
-                            hx-target="#tabla-wrapper"
-                            hx-push-url="true"
-                            hx-indicator=".htmx-indicator">
-                            Marca & Modelo {% if current_sort == 'marca' %}{% if current_order == 'asc' %}↑{% else %}↓{% endif %}{% endif %}
-                        </th>
-                        <th class="px-6 py-4 cursor-pointer hover:text-jmie-orange transition-colors select-none"
-                            hx-get="{% url 'dispositivos:dispositivo_list' %}?{% if query %}q={{ query }}&{% endif %}{% if filter.form.centro_costo.value %}centro_costo={{ filter.form.centro_costo.value }}&{% endif %}{% if filter.form.estado.value %}estado={{ filter.form.estado.value }}&{% endif %}{% if filter.form.tipo.value %}tipo={{ filter.form.tipo.value }}&{% endif %}{% if filter.form.fabricante.value %}fabricante={{ filter.form.fabricante.value }}&{% endif %}sort=responsable&order={% if current_sort == 'responsable' and current_order == 'asc' %}desc{% else %}asc{% endif %}"
-                            hx-target="#tabla-wrapper"
-                            hx-push-url="true"
-                            hx-indicator=".htmx-indicator">
-                            Responsable & CC {% if current_sort == 'responsable' %}{% if current_order == 'asc' %}↑{% else %}↓{% endif %}{% endif %}
-                        </th>
-                        <th class="px-6 py-4 cursor-pointer hover:text-jmie-orange transition-colors select-none"
-                            hx-get="{% url 'dispositivos:dispositivo_list' %}?{% if query %}q={{ query }}&{% endif %}{% if filter.form.centro_costo.value %}centro_costo={{ filter.form.centro_costo.value }}&{% endif %}{% if filter.form.estado.value %}estado={{ filter.form.estado.value }}&{% endif %}{% if filter.form.tipo.value %}tipo={{ filter.form.tipo.value }}&{% endif %}{% if filter.form.fabricante.value %}fabricante={{ filter.form.fabricante.value }}&{% endif %}sort=estado&order={% if current_sort == 'estado' and current_order == 'asc' %}desc{% else %}asc{% endif %}"
-                            hx-target="#tabla-wrapper"
-                            hx-push-url="true"
-                            hx-indicator=".htmx-indicator">
-                            Estado {% if current_sort == 'estado' %}{% if current_order == 'asc' %}↑{% else %}↓{% endif %}{% endif %}
-                        </th>
-                        <th class="px-6 py-4 cursor-pointer hover:text-jmie-orange transition-colors select-none"
-                            hx-get="{% url 'dispositivos:dispositivo_list' %}?{% if query %}q={{ query }}&{% endif %}{% if filter.form.centro_costo.value %}centro_costo={{ filter.form.centro_costo.value }}&{% endif %}{% if filter.form.estado.value %}estado={{ filter.form.estado.value }}&{% endif %}{% if filter.form.tipo.value %}tipo={{ filter.form.tipo.value }}&{% endif %}{% if filter.form.fabricante.value %}fabricante={{ filter.form.fabricante.value }}&{% endif %}sort=acta&order={% if current_sort == 'acta' and current_order == 'asc' %}desc{% else %}asc{% endif %}"
-                            hx-target="#tabla-wrapper"
-                            hx-push-url="true"
-                            hx-indicator=".htmx-indicator">
-                            Acta {% if current_sort == 'acta' %}{% if current_order == 'asc' %}↑{% else %}↓{% endif %}{% endif %}
-                        </th>
+                        <c-th-sort sort="id">ID / Serie</c-th-sort>
+                        <c-th-sort sort="tipo">Tipo</c-th-sort>
+                        <c-th-sort sort="marca">Marca & Modelo</c-th-sort>
+                        <c-th-sort sort="responsable">Responsable & CC</c-th-sort>
+                        <c-th-sort sort="estado">Estado</c-th-sort>
+                        <c-th-sort sort="acta">Acta</c-th-sort>
                         <th class="px-6 py-4 text-right">Acciones</th>
                     </tr>
                 </thead>
@@ -138,16 +75,13 @@
             </div>
         </div>
 
-        <!-- Footer de la tabla (Paginación futura) -->
         <div class="px-6 py-4 bg-white/[0.01] border-t border-white/5 flex items-center justify-between">
             <span class="text-[10px] font-bold text-jmie-gray uppercase tracking-tighter">
                 Mostrando {{ dispositivos.count }} activos registrados
             </span>
-            <div class="flex gap-2">
-                <!-- Aquí iría la paginación -->
-            </div>
+            <div class="flex gap-2"></div>
         </div>
-    </div>
+    </c-glass-panel>
 </div>
 
 <style>

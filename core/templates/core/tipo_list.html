@@ -1,8 +1,8 @@
 {% extends "core/base_catalogo.html" %}
 
 {% block section_name %}Catálogo de Tipos{% endblock %}
-{% block nav_tipos %}text-on-background bg-white/5 border-l-2 border-jmie-orange rounded-none{% endblock %}
-{% block nav_tipos_icon %}text-jmie-orange{% endblock %}
+
+
 
 {% block catalogo_nombre %}Categorías{% endblock %}
 {% block catalogo_titulo %}Tipos de Dispositivo{% endblock %}
@@ -10,10 +10,10 @@
 
 {% block header_actions %}
     {% if perms.core.add_tipodispositivo %}
-    <button hx-get="{% url 'core:tipodispositivo_create' %}" hx-target="#modal-container" class="px-5 py-3 bg-jmie-orange hover:brightness-110 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-[0_0_15px_rgba(237,139,0,0.3)]">
+    <c-btn-primary hx-get="{% url 'core:tipodispositivo_create' %}" hx-target="#modal-container">
         <span class="material-symbols-outlined mr-2 text-[18px]">add</span>
         Nuevo Tipo
-    </button>
+    </c-btn-primary>
     {% endif %}
 {% endblock %}
 
@@ -21,8 +21,8 @@
 {% block refresh_trigger %}tipoListChanged{% endblock %}
 
 {% block table_head %}
-    <th class="px-6 py-5">Nombre del Tipo</th>
-    <th class="px-6 py-5">Sigla Identificadora</th>
+    <c-th>Nombre del Tipo</c-th>
+    <c-th>Sigla</c-th>
 {% endblock %}
 
 {% block table_body %}
@@ -44,7 +44,7 @@
     {% empty %}
     <tr>
         <td colspan="3">
-            {% include "partials/empty_state.html" with icon="devices" title="Sin Categorías" subtitle="No se han definido tipos de dispositivos aún." %}
+            <c-empty-state icon="devices" title="Sin Categorías" subtitle="No se han definido tipos de dispositivos aún." />
         </td>
     </tr>
     {% endfor %}

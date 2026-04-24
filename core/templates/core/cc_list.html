@@ -1,8 +1,8 @@
 {% extends "core/base_catalogo.html" %}
 
 {% block section_name %}Catálogo de Centros de Costo{% endblock %}
-{% block nav_ccs %}text-on-background bg-white/5 border-l-2 border-jmie-orange rounded-none{% endblock %}
-{% block nav_ccs_icon %}text-jmie-orange{% endblock %}
+
+
 
 {% block catalogo_nombre %}Estructura Contable{% endblock %}
 {% block catalogo_titulo %}Centros de Costo{% endblock %}
@@ -10,10 +10,10 @@
 
 {% block header_actions %}
     {% if perms.core.add_centrocosto %}
-    <button hx-get="{% url 'core:centrocosto_create' %}" hx-target="#modal-container" class="px-5 py-3 bg-jmie-orange hover:brightness-110 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-[0_0_15px_rgba(237,139,0,0.3)]">
+    <c-btn-primary hx-get="{% url 'core:centrocosto_create' %}" hx-target="#modal-container">
         <span class="material-symbols-outlined mr-2 text-[18px]">add</span>
         Nuevo Centro
-    </button>
+    </c-btn-primary>
     {% endif %}
 {% endblock %}
 
@@ -21,9 +21,9 @@
 {% block refresh_trigger %}ccListChanged{% endblock %}
 
 {% block table_head %}
-    <th class="px-6 py-5">Nombre / Sede</th>
-    <th class="px-6 py-5">Código Contable</th>
-    <th class="px-6 py-5">Estado</th>
+    <c-th>Nombre / Sede</c-th>
+    <c-th>Código Contable</c-th>
+    <c-th>Estado</c-th>
 {% endblock %}
 
 {% block table_body %}
@@ -50,7 +50,7 @@
     {% empty %}
     <tr>
         <td colspan="4">
-            {% include "partials/empty_state.html" with icon="payments" title="Sin Centros de Costo" subtitle="Aún no se ha definido la estructura contable." %}
+            <c-empty-state icon="payments" title="Sin Centros de Costo" subtitle="Aún no se ha definido la estructura contable." />
         </td>
     </tr>
     {% endfor %}

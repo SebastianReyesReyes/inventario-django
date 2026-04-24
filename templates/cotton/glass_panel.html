@@ -1,0 +1,7 @@
+<!-- Panel de Vidrio Reutilizable -->
+<div class="glass-panel rounded-2xl border border-white/5 overflow-hidden relative {{ class }}" {{ attrs }}>
+    {% if loader_label %}
+    <c-htmx-loader label="{{ loader_label }}" />
+    {% endif %}
+    {{ slot }}
+</div>

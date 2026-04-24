@@ -161,9 +161,7 @@ def dispositivo_list(request):
             # Renderizamos la lista en un panel side-over
             context['drilldown_title'] = f"Equipos: {tipo_nombre or estado_nombre or cc_nombre or 'Listado'}"
             return render(request, 'dispositivos/partials/dispositivo_sideover_list.html', context)
-        if request.GET.get('sort') or request.GET.get('order'):
-            return render(request, 'dispositivos/partials/dispositivo_list_table.html', context)
-        return render(request, 'dispositivos/partials/dispositivo_list_results.html', context)
+        return render(request, 'dispositivos/partials/dispositivo_list_table.html', context)
         
     return render(request, 'dispositivos/dispositivo_list.html', context)
 

@@ -46,9 +46,7 @@ def colaborador_list(request):
     }
 
     if request.headers.get('HX-Request'):
-        if request.GET.get('sort') or request.GET.get('order'):
-            return render(request, 'colaboradores/partials/colaborador_list_table.html', context)
-        return render(request, 'colaboradores/partials/colaborador_list_results.html', context)
+        return render(request, 'colaboradores/partials/colaborador_list_table.html', context)
 
     return render(request, 'colaboradores/colaborador_list.html', context)
 

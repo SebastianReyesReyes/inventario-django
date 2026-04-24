@@ -88,7 +88,7 @@
                     {% empty %}
                     <tr>
                         <td colspan="3" class="px-4 py-8">
-                            {% include "partials/empty_state.html" with icon="inventory_2" title="Sin Equipos" subtitle="Este colaborador no tiene activos asignados." compact=True %}
+                            <c-empty-state icon="inventory_2" title="Sin Equipos" subtitle="Este colaborador no tiene activos asignados." compact="True" />
                         </td>
                     </tr>
                     {% endfor %}

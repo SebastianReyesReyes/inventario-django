@@ -50,27 +50,27 @@
             hx-trigger="change delay:200ms" hx-push-url="true" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             
             <div class="space-y-2">
-                <label class="text-[10px] font-black uppercase text-jmie-gray ml-1">Centro de Costo / Obra</label>
+                <c-form-label>Centro de Costo / Obra</c-form-label>
                 {{ filter.form.centro_costo }}
             </div>
 
             <div class="space-y-2">
-                <label class="text-[10px] font-black uppercase text-jmie-gray ml-1">Fabricante / Marca</label>
+                <c-form-label>Fabricante / Marca</c-form-label>
                 {{ filter.form.fabricante }}
             </div>
 
             <div class="space-y-2">
-                <label class="text-[10px] font-black uppercase text-jmie-gray ml-1">Tipo de Equipo</label>
+                <c-form-label>Tipo de Equipo</c-form-label>
                 {{ filter.form.tipo }}
             </div>
             
             <div class="space-y-2">
-                <label class="text-[10px] font-black uppercase text-jmie-gray ml-1">Estado Operativo</label>
+                <c-form-label>Estado Operativo</c-form-label>
                 {{ filter.form.estado }}
             </div>
 
             <div class="md:col-span-2 lg:col-span-4 space-y-2">
-                <label class="text-[10px] font-black uppercase text-jmie-gray ml-1">Rango de Fecha de Compra</label>
+                <c-form-label>Rango de Fecha de Compra</c-form-label>
                 <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                     {{ filter.form.fecha_compra }}
                 </div>

@@ -1,3 +1,4 @@
+{% load ui_tags %}
 <div x-data="{ open: true }"
     x-init="$el.focus()"
     @keydown.escape.window="open = false; setTimeout(() => $el.remove(), 300)"
@@ -53,15 +54,9 @@
                                         <div class="text-sm font-black text-on-background group-hover:text-jmie-orange transition-colors">{{ d.identificador_interno }}</div>
                                         <div class="text-[10px] font-bold text-jmie-gray">{{ d.numero_serie }}</div>
                                     </div>
-                                    {% with e=d.estado.nombre.lower %}
-                                    <span class="px-2 py-1 rounded border text-[10px] font-black uppercase tracking-wider
-                                        {% if 'disponible' in e or 'bueno' in e %} bg-success/10 text-success border-success/20
-                                        {% elif 'asignado' in e %} bg-jmie-blue/10 text-jmie-blue border-jmie-blue/20
-                                        {% elif 'reparación' in e or 'falla' in e %} bg-jmie-orange/10 text-jmie-orange border-jmie-orange/20
-                                        {% else %} bg-white/5 text-jmie-gray border-white/10 {% endif %}">
+                                    <span class="px-2 py-1 rounded border text-[10px] font-black uppercase tracking-wider {% status_badge d.estado %}">
                                         {{ d.estado.nombre }}
                                     </span>
-                                    {% endwith %}
                                 </div>
                                 <div class="flex justify-between items-end mt-3">
                                     <div>

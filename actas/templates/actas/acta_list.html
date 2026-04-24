@@ -29,7 +29,11 @@
     </c-page-header>
 
     <c-glass-panel loader_label="Sincronizando..." class="shadow-2xl">
-        <div id="tabla-wrapper" class="overflow-x-auto">
+        <div id="tabla-wrapper" class="overflow-x-auto"
+             hx-get="{% url 'actas:acta_list' %}"
+             hx-trigger="actaCreated from:body"
+             hx-indicator=".htmx-indicator"
+             hx-push-url="false">
             <table class="w-full text-left border-collapse">
                 <thead>
                     <tr class="bg-white/[0.02] border-b border-white/5 text-jmie-gray uppercase text-[10px] font-black tracking-widest">
@@ -41,11 +45,7 @@
                         <th class="px-6 py-5 text-right font-black">Acciones</th>
                     </tr>
                 </thead>
-                <tbody id="search-results" 
-                       class="divide-y divide-white/5" 
-                       hx-trigger="refresh, actaCreated from:body" 
-                       hx-get="{% url 'actas:acta_list' %}" 
-                       hx-target="this">
+                <tbody id="search-results" class="divide-y divide-white/5">
                     {% include "actas/partials/acta_table_rows.html" %}
                 </tbody>
             </table>

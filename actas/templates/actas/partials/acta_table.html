@@ -10,11 +10,7 @@
             <th class="px-6 py-5 text-right font-black">Acciones</th>
         </tr>
     </thead>
-    <tbody id="search-results" 
-           class="divide-y divide-white/5" 
-           hx-trigger="refresh, actaCreated from:body" 
-           hx-get="{% url 'actas:acta_list' %}" 
-           hx-target="this">
+    <tbody id="search-results" class="divide-y divide-white/5">
         {% include "actas/partials/acta_table_rows.html" %}
     </tbody>
 </table>

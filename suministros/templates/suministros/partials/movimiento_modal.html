@@ -22,7 +22,8 @@
 
             <form hx-post="{% url 'suministros:movimiento_create' %}"
                   hx-target="#modal-container"
-                  hx-disabled-elt="this"
+                  hx-indicator=".htmx-indicator"
+                  hx-on::after-request="if(event.detail.successful) showModal = false"
                   class="space-y-5">
                 {% csrf_token %}
                 {{ form.suministro }}

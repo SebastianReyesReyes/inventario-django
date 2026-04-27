@@ -105,6 +105,7 @@ python manage.py import_devices ruta/al/archivo.csv --dry-run  # Simulación
 - [Mejores Prácticas Django](docs/dev_guide/03_mejores_practicas_django.md)
 - [Mejores Prácticas Frontend](docs/dev_guide/04_mejores_practicas_frontend.md)
 - [Guía de Pruebas E2E](docs/dev_guide/05_guia_de_pruebas_e2e.md)
+- [Poblado de Datos Iniciales y Reset](docs/dev_guide/06_poblado_de_datos_iniciales.md)
 - [Convenciones de URLs](docs/dev_guide/URL_CONVENTIONS.md)
 - [Higiene de Dependencias](docs/dev_guide/dependency_hygiene.md)
 - [Guía de Despliegue](ops/deploy/README_DEPLOY.md)

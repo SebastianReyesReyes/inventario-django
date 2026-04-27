@@ -19,3 +19,5 @@ skills-lock.json
 .opencode/
 .stitch/
 node_modules/
+.stitch/
+*.log

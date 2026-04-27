@@ -46,11 +46,22 @@
                         </div>
                         <div class="ml-4">
                             <h3 class="text-xl font-black text-on-background" id="modal-title">{% if modelo %}Editar Modelo{% else %}Nuevo Modelo{% endif %}</h3>
-                            <p class="text-sm font-bold text-jmie-gray mt-1">{% if modelo %}Actualiza el nombre o fabricante.{% else %}Añade un modelo específico a una marca.{% endif %}</p>
+                            <p class="text-sm font-bold text-jmie-gray mt-1">{% if modelo %}Actualiza nombre, fabricante y tipo de dispositivo.{% else %}Añade un modelo específico a una marca.{% endif %}</p>
                         </div>
                     </div>
                     
                     <div class="space-y-4">
+                        {% if form.non_field_errors %}
+                        <div class="rounded-lg border border-error/20 bg-error/10 px-3 py-2">
+                            {% for error in form.non_field_errors %}
+                                <p class="text-error text-xs font-bold flex items-center">
+                                    <span class="material-symbols-outlined text-[14px] mr-1">error</span>
+                                    {{ error }}
+                                </p>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+
                         <div>
                             <label class="block text-[11px] font-bold text-jmie-gray uppercase tracking-widest mb-2 px-1">Fabricante</label>
                             {{ form.fabricante }}
@@ -61,6 +72,18 @@
                                 </p>
                             {% endif %}
                         </div>
+
+                        <div>
+                            <label class="block text-[11px] font-bold text-jmie-gray uppercase tracking-widest mb-2 px-1">Tipo de Dispositivo</label>
+                            {{ form.tipo_dispositivo }}
+                            {% if form.tipo_dispositivo.errors %}
+                                <p class="text-error text-xs font-bold mt-1.5 flex items-center">
+                                    <span class="material-symbols-outlined text-[14px] mr-1">error</span>
+                                    {{ form.tipo_dispositivo.errors.0 }}
+                                </p>
+                            {% endif %}
+                        </div>
+
                         <div>
                             <label class="block text-[11px] font-bold text-jmie-gray uppercase tracking-widest mb-2 px-1">Nombre del Modelo</label>
                             {{ form.nombre }}

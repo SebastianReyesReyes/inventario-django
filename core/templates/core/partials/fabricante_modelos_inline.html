@@ -29,17 +29,18 @@
                 {% endif %}
 
                 {% if perms.core.delete_modelo %}
-                <button
-                    type="button"
-                    class="opacity-0 group-hover:opacity-100 text-error/70 hover:text-error transition-opacity"
+                <c-confirm-dialog
+                    dialog_title="Eliminar Modelo"
+                    message="¿Eliminar modelo '{{ modelo.nombre }}'?"
+                    confirm_text="Eliminar"
+                    trigger_class="opacity-0 group-hover:opacity-100 text-error/70 hover:text-error transition-opacity"
                     title="Eliminar"
                     hx-post="{% url 'core:modelo_inline_delete' modelo.pk %}"
                     hx-target="#fabricante-modelos-{{ fabricante.pk }}"
                     hx-swap="outerHTML"
-                    hx-confirm="¿Eliminar modelo '{{ modelo.nombre }}'?"
                 >
                     <span class="material-symbols-outlined text-[10px]">close</span>
-                </button>
+                </c-confirm-dialog>
                 {% endif %}
             </div>
 
@@ -74,25 +75,18 @@
         {% endfor %}
     </div>
 
-    <!-- Crear nuevo modelo -->
+    <!-- Crear nuevo modelo (vía modal para incluir tipo_dispositivo) -->
     {% if perms.core.add_modelo %}
-    <div class="flex gap-2 mt-1">
-        <input
-            type="text"
-            id="nuevo-modelo-{{ fabricante.pk }}"
-            name="nuevo_modelo_nombre"
-            placeholder="Nuevo modelo..."
-            class="flex-1 bg-surface-container-high border-[1px] border-white/5 rounded-lg px-3 py-1.5 text-[10px] text-on-background placeholder:text-jmie-gray focus:outline-none focus:border-jmie-blue transition-all"
-        >
+    <div class="flex mt-1">
         <button
             type="button"
-            class="px-2.5 py-1.5 bg-jmie-blue/20 hover:bg-jmie-blue/30 text-jmie-blue text-[10px] font-black rounded-lg border border-jmie-blue/20 transition-all"
-            hx-post="{% url 'core:fabricante_modelo_inline' fabricante.pk %}"
-            hx-include="#nuevo-modelo-{{ fabricante.pk }}"
-            hx-target="#fabricante-modelos-{{ fabricante.pk }}"
-            hx-swap="outerHTML"
+            hx-get="{% url 'core:modelo_create' %}?fabricante_id={{ fabricante.pk }}"
+            hx-target="#modal-container"
+            class="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-jmie-blue/15 hover:bg-jmie-blue/25 text-jmie-blue text-[10px] font-black rounded-lg border border-jmie-blue/20 transition-all"
+            title="Agregar modelo"
         >
-            +
+            <span class="material-symbols-outlined text-[12px]">add</span>
+            Agregar modelo
         </button>
     </div>
     {% endif %}

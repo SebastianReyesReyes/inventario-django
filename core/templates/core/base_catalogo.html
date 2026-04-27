@@ -16,6 +16,16 @@
             <p class="text-jmie-gray mt-1 text-sm font-bold">{% block catalogo_descripcion %}{% endblock %}</p>
         </div>
         <div class="flex items-center gap-3">
+            {% if perms.core.add_fabricante %}
+            <c-btn-secondary
+                hx-get="{% url 'core:catalogo_import_modal' %}"
+                hx-target="#modal-container"
+                class="text-xs"
+            >
+                <span class="material-symbols-outlined mr-2 text-[18px]">upload_file</span>
+                Importar CSV
+            </c-btn-secondary>
+            {% endif %}
             {% block header_actions %}{% endblock %}
         </div>
     </div>

@@ -73,7 +73,7 @@ class FabricanteDeleteView(LoginRequiredMixin, PermissionRequiredMixin, View):
     def _delete(self, pk):
         fabricante = get_object_or_404(Fabricante, pk=pk)
         if fabricante.modelos.exists():
-            return HttpResponse("No se puede eliminar: tiene modelos asociados", status=400)
+            return htmx_trigger_response({"showNotification": {"message": "No se puede eliminar: tiene modelos asociados", "type": "error"}})
         fabricante.delete()
         return htmx_trigger_response({"fabricanteListChanged": True, "showNotification": "Fabricante eliminado"})
 
@@ -195,7 +195,12 @@ class ModeloCreateView(CatalogCreateViewBase):
     def get_initial(self, request):
         initial = {}
         if request.GET.get("fabricante_id"):
-            initial["fabricante"] = request.GET.get("fabricante_id")
+            fabricante_id = request.GET.get("fabricante_id")
+            initial["fabricante"] = fabricante_id
+            # Preseleccionar tipo desde el primer modelo existente del fabricante (si existe)
+            modelo_existente = Modelo.objects.filter(fabricante_id=fabricante_id).select_related("tipo_dispositivo").first()
+            if modelo_existente:
+                initial["tipo_dispositivo"] = modelo_existente.tipo_dispositivo_id
         return initial
 
 
@@ -220,7 +225,7 @@ class ModeloDeleteView(CatalogDeleteViewBase):
 
     def get_protection_response(self, obj):
         if Dispositivo.objects.filter(modelo=obj).exists():
-            return HttpResponse("Protegido: Existen dispositivos de este modelo", status=400)
+            return htmx_trigger_response({"showNotification": {"message": "Protegido: Existen dispositivos de este modelo", "type": "error"}})
         return None
 
 
@@ -249,7 +254,7 @@ class TipoDeleteView(CatalogDeleteViewBase):
 
     def get_protection_response(self, obj):
         if Dispositivo.objects.filter(modelo__tipo_dispositivo=obj).exists():
-            return htmx_trigger_response({"showNotification": "Protegido: Existen dispositivos de este tipo"})
+            return htmx_trigger_response({"showNotification": {"message": "Protegido: Existen dispositivos de este tipo", "type": "error"}})
         return None
 
 
@@ -296,7 +301,7 @@ class EstadoDeleteView(CatalogDeleteViewBase):
 
     def get_protection_response(self, obj):
         if Dispositivo.objects.filter(estado=obj).exists():
-            return htmx_trigger_response({"showNotification": "Protegido: Existen dispositivos en este estado"})
+            return htmx_trigger_response({"showNotification": {"message": "Protegido: Existen dispositivos en este estado", "type": "error"}})
         return None
 
 
@@ -326,5 +331,5 @@ class DepartamentoDeleteView(CatalogDeleteViewBase):
     def get_protection_response(self, obj):
         from colaboradores.models import Colaborador
         if Colaborador.objects.filter(departamento=obj).exists():
-            return htmx_trigger_response({"showNotification": "Protegido: Existen colaboradores en este departamento"})
+            return htmx_trigger_response({"showNotification": {"message": "Protegido: Existen colaboradores en este departamento", "type": "error"}})
         return None

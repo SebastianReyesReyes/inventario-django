@@ -364,33 +364,82 @@
     </div>
 
     <!-- Toast Notifications -->
-    <div x-data="{ 
-            notifications: [],
-            add(msg) {
-                this.notifications.push({ id: Date.now(), msg: msg });
-                setTimeout(() => { this.notifications = this.notifications.filter(n => n.id !== this.notifications[0]?.id) }, 3000);
-            }
-        }" @show-notification.window="add($event.detail.value || $event.detail)"
+    <div x-data="toastSystem()" x-init="init()"
         class="fixed bottom-6 right-6 z-[100] flex flex-col gap-3">
         <template x-for="n in notifications" :key="n.id">
-            <div x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4"
+            <div x-show="n.visible"
+                x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4"
                 x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="ease-in duration-200"
                 x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
-                class="bg-surface-container-highest border border-jmie-orange/30 rounded-xl px-5 py-3 shadow-[0_10px_25px_-5px_rgba(0,0,0,0.5)] flex items-center gap-3 min-w-[300px]">
-                <div class="bg-jmie-orange/20 p-1.5 rounded-lg text-jmie-orange">
-                    <span class="material-symbols-outlined text-[18px]">check_circle</span>
+                class="rounded-xl px-5 py-3 shadow-[0_10px_25px_-5px_rgba(0,0,0,0.5)] flex items-center gap-3 min-w-[300px] border"
+                :class="n.type === 'error' ? 'bg-error/10 border-error/20 text-error' : (n.type === 'success' ? 'bg-success/10 border-success/20 text-success' : 'bg-jmie-orange/10 border-jmie-orange/20 text-jmie-orange')">
+                <div class="p-1.5 rounded-lg shrink-0"
+                    :class="n.type === 'error' ? 'bg-error/20 text-error' : (n.type === 'success' ? 'bg-success/20 text-success' : 'bg-jmie-orange/20 text-jmie-orange')">
+                    <span class="material-symbols-outlined text-[18px]"
+                        x-text="n.type === 'error' ? 'error' : (n.type === 'success' ? 'check_circle' : 'info')"></span>
                 </div>
-                <div class="flex-1">
-                    <p class="text-xs font-black text-jmie-gray uppercase tracking-widest mb-0.5">Notificación</p>
+                <div class="flex-1 min-w-0">
+                    <p class="text-xs font-black uppercase tracking-widest mb-0.5"
+                        :class="n.type === 'error' ? 'text-error/60' : (n.type === 'success' ? 'text-success/60' : 'text-jmie-orange/60')"
+                        x-text="n.type === 'error' ? 'Error' : (n.type === 'success' ? 'Éxito' : 'Notificación')"></p>
                     <p class="text-sm font-bold text-on-background" x-text="n.msg"></p>
                 </div>
-                <button @click="notifications = notifications.filter(i => i.id !== n.id)"
-                    class="text-jmie-gray hover:text-on-background">
+                <button @click="remove(n.id)"
+                    class="text-jmie-gray hover:text-on-background shrink-0">
                     <span class="material-symbols-outlined text-[16px]">close</span>
                 </button>
             </div>
         </template>
     </div>
+
+    <script>
+    function toastSystem() {
+        return {
+            notifications: [],
+            _lastPayload: null,
+            _lastTime: 0,
+            init() {
+                // HTMX 1.9+ dispara automaticamente eventos desde HX-Trigger header
+                document.body.addEventListener('showNotification', (e) => {
+                    const detail = e.detail;
+                    let msg, type;
+                    if (typeof detail === 'string') {
+                        msg = detail; type = 'success';
+                    } else if (detail?.message) {
+                        msg = detail.message; type = detail.type || 'success';
+                    } else { return; }
+                    this._push(msg, type);
+                });
+                // Compatibilidad: eventos CustomEvent disparados manualmente
+                document.addEventListener('show-notification', (e) => {
+                    const detail = e.detail?.value || e.detail;
+                    if (typeof detail === 'string') {
+                        this._push(detail, 'success');
+                    } else if (detail?.message) {
+                        this._push(detail.message, detail.type || 'success');
+                    }
+                });
+            },
+            _push(msg, type) {
+                const now = Date.now();
+                const payload = JSON.stringify({msg, type});
+                if (payload === this._lastPayload && (now - this._lastTime) < 800) return;
+                this._lastPayload = payload;
+                this._lastTime = now;
+                const id = now + Math.random();
+                this.notifications.push({ id, msg, type, visible: true });
+                setTimeout(() => this.remove(id), 4000);
+            },
+            remove(id) {
+                const n = this.notifications.find(i => i.id === id);
+                if (n) {
+                    n.visible = false;
+                    setTimeout(() => { this.notifications = this.notifications.filter(i => i.id !== id); }, 200);
+                }
+            }
+        };
+    }
+    </script>
 
     <!-- Django Messages to Toast Notifications -->
     {% if messages %}

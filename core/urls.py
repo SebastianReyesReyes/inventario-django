@@ -42,6 +42,10 @@ urlpatterns = [
     path('departamentos/<int:pk>/editar/', views.departamento_edit, name='departamento_update'),
     path('departamentos/<int:pk>/eliminar/', views.departamento_delete, name='departamento_delete'),
     
+    # Importación de catálogos
+    path('importar/', views.catalogo_import_modal, name='catalogo_import_modal'),
+    path('importar/procesar/', views.catalogo_import_process, name='catalogo_import_process'),
+
     # Dashboard API / Drill-down
     path('dashboard/drill-down/', views.dashboard_drill_down, name='dashboard_drill_down'),
 ]

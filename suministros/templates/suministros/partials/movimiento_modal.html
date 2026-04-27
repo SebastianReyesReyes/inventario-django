@@ -1,4 +1,4 @@
-<div x-data="{ showModal: true }" x-show="showModal" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+<div x-data="{ showModal: true }" x-show="showModal" @modal-close.window="showModal = false" class="fixed inset-0 z-50 flex items-center justify-center p-4" x-cloak>
     <div @click="showModal = false" class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
 
     <div class="relative bg-surface-container rounded-2xl border border-white/10 shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200">
@@ -23,7 +23,7 @@
             <form hx-post="{% url 'suministros:movimiento_create' %}"
                   hx-target="#modal-container"
                   hx-indicator=".htmx-indicator"
-                  hx-on::after-request="if(event.detail.successful) showModal = false"
+                  hx-on::after-request="if(event.detail.successful) { window.dispatchEvent(new CustomEvent('modal-close')); window.dispatchEvent(new CustomEvent('show-notification', { detail: { message: 'Movimiento registrado correctamente', type: 'success' } })); }"
                   class="space-y-5">
                 {% csrf_token %}
                 {{ form.suministro }}

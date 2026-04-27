@@ -1,25 +1,90 @@
 <div id="fabricante-modelos-{{ fabricante.pk }}" class="flex flex-col gap-2">
     <span class="text-[10px] font-black uppercase tracking-widest text-jmie-gray opacity-50">
-        {{ fabricante.modelos.count }} Modelos registrados:
+        {{ fabricante.modelos.count }} Modelo{{ fabricante.modelos.count|pluralize }} registrado{{ fabricante.modelos.count|pluralize }}:
     </span>
-    <div class="flex flex-wrap gap-1.5">
+
+    <!-- Lista de modelos con scroll si hay muchos -->
+    <div class="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto pr-1 custom-scrollbar">
         {% for modelo in fabricante.modelos.all %}
-        <span class="inline-flex items-center px-2 py-0.5 rounded bg-white/5 text-[10px] font-bold text-on-background border border-white/5">
-            {{ modelo.nombre }}
-        </span>
+        <div
+            x-data="{ editing: false }"
+            class="inline-flex items-center"
+        >
+            <!-- Modo lectura -->
+            <div
+                x-show="!editing"
+                class="group inline-flex items-center gap-1 px-2 py-0.5 rounded bg-white/5 text-[10px] font-bold text-on-background border border-white/5 hover:border-jmie-blue/30 transition-all"
+            >
+                <span>{{ modelo.nombre }}</span>
+
+                {% if perms.core.change_modelo %}
+                <button
+                    type="button"
+                    @click="editing = true; $nextTick(() => $refs.input{{ modelo.pk }}.focus())"
+                    class="ml-0.5 opacity-0 group-hover:opacity-100 text-jmie-blue hover:text-white transition-opacity"
+                    title="Editar"
+                >
+                    <span class="material-symbols-outlined text-[10px]">edit</span>
+                </button>
+                {% endif %}
+
+                {% if perms.core.delete_modelo %}
+                <button
+                    type="button"
+                    class="opacity-0 group-hover:opacity-100 text-error/70 hover:text-error transition-opacity"
+                    title="Eliminar"
+                    hx-post="{% url 'core:modelo_inline_delete' modelo.pk %}"
+                    hx-target="#fabricante-modelos-{{ fabricante.pk }}"
+                    hx-swap="outerHTML"
+                    hx-confirm="¿Eliminar modelo '{{ modelo.nombre }}'?"
+                >
+                    <span class="material-symbols-outlined text-[10px]">close</span>
+                </button>
+                {% endif %}
+            </div>
+
+            <!-- Modo edición -->
+            <form
+                x-show="editing"
+                class="inline-flex items-center gap-1"
+                hx-post="{% url 'core:modelo_inline_update' modelo.pk %}"
+                hx-target="#fabricante-modelos-{{ fabricante.pk }}"
+                hx-swap="outerHTML"
+                @submit="editing = false"
+            >
+                {% csrf_token %}
+                <input
+                    x-ref="input{{ modelo.pk }}"
+                    type="text"
+                    name="nombre"
+                    value="{{ modelo.nombre }}"
+                    class="w-24 bg-surface-container-high border border-jmie-blue/30 rounded px-1.5 py-0.5 text-[10px] text-on-background focus:outline-none"
+                    @keydown.escape.window="editing = false"
+                >
+                <button type="submit" class="text-emerald-400 hover:text-emerald-300 transition-colors">
+                    <span class="material-symbols-outlined text-[12px]">check</span>
+                </button>
+                <button type="button" @click="editing = false" class="text-jmie-gray hover:text-white transition-colors">
+                    <span class="material-symbols-outlined text-[12px]">close</span>
+                </button>
+            </form>
+        </div>
         {% empty %}
         <span class="text-[10px] text-white/20 italic font-medium">Sin modelos registrados</span>
         {% endfor %}
     </div>
+
+    <!-- Crear nuevo modelo -->
+    {% if perms.core.add_modelo %}
     <div class="flex gap-2 mt-1">
-        <input 
-            type="text" 
+        <input
+            type="text"
             id="nuevo-modelo-{{ fabricante.pk }}"
-            name="nuevo_modelo_nombre" 
-            placeholder="Nuevo modelo..." 
+            name="nuevo_modelo_nombre"
+            placeholder="Nuevo modelo..."
             class="flex-1 bg-surface-container-high border-[1px] border-white/5 rounded-lg px-3 py-1.5 text-[10px] text-on-background placeholder:text-jmie-gray focus:outline-none focus:border-jmie-blue transition-all"
         >
-        <button 
+        <button
             type="button"
             class="px-2.5 py-1.5 bg-jmie-blue/20 hover:bg-jmie-blue/30 text-jmie-blue text-[10px] font-black rounded-lg border border-jmie-blue/20 transition-all"
             hx-post="{% url 'core:fabricante_modelo_inline' fabricante.pk %}"
@@ -30,4 +95,5 @@
             +
         </button>
     </div>
+    {% endif %}
 </div>

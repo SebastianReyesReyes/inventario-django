@@ -168,9 +168,10 @@ class TestCoreCatalogViews:
 
     def test_modelo_create_htmx_trigger(self, admin_client):
         fabricante = FabricanteFactory(nombre="Samsung")
+        tipo = TipoDispositivoFactory()
         response = admin_client.post(
             reverse("core:modelo_create"),
-            {"nombre": "Galaxy Book", "fabricante": fabricante.pk},
+            {"nombre": "Galaxy Book", "fabricante": fabricante.pk, "tipo_dispositivo": tipo.pk},
             HTTP_HX_REQUEST="true",
         )
 
@@ -209,7 +210,8 @@ class TestCoreCatalogViews:
 
     def test_tipo_delete_protected_trigger(self, admin_client):
         tipo = TipoDispositivoFactory(nombre="Servidor")
-        DispositivoFactory(tipo=tipo)
+        modelo = ModeloFactory(tipo_dispositivo=tipo)
+        DispositivoFactory(modelo=modelo)
 
         response = admin_client.delete(reverse("core:tipodispositivo_delete", kwargs={"pk": tipo.pk}))
         assert response.status_code == 204

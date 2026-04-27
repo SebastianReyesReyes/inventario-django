@@ -1,0 +1,40 @@
+<div class="p-6">
+    <div class="flex items-center gap-4 mb-6">
+        <div class="w-12 h-12 rounded-full bg-error/10 flex items-center justify-center text-error">
+            <span class="material-symbols-outlined">delete_forever</span>
+        </div>
+        <div>
+            <h3 class="text-lg font-black tracking-tight text-on-background">Desactivar Suministro</h3>
+            <p class="text-xs text-jmie-gray font-bold uppercase tracking-widest mt-0.5">{{ suministro.nombre }}</p>
+        </div>
+    </div>
+
+    {% if suministro.stock_actual > 0 %}
+    <div class="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 mb-4">
+        <p class="text-sm text-amber-400 font-medium leading-relaxed">
+            Este suministro aún tiene <strong>{{ suministro.stock_actual }}</strong> unidades en stock. Al desactivarlo, desaparecerá del listado pero el historial de movimientos se conservará.
+        </p>
+    </div>
+    {% endif %}
+
+    <div class="bg-surface-container-high/50 border border-white/5 rounded-2xl p-4 mb-6">
+        <p class="text-sm text-on-background font-medium leading-relaxed">
+            ¿Estás seguro de que deseas desactivar este suministro? Esta acción <span class="text-error font-bold">no elimina</span> los registros históricos.
+        </p>
+    </div>
+
+    <form hx-post="{% url 'suministros:suministro_delete' suministro.pk %}"
+          hx-target="#modal-container"
+          class="flex gap-3">
+        {% csrf_token %}
+        <button type="button"
+                @click="showModal = false"
+                class="flex-1 px-4 py-3 bg-white/5 hover:bg-white/10 text-on-background font-black text-[10px] uppercase tracking-widest rounded-xl border border-white/10 transition-all">
+            Cancelar
+        </button>
+        <button type="submit"
+                class="flex-1 px-4 py-3 bg-error hover:bg-error-container text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-error/20">
+            Desactivar
+        </button>
+    </form>
+</div>

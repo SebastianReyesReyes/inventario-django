@@ -10,6 +10,8 @@ urlpatterns = [
     path('fabricantes/<int:pk>/editar/', views.fabricante_edit, name='fabricante_update'),
     path('fabricantes/<int:pk>/eliminar/', views.fabricante_delete, name='fabricante_delete'),
     path('fabricantes/<int:pk>/modelos/inline/', views.ajax_modelo_create_inline, name='fabricante_modelo_inline'),
+    path('modelos/<int:pk>/inline/editar/', views.ajax_modelo_update_inline, name='modelo_inline_update'),
+    path('modelos/<int:pk>/inline/eliminar/', views.ajax_modelo_delete_inline, name='modelo_inline_delete'),
     
     path('modelos/', views.modelo_list, name='modelo_list'),
     path('modelos/crear/', views.modelo_create, name='modelo_create'),
@@ -33,6 +35,12 @@ urlpatterns = [
     path('estados/crear/', views.estado_create, name='estadodispositivo_create'),
     path('estados/<int:pk>/editar/', views.estado_edit, name='estadodispositivo_update'),
     path('estados/<int:pk>/eliminar/', views.estado_delete, name='estadodispositivo_delete'),
+
+    # Departamentos
+    path('departamentos/', views.departamento_list, name='departamento_list'),
+    path('departamentos/crear/', views.departamento_create, name='departamento_create'),
+    path('departamentos/<int:pk>/editar/', views.departamento_edit, name='departamento_update'),
+    path('departamentos/<int:pk>/eliminar/', views.departamento_delete, name='departamento_delete'),
     
     # Dashboard API / Drill-down
     path('dashboard/drill-down/', views.dashboard_drill_down, name='dashboard_drill_down'),

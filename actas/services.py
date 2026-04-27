@@ -121,7 +121,7 @@ class ActaService:
             'creado_por',
             'ministro_de_fe',
         ).prefetch_related(
-            'asignaciones__dispositivo__tipo',
+            'asignaciones__dispositivo__modelo__tipo_dispositivo',
             'asignaciones__dispositivo__modelo__fabricante',
             'accesorios',
         ).get(pk=acta_pk)
@@ -140,7 +140,7 @@ class ActaService:
             QuerySet de HistorialAsignacion.
         """
         return HistorialAsignacion.objects.filter(acta=acta).select_related(
-            'dispositivo__tipo',
+            'dispositivo__modelo__tipo_dispositivo',
             'dispositivo__modelo__fabricante',
             'dispositivo__modelo',
         )
@@ -198,7 +198,7 @@ class ActaService:
             acta__isnull=True,
             fecha_fin__isnull=True,
         ).select_related(
-            'dispositivo__tipo',
+            'dispositivo__modelo__tipo_dispositivo',
             'dispositivo__modelo__fabricante',
         )
 

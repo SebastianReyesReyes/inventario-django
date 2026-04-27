@@ -15,7 +15,7 @@ def dashboard_principal(request):
     Calcula métricas y datos para gráficos basados en filtros avanzados.
     """
     # Inicializar el filtro avanzado
-    queryset = Dispositivo.objects.select_related('tipo', 'estado', 'centro_costo', 'modelo__fabricante').all()
+    queryset = Dispositivo.objects.select_related('modelo__tipo_dispositivo', 'estado', 'centro_costo', 'modelo__fabricante').all()
     filterset = AnaliticaInventarioFilter(request.GET, queryset=queryset)
     filtered_qs = filterset.qs
 

@@ -1,0 +1,13 @@
+{% if suministro.stock_actual == 0 %}
+<span class="px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-wider bg-red-500/10 text-red-400 border border-red-500/20">
+    Sin Stock (0)
+</span>
+{% elif suministro.stock_actual <= suministro.stock_minimo %}
+<span class="px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-wider bg-amber-500/10 text-amber-400 border border-amber-500/20">
+    Bajo Stock ({{ suministro.stock_actual }})
+</span>
+{% else %}
+<span class="px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+    OK ({{ suministro.stock_actual }})
+</span>
+{% endif %}

@@ -87,7 +87,7 @@ def colaborador_detail(request, pk):
     """Vista de perfil y auditoría de equipos asignados."""
     colaborador = get_object_or_404(Colaborador.objects.select_related('departamento', 'centro_costo'), pk=pk)
     # Obtenemos los equipos asignados actualmente
-    equipos = colaborador.equipos_asignados.select_related('tipo', 'modelo__fabricante', 'estado')
+    equipos = colaborador.equipos_asignados.select_related('modelo__tipo_dispositivo', 'modelo__fabricante', 'estado')
     
     context = {
         'c': colaborador,

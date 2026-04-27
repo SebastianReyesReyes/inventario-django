@@ -304,12 +304,14 @@ class TestTrazabilidadViews:
         user = self._login_superuser(client)
         tipo1 = TipoDispositivoFactory(nombre="Notebook")
         tipo2 = TipoDispositivoFactory(nombre="Smartphone")
-        DispositivoFactory(tipo=tipo1)
-        DispositivoFactory(tipo=tipo2)
+        modelo1 = ModeloFactory(tipo_dispositivo=tipo1)
+        modelo2 = ModeloFactory(tipo_dispositivo=tipo2)
+        DispositivoFactory(modelo=modelo1)
+        DispositivoFactory(modelo=modelo2)
         url = reverse('dispositivos:dispositivo_list')
         response = client.get(url, {'sort': 'tipo', 'order': 'asc'})
         assert response.status_code == 200
-        tipos = [d.tipo.nombre for d in response.context['dispositivos']]
+        tipos = [d.modelo.tipo_dispositivo.nombre for d in response.context['dispositivos']]
         assert tipos.index("Notebook") < tipos.index("Smartphone")
 
     def test_create_dispositivo_genera_acta(self, client):
@@ -319,7 +321,7 @@ class TestTrazabilidadViews:
         tipo = TipoDispositivoFactory(nombre="Impresora")  # Tipo genérico para evitar campos técnicos
         estado = EstadoDispositivoFactory(nombre="Disponible")
         fabricante = FabricanteFactory()
-        modelo = ModeloFactory(fabricante=fabricante)
+        modelo = ModeloFactory(fabricante=fabricante, tipo_dispositivo=tipo)
         cc = CentroCostoFactory()
         
         url = reverse('dispositivos:dispositivo_create')
@@ -356,7 +358,7 @@ class TestTrazabilidadViews:
         tipo = TipoDispositivoFactory(nombre="Impresora")
         estado = EstadoDispositivoFactory()
         fabricante = FabricanteFactory()
-        modelo = ModeloFactory(fabricante=fabricante)
+        modelo = ModeloFactory(fabricante=fabricante, tipo_dispositivo=tipo)
         cc = CentroCostoFactory()
         
         url = reverse('dispositivos:dispositivo_create')
@@ -386,7 +388,7 @@ class TestTrazabilidadViews:
         url = reverse('dispositivos:dispositivo_update', kwargs={'pk': dispositivo.pk})
         response = client.post(url, {
             'numero_serie': dispositivo.numero_serie,
-            'tipo': dispositivo.tipo.pk,
+            'tipo': dispositivo.modelo.tipo_dispositivo.pk,
             'estado': estado.pk,
             'modelo': dispositivo.modelo.pk,
             'centro_costo': dispositivo.centro_costo.pk,
@@ -415,7 +417,7 @@ class TestTrazabilidadViews:
         url = reverse('dispositivos:dispositivo_update', kwargs={'pk': dispositivo.pk})
         response = client.post(url, {
             'numero_serie': dispositivo.numero_serie,
-            'tipo': dispositivo.tipo.pk,
+            'tipo': dispositivo.modelo.tipo_dispositivo.pk,
             'estado': dispositivo.estado.pk,
             'modelo': dispositivo.modelo.pk,
             'centro_costo': dispositivo.centro_costo.pk,

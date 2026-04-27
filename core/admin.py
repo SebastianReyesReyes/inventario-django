@@ -17,8 +17,8 @@ class FabricanteAdmin(admin.ModelAdmin):
 
 @admin.register(Modelo)
 class ModeloAdmin(admin.ModelAdmin):
-    list_display = ('nombre', 'fabricante')
-    list_filter = ('fabricante',)
+    list_display = ('nombre', 'fabricante', 'tipo_dispositivo')
+    list_filter = ('fabricante', 'tipo_dispositivo')
     search_fields = ('nombre',)
 
 @admin.register(Departamento)

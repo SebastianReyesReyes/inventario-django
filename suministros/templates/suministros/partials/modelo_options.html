@@ -1,0 +1,5 @@
+{% for modelo in modelos %}
+<option value="{{ modelo.pk }}">{{ modelo.nombre }} ({{ modelo.fabricante.nombre }})</option>
+{% empty %}
+<option value="">No hay modelos compatibles</option>
+{% endfor %}

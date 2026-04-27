@@ -10,7 +10,7 @@
 
 {% block header_actions %}
     {% if perms.core.add_estado %}
-    <c-btn-primary hx-get="{% url 'core:estado_create' %}" hx-target="#modal-container">
+    <c-btn-primary hx-get="{% url 'core:estadodispositivo_create' %}" hx-target="#modal-container">
         <span class="material-symbols-outlined mr-2 text-[18px]">add</span>
         Nuevo Estado
     </c-btn-primary>
@@ -21,9 +21,8 @@
 {% block refresh_trigger %}estadoListChanged{% endblock %}
 
 {% block table_head %}
-    <c-th>Ref.</c-th>
     <c-th>Nombre</c-th>
-    <c-th>Desc. Breve</c-th>
+    <c-th>Color</c-th>
 {% endblock %}
 
 {% block table_body %}
@@ -31,8 +30,14 @@
     <tr class="hover:bg-white/[0.03] transition-colors group">
         <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-on-background">
             <div class="flex items-center gap-3">
-                <span class="w-1.5 h-1.5 rounded-full bg-jmie-orange"></span>
+                <span class="w-1.5 h-1.5 rounded-full" style="background-color: {{ estado.color }};"></span>
                 {{ estado.nombre }}
+            </div>
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-on-background/70">
+            <div class="flex items-center gap-2">
+                <span class="w-6 h-6 rounded-md border border-white/10 shadow-sm" style="background-color: {{ estado.color }};"></span>
+                <span class="font-mono text-xs">{{ estado.color }}</span>
             </div>
         </td>
         <td class="px-6 py-4 text-right">
@@ -42,7 +47,7 @@
     </tr>
     {% empty %}
     <tr>
-        <td colspan="2">
+        <td colspan="3">
             <c-empty-state icon="label" title="Sin Estados" subtitle="No hay estados de inventario definidos." />
         </td>
     </tr>

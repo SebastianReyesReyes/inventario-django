@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block title %}{{ suministro.nombre }} | JMIE{% endblock %}
+{% block section_name %}Suministros{% endblock %}
+
+{% block content %}
+<div class="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <c-page-header title="{{ suministro.nombre }}" subtitle="{{ suministro.categoria.nombre }} — SKU: {{ suministro.codigo_interno|default:"N/A" }}">
+        <a href="{% url 'suministros:suministro_list' %}" class="px-4 py-2.5 rounded-xl border border-white/10 text-on-background hover:bg-white/5 transition-all text-xs font-bold">
+            Volver
+        </a>
+    </c-page-header>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Info Card -->
+        <c-glass-panel class="lg:col-span-1">
+            <div class="space-y-4">
+                <div class="flex items-center justify-between">
+                    <span class="text-[10px] font-black text-jmie-gray uppercase tracking-widest">Stock Actual</span>
+                    {% include "suministros/partials/stock_badge.html" with suministro=suministro only %}
+                </div>
+                <div class="text-3xl font-black tracking-tighter text-on-background">{{ suministro.stock_actual }}</div>
+                <div class="pt-4 border-t border-white/5 space-y-3 text-xs text-jmie-gray font-bold">
+                    <div class="flex justify-between"><span>Stock Mínimo</span><span class="text-on-background">{{ suministro.stock_minimo }}</span></div>
+                    <div class="flex justify-between"><span>Unidad</span><span class="text-on-background">{{ suministro.unidad_medida }}</span></div>
+                    <div class="flex justify-between"><span>Marca</span><span class="text-on-background">{{ suministro.marca|default:"—" }}</span></div>
+                    <div class="flex justify-between"><span>Alternativo</span><span class="text-on-background">{% if suministro.es_alternativo %}Sí{% else %}No{% endif %}</span></div>
+                </div>
+                {% if perms.suministros.change_suministro %}
+                <div class="pt-4 border-t border-white/5">
+                    <a href="{% url 'suministros:suministro_update' suministro.pk %}" class="w-full flex items-center justify-center py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-bold transition-all border border-white/10">
+                        <span class="material-symbols-outlined text-sm mr-2">edit</span> Editar Suministro
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </c-glass-panel>
+
+        <!-- Movement History -->
+        <c-glass-panel class="lg:col-span-2" title="Historial de Movimientos">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-white/[0.02] border-b border-white/5 text-jmie-gray uppercase text-[10px] font-black tracking-widest">
+                            <th class="px-4 py-3">Fecha</th>
+                            <th class="px-4 py-3">Tipo</th>
+                            <th class="px-4 py-3">Cantidad</th>
+                            <th class="px-4 py-3">Registrado por</th>
+                            <th class="px-4 py-3">Notas</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-white/5">
+                        {% for m in page_obj %}
+                        <tr class="hover:bg-white/[0.02] transition-colors">
+                            <td class="px-4 py-3 text-xs text-jmie-gray">{{ m.fecha|date:"d/m/Y H:i" }}</td>
+                            <td class="px-4 py-3">
+                                <span class="px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-wider
+                                    {% if m.tipo_movimiento == 'ENTRADA' %}bg-emerald-500/10 text-emerald-400 border border-emerald-500/20
+                                    {% elif m.tipo_movimiento == 'SALIDA' %}bg-blue-500/10 text-blue-400 border border-blue-500/20
+                                    {% elif m.tipo_movimiento == 'AJUSTE_POS' %}bg-amber-500/10 text-amber-400 border border-amber-500/20
+                                    {% else %}bg-red-500/10 text-red-400 border border-red-500/20{% endif %}">
+                                    {{ m.get_tipo_movimiento_display }}
+                                </span>
+                            </td>
+                            <td class="px-4 py-3 text-xs font-bold text-on-background">{{ m.cantidad }}</td>
+                            <td class="px-4 py-3 text-xs text-jmie-gray">{{ m.registrado_por.get_full_name|default:m.registrado_por.username|default:"—" }}</td>
+                            <td class="px-4 py-3 text-xs text-jmie-gray max-w-xs truncate">{{ m.notas|default:"—" }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="px-4 py-8 text-center text-xs text-jmie-gray font-bold">Sin movimientos registrados</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% if page_obj.has_other_pages %}
+            <div class="px-4 py-3 bg-white/[0.01] border-t border-white/5 flex items-center justify-between">
+                <span class="text-[10px] text-jmie-gray font-bold">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+                <div class="flex gap-2">
+                    {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}" class="px-3 py-1.5 rounded-lg bg-white/5 text-[10px] font-black text-jmie-gray hover:bg-white/10 transition-all">Anterior</a>
+                    {% endif %}
+                    {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}" class="px-3 py-1.5 rounded-lg bg-white/5 text-[10px] font-black text-jmie-gray hover:bg-white/10 transition-all">Siguiente</a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </c-glass-panel>
+    </div>
+</div>
+{% endblock %}

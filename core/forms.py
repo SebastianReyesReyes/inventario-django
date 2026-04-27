@@ -1,5 +1,5 @@
 from django import forms
-from .models import TipoDispositivo, Fabricante, Modelo, CentroCosto, EstadoDispositivo
+from .models import TipoDispositivo, Fabricante, Modelo, CentroCosto, EstadoDispositivo, Departamento
 
 class BaseStyledForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
@@ -35,9 +35,11 @@ class FabricanteForm(BaseStyledForm):
 class ModeloForm(BaseStyledForm):
     class Meta:
         model = Modelo
-        fields = ['nombre', 'fabricante']
+        fields = ['nombre', 'fabricante', 'tipo_dispositivo']
         widgets = {
             'nombre': forms.TextInput(attrs={'placeholder': 'Ej: ThinkPad X1 Carbon...'}),
+            'fabricante': forms.Select(),
+            'tipo_dispositivo': forms.Select(),
         }
 
 class CentroCostoForm(BaseStyledForm):
@@ -56,4 +58,13 @@ class EstadoDispositivoForm(BaseStyledForm):
         widgets = {
             'nombre': forms.TextInput(attrs={'placeholder': 'Ej: Disponible, En Reparación...'}),
             'color': forms.HiddenInput(),
+        }
+
+
+class DepartamentoForm(BaseStyledForm):
+    class Meta:
+        model = Departamento
+        fields = ['nombre']
+        widgets = {
+            'nombre': forms.TextInput(attrs={'placeholder': 'Ej: Operaciones, TI, Administración...'}),
         }

@@ -78,6 +78,7 @@ INSTALLED_APPS = [
     'imagekit',
     'django_filters',
     'django_cotton',
+    'suministros',
 ]
 
 
@@ -234,6 +235,11 @@ LOGGING = {
             'propagate': False,
         },
         'core': {
+            'handlers': ['file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'suministros': {
             'handlers': ['file'],
             'level': 'INFO',
             'propagate': False,

@@ -3,6 +3,7 @@ from django.db import models
 class TipoDispositivo(models.Model):
     nombre = models.CharField(max_length=100, unique=True)
     sigla = models.CharField(max_length=10, unique=True, null=True, blank=True, help_text="Ej: NTBK, SMPH")
+    descripcion = models.CharField(max_length=255, blank=True, null=True)
 
     def __str__(self):
         return self.nombre
@@ -31,9 +32,10 @@ class Fabricante(models.Model):
 class Modelo(models.Model):
     nombre = models.CharField(max_length=100)
     fabricante = models.ForeignKey(Fabricante, on_delete=models.PROTECT, related_name="modelos")
+    tipo_dispositivo = models.ForeignKey(TipoDispositivo, on_delete=models.PROTECT, related_name="modelos")
 
     def __str__(self):
-        return f"{self.fabricante.nombre} {self.nombre}"
+        return self.nombre
 
     class Meta:
         unique_together = ('nombre', 'fabricante')

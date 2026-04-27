@@ -92,7 +92,7 @@ def dispositivo_list(request):
         dispositivo=OuterRef('pk')
     ).order_by('-fecha_inicio').values('acta__firmada')[:1]
     
-    dispositivos = Dispositivo.objects.select_related('tipo', 'modelo', 'modelo__fabricante', 'estado', 'propietario_actual', 'centro_costo').annotate(
+    dispositivos = Dispositivo.objects.select_related('modelo__tipo_dispositivo', 'modelo__fabricante', 'estado', 'propietario_actual', 'centro_costo').annotate(
         acta_firmada=Subquery(ultima_acta_firmada)
     )
     
@@ -106,7 +106,7 @@ def dispositivo_list(request):
     cc_nombre = request.GET.get('cc_nombre')
 
     if tipo_nombre:
-        dispositivos = dispositivos.filter(tipo__nombre=tipo_nombre)
+        dispositivos = dispositivos.filter(modelo__tipo_dispositivo__nombre=tipo_nombre)
     if estado_nombre:
         dispositivos = dispositivos.filter(estado__nombre=estado_nombre)
     if cc_nombre:
@@ -139,7 +139,7 @@ def dispositivo_list(request):
     # Ordenamiento
     SORT_MAP = {
         'id': 'identificador_interno',
-        'tipo': 'tipo__nombre',
+        'tipo': 'modelo__tipo_dispositivo__nombre',
         'marca': 'modelo__fabricante__nombre',
         'modelo': 'modelo__nombre',
         'responsable': 'propietario_actual__first_name',
@@ -175,7 +175,7 @@ def dispositivo_list(request):
 def dispositivo_detail(request, pk):
     """Vista detallada con carga Ajax de specs técnicos."""
     dispositivo = get_object_or_404(
-        Dispositivo.objects.select_related('tipo', 'modelo__fabricante', 'estado', 'propietario_actual', 'centro_costo'),
+        Dispositivo.objects.select_related('modelo__tipo_dispositivo', 'modelo__fabricante', 'estado', 'propietario_actual', 'centro_costo'),
         pk=pk
     )
     
@@ -187,12 +187,21 @@ def dispositivo_detail(request, pk):
 
 @login_required
 def ajax_get_modelos(request):
-    """Retorna opciones de modelos filtrados por fabricante para el formulario."""
+    """Retorna opciones de modelos filtrados por fabricante y tipo para el formulario."""
     fabricante_id = request.GET.get('fabricante')
+    tipo_id = request.GET.get('tipo')
+    
+    modelos = Modelo.objects.all()
+    
     if fabricante_id:
-        modelos = Modelo.objects.filter(fabricante_id=fabricante_id).order_by('nombre')
-    else:
+        modelos = modelos.filter(fabricante_id=fabricante_id)
+    if tipo_id:
+        modelos = modelos.filter(tipo_dispositivo_id=tipo_id)
+        
+    if not fabricante_id and not tipo_id:
         modelos = Modelo.objects.none()
+    else:
+        modelos = modelos.order_by('nombre')
     
     return render(request, 'dispositivos/partials/modelo_options.html', {'modelos': modelos})
 
@@ -200,26 +209,33 @@ def ajax_get_modelos(request):
 @login_required
 @permission_required('dispositivos.add_dispositivo', raise_exception=True)
 def ajax_crear_modelo(request):
-    """Crea un modelo nuevo para un fabricante desde el formulario de dispositivos."""
+    """Crea un modelo nuevo para un fabricante y tipo desde el formulario de dispositivos."""
     fabricante_id = request.POST.get('fabricante')
+    tipo_id = request.POST.get('tipo')
     nombre = request.POST.get('nuevo_modelo_nombre', '').strip()
 
-    if not fabricante_id or not nombre:
-        modelos = Modelo.objects.filter(fabricante_id=fabricante_id).order_by('nombre') if fabricante_id else Modelo.objects.none()
-        return render(request, 'dispositivos/partials/modelo_options.html', {'modelos': modelos})
+    modelos = Modelo.objects.all()
+    if fabricante_id:
+        modelos = modelos.filter(fabricante_id=fabricante_id)
+    if tipo_id:
+        modelos = modelos.filter(tipo_dispositivo_id=tipo_id)
+
+    if not fabricante_id or not tipo_id or not nombre:
+        return render(request, 'dispositivos/partials/modelo_options.html', {'modelos': modelos.order_by('nombre') if (fabricante_id or tipo_id) else Modelo.objects.none()})
 
     fabricante = get_object_or_404(Fabricante, pk=fabricante_id)
+    tipo_dispositivo = get_object_or_404(TipoDispositivo, pk=tipo_id)
 
     # Normalización: evitar duplicados por diferencia de mayúsculas
-    modelo = Modelo.objects.filter(fabricante=fabricante, nombre__iexact=nombre).first()
+    modelo = Modelo.objects.filter(fabricante=fabricante, tipo_dispositivo=tipo_dispositivo, nombre__iexact=nombre).first()
 
     if not modelo:
         try:
-            modelo = Modelo.objects.create(nombre=nombre, fabricante=fabricante)
+            modelo = Modelo.objects.create(nombre=nombre, fabricante=fabricante, tipo_dispositivo=tipo_dispositivo)
         except IntegrityError:
-            modelo = Modelo.objects.get(fabricante=fabricante, nombre__iexact=nombre)
+            modelo = Modelo.objects.get(fabricante=fabricante, tipo_dispositivo=tipo_dispositivo, nombre__iexact=nombre)
 
-    modelos = Modelo.objects.filter(fabricante=fabricante).order_by('nombre')
+    modelos = Modelo.objects.filter(fabricante=fabricante, tipo_dispositivo=tipo_dispositivo).order_by('nombre')
     return render(request, 'dispositivos/partials/modelo_options.html', {
         'modelos': modelos,
         'selected_modelo_id': modelo.id

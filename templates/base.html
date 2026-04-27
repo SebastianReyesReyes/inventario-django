@@ -241,6 +241,12 @@
                     class="material-symbols-outlined mr-3 {% active_icon 'actas:acta_list' %}">description</span>
                 Actas
             </a>
+            <a href="{% url 'suministros:suministro_list' %}"
+                class="flex items-center px-3 py-2 text-sm font-bold uppercase tracking-wide rounded-lg transition-all group {% active_url 'suministros:suministro_list' %}">
+                <span
+                    class="material-symbols-outlined mr-3 {% active_icon 'suministros:suministro_list' %}">inventory</span>
+                Suministros
+            </a>
 
             {% if perms.dispositivos.add_dispositivo %}
             <p class="px-5 text-[10px] font-black text-jmie-gray uppercase tracking-widest mb-3 mt-4 opacity-50">
@@ -269,6 +275,12 @@
                     <span
                         class="material-symbols-outlined mr-3 text-[22px] group-hover:scale-110 transition-transform {% active_icon 'core:estadodispositivo_list' %}">label</span>
                     <span class="text-sm font-bold">Estados</span>
+                </a>
+                <a href="{% url 'core:departamento_list' %}"
+                    class="flex items-center px-4 py-2.5 rounded-xl transition-all group {% active_url 'core:departamento_list' %}">
+                    <span
+                        class="material-symbols-outlined mr-3 text-[22px] group-hover:scale-110 transition-transform {% active_icon 'core:departamento_list' %}">apartment</span>
+                    <span class="text-sm font-bold">Departamentos</span>
                 </a>
             </div>
             {% endif %}

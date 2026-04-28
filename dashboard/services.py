@@ -43,15 +43,15 @@ class DashboardMetricsService:
         porcentaje_asignados = round((total_asignados / total_activos * 100) if total_activos > 0 else 0)
 
         total_notebooks_disponibles = filtered_qs.filter(
-            tipo__nombre__icontains="Notebook",
+            modelo__tipo_dispositivo__nombre__icontains="Notebook",
             estado__nombre__in=["Disponible", "Reservado"],
         ).count()
         total_smartphones_disponibles = filtered_qs.filter(
-            tipo__nombre__icontains="Smartphone",
+            modelo__tipo_dispositivo__nombre__icontains="Smartphone",
             estado__nombre__in=["Disponible", "Reservado"],
         ).count()
         total_impresoras_disponibles = Dispositivo.objects.filter(
-            tipo__nombre__icontains="Impresora",
+            modelo__tipo_dispositivo__nombre__icontains="Impresora",
             estado__nombre__in=["Disponible", "Reservado"],
         ).count()
 
@@ -61,7 +61,7 @@ class DashboardMetricsService:
             fecha__gte=timezone.now() - timedelta(days=30),
         ).count()
 
-        chart_tipo_data = list(filtered_qs.values("tipo__nombre").annotate(total=Count("id")).order_by("-total"))
+        chart_tipo_data = list(filtered_qs.values("modelo__tipo_dispositivo__nombre").annotate(total=Count("id")).order_by("-total"))
         chart_estado_data = list(filtered_qs.values("estado__nombre").annotate(total=Count("id")).order_by("-total"))
 
         if top10_metric == "precio":
@@ -111,7 +111,7 @@ class DashboardMetricsService:
             "tipo_notebook_id": tipo_notebook.id if tipo_notebook else "",
             "tipo_smartphone_id": tipo_smartphone.id if tipo_smartphone else "",
             "tipo_impresora_id": tipo_impresora.id if tipo_impresora else "",
-            "chart_tipo_labels": json.dumps([item["tipo__nombre"] or "Sin Categoría" for item in chart_tipo_data]),
+            "chart_tipo_labels": json.dumps([item["modelo__tipo_dispositivo__nombre"] or "Sin Categoría" for item in chart_tipo_data]),
             "chart_tipo_values": json.dumps([item["total"] for item in chart_tipo_data]),
             "chart_estado_labels": json.dumps([item["estado__nombre"] or "Estado Desconocido" for item in chart_estado_data]),
             "chart_estado_values": json.dumps([item["total"] for item in chart_estado_data]),

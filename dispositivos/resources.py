@@ -5,9 +5,9 @@ from core.models import TipoDispositivo, EstadoDispositivo, CentroCosto, Modelo
 from colaboradores.models import Colaborador
 
 class DispositivoResource(resources.ModelResource):
-    tipo = fields.Field(
+    tipo_dispositivo = fields.Field(
         column_name='Tipo',
-        attribute='tipo',
+        attribute='modelo__tipo_dispositivo',
         widget=ForeignKeyWidget(TipoDispositivo, 'nombre')
     )
     estado = fields.Field(
@@ -38,8 +38,8 @@ class DispositivoResource(resources.ModelResource):
     class Meta:
         model = Dispositivo
         fields = (
-            'identificador_interno', 'numero_serie', 'fabricante', 'modelo', 
-            'tipo', 'estado', 'centro_costo', 'propietario', 
+            'identificador_interno', 'numero_serie', 'fabricante', 'modelo',
+            'tipo_dispositivo', 'estado', 'centro_costo', 'propietario',
             'fecha_compra', 'valor_contable'
         )
         export_order = fields

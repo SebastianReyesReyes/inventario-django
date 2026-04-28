@@ -53,23 +53,31 @@
     {% elif can_delete and url_delete %}
         {% if action_type == 'personnel' %}
             {# Para personal usamos icono de remover persona #}
-            <button hx-delete="{{ url_delete }}" 
-                    hx-confirm="¿Está seguro de desactivar este registro? Esta acción es irreversible operativamente."
-                    hx-target="closest tr"
-                    hx-swap="outerHTML swap:0.5s"
-                    class="p-2 text-jmie-gray hover:text-error transition-colors" 
-                    title="Desactivar Colaborador">
+            <c-confirm-dialog
+                dialog_title="Desactivar Colaborador"
+                message="¿Está seguro de desactivar este registro? Esta acción es irreversible operativamente."
+                confirm_text="Desactivar"
+                trigger_class="p-2 text-jmie-gray hover:text-error transition-colors"
+                title="Desactivar Colaborador"
+                hx-delete="{{ url_delete }}"
+                hx-target="closest tr"
+                hx-swap="outerHTML swap:0.5s"
+            >
                 <span class="material-symbols-outlined text-[18px]">person_remove</span>
-            </button>
+            </c-confirm-dialog>
         {% else %}
-            <button hx-delete="{{ url_delete }}" 
-                    hx-confirm="¿Estás seguro de eliminar este registro? Esta acción no se puede deshacer."
-                    hx-target="closest tr"
-                    hx-swap="outerHTML swap:1s"
-                    class="p-1.5 hover:bg-white/10 rounded-lg text-jmie-gray hover:text-error transition-colors"
-                    title="Eliminar">
+            <c-confirm-dialog
+                dialog_title="Eliminar Registro"
+                message="¿Estás seguro de eliminar este registro? Esta acción no se puede deshacer."
+                confirm_text="Eliminar"
+                trigger_class="p-1.5 hover:bg-white/10 rounded-lg text-jmie-gray hover:text-error transition-colors"
+                title="Eliminar"
+                hx-delete="{{ url_delete }}"
+                hx-target="closest tr"
+                hx-swap="outerHTML swap:1s"
+            >
                 <span class="material-symbols-outlined text-[18px]">delete</span>
-            </button>
+            </c-confirm-dialog>
         {% endif %}
     {% endif %}
 

@@ -1,0 +1,36 @@
+{% load action_tags %}
+{% for s in suministros %}
+<tr class="group hover:bg-white/[0.02] border-b border-white/5 transition-colors">
+    <td class="px-6 py-4">
+        <div class="flex flex-col">
+            <span class="text-xs font-black tracking-tighter text-on-background">{{ s.nombre }}</span>
+            <span class="text-[10px] text-jmie-gray font-bold">{{ s.codigo_interno|default:"Sin SKU" }}</span>
+        </div>
+    </td>
+    <td class="px-6 py-4 text-xs font-bold text-jmie-gray">{{ s.categoria.nombre }}</td>
+    <td class="px-6 py-4">
+        {% include "suministros/partials/stock_badge.html" with suministro=s only %}
+    </td>
+    <td class="px-6 py-4 text-xs font-bold text-jmie-gray">{{ s.stock_minimo }}</td>
+    <td class="px-6 py-4 text-right">
+        <div class="flex items-center justify-end gap-2">
+            {% if perms.suministros.add_movimientostock %}
+            <button hx-get="{% url 'suministros:movimiento_create' %}?suministro={{ s.pk }}"
+                    hx-target="#modal-container"
+                    class="px-3 py-1.5 rounded-lg bg-jmie-blue/10 text-jmie-blue text-[10px] font-black uppercase tracking-widest hover:bg-jmie-blue/20 transition-all">
+                <span class="material-symbols-outlined text-[14px] leading-none align-middle mr-1">sync_alt</span>
+                Movimiento
+            </button>
+            {% endif %}
+            {% render_actions s 'inventory' %}
+        </div>
+    </td>
+</tr>
+{% empty %}
+<tr>
+    <td colspan="5">
+        <c-empty-state icon="inventory" title="Sin Suministros" subtitle="No se encontraron suministros que coincidan con los filtros."
+            action_url="{% url 'suministros:suministro_create' %}" action_label="Registrar Suministro" />
+    </td>
+</tr>
+{% endfor %}

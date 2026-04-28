@@ -1,0 +1,72 @@
+<div x-data="{ showModal: true }" x-show="showModal" @modal-close.window="showModal = false" class="fixed inset-0 z-50 flex items-center justify-center p-4" x-cloak>
+    <div @click="showModal = false" class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+
+    <div class="relative bg-surface-container rounded-2xl border border-white/10 shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200">
+        <div class="p-6">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-xl font-bold text-on-background flex items-center gap-2">
+                    <span class="material-symbols-outlined text-jmie-blue">sync_alt</span>
+                    Registrar Movimiento
+                </h3>
+                <button @click="showModal = false" class="text-jmie-gray hover:text-on-background transition-colors">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+
+            {% if suministro %}
+            <div class="mb-6 p-3 bg-white/5 border border-white/10 rounded-xl">
+                <p class="text-[10px] text-jmie-gray uppercase tracking-widest font-black mb-1">Suministro</p>
+                <p class="text-xs text-on-background font-bold truncate">{{ suministro.nombre }} (Stock: {{ suministro.stock_actual }})</p>
+            </div>
+            {% endif %}
+
+            <form hx-post="{% url 'suministros:movimiento_create' %}"
+                  hx-target="#modal-container"
+                  hx-indicator=".htmx-indicator"
+                  hx-on::after-request="if(event.detail.successful) { window.dispatchEvent(new CustomEvent('modal-close')); window.dispatchEvent(new CustomEvent('show-notification', { detail: { message: 'Movimiento registrado correctamente', type: 'success' } })); }"
+                  class="space-y-5">
+                {% csrf_token %}
+                {{ form.suministro }}
+
+                <div class="space-y-1.5">
+                    <label class="text-[10px] font-black uppercase text-jmie-gray tracking-tighter ml-1">Tipo de Movimiento</label>
+                    {{ form.tipo_movimiento }}
+                    {% if form.tipo_movimiento.errors %}
+                        <p class="mt-1 text-xs text-red-400">{{ form.tipo_movimiento.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <div class="space-y-1.5">
+                    <label class="text-[10px] font-black uppercase text-jmie-gray tracking-tighter ml-1">Cantidad</label>
+                    {{ form.cantidad }}
+                    {% if form.cantidad.errors %}
+                        <p class="mt-1 text-xs text-red-400">{{ form.cantidad.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <div class="space-y-1.5">
+                    <label class="text-[10px] font-black uppercase text-jmie-gray tracking-tighter ml-1">Notas / Observaciones</label>
+                    {{ form.notas }}
+                </div>
+
+                {% if form.non_field_errors %}
+                <div class="bg-red-500/10 border border-red-500/20 rounded-xl p-3">
+                    <p class="text-xs text-red-400 font-medium">{{ form.non_field_errors.0 }}</p>
+                </div>
+                {% endif %}
+
+                <div class="flex justify-end gap-3 pt-4 border-t border-white/5">
+                    <button type="button" @click="showModal = false"
+                            class="px-5 py-2.5 rounded-xl border border-white/10 text-on-background hover:bg-white/5 transition-all text-xs font-bold">
+                        Cancelar
+                    </button>
+                    <button type="submit"
+                            class="px-6 py-2.5 rounded-xl bg-jmie-blue text-white font-black uppercase tracking-widest text-[10px] hover:brightness-110 shadow-[0_4px_15px_rgba(0,53,148,0.3)] transition-all flex items-center gap-2">
+                        <span>Confirmar</span>
+                        <div class="htmx-indicator animate-spin h-3 w-3 border-2 border-white/30 border-t-white rounded-full"></div>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

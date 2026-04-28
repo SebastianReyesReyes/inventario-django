@@ -1,0 +1,76 @@
+{% if error %}
+<div class="bg-error/10 border border-error/20 rounded-xl p-4">
+    <div class="flex items-center gap-2">
+        <span class="material-symbols-outlined text-error text-[18px]">error</span>
+        <p class="text-sm font-bold text-error">{{ error }}</p>
+    </div>
+</div>
+{% elif resultado %}
+<div class="space-y-4">
+    <!-- Resumen -->
+    <div class="grid grid-cols-2 gap-3">
+        <div class="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3 text-center">
+            <span class="text-2xl font-black text-emerald-400">{{ resultado.creados_fab|add:resultado.creados_tipo|add:resultado.creados_modelo }}</span>
+            <p class="text-[10px] font-black text-emerald-400/70 uppercase tracking-widest mt-1">Creados</p>
+        </div>
+        <div class="bg-jmie-blue/10 border border-jmie-blue/20 rounded-xl p-3 text-center">
+            <span class="text-2xl font-black text-jmie-blue">{{ resultado.actualizados_modelo }}</span>
+            <p class="text-[10px] font-black text-jmie-blue/70 uppercase tracking-widest mt-1">Actualizados</p>
+        </div>
+    </div>
+
+    <!-- Detalle -->
+    <div class="bg-white/5 border border-white/5 rounded-xl p-4 space-y-2">
+        <div class="flex justify-between text-xs">
+            <span class="text-jmie-gray">Fabricantes creados</span>
+            <span class="font-black text-on-background">{{ resultado.creados_fab }}</span>
+        </div>
+        <div class="flex justify-between text-xs">
+            <span class="text-jmie-gray">Tipos creados</span>
+            <span class="font-black text-on-background">{{ resultado.creados_tipo }}</span>
+        </div>
+        <div class="flex justify-between text-xs">
+            <span class="text-jmie-gray">Modelos creados</span>
+            <span class="font-black text-on-background">{{ resultado.creados_modelo }}</span>
+        </div>
+        <div class="flex justify-between text-xs">
+            <span class="text-jmie-gray">Filas leídas</span>
+            <span class="font-black text-on-background">{{ resultado.total }}</span>
+        </div>
+        {% if resultado.saltados %}
+        <div class="flex justify-between text-xs">
+            <span class="text-jmie-gray">Saltadas</span>
+            <span class="font-black text-warning">{{ resultado.saltados }}</span>
+        </div>
+        {% endif %}
+        {% if resultado.errores %}
+        <div class="flex justify-between text-xs">
+            <span class="text-jmie-gray">Errores</span>
+            <span class="font-black text-error">{{ resultado.errores }}</span>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Logs -->
+    {% if resultado.logs %}
+    <div class="bg-surface-container-high/50 border border-white/5 rounded-xl p-4 max-h-40 overflow-y-auto">
+        <h5 class="text-[10px] font-black text-jmie-gray uppercase tracking-widest mb-2">Detalle</h5>
+        <div class="space-y-1">
+            {% for log in resultado.logs %}
+            <p class="text-[10px] font-mono text-on-background/60">{{ log }}</p>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Trigger para refrescar listas -->
+    <div
+        hx-get="{{ request.headers.referer|default:'' }}"
+        hx-trigger="load delay:500ms"
+        hx-target="#catalogo-list-container"
+        hx-select="#catalogo-list-container"
+        hx-swap="outerHTML"
+        class="hidden"
+    ></div>
+</div>
+{% endif %}

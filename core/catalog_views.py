@@ -7,13 +7,14 @@ from dispositivos.models import Dispositivo
 
 from .forms import (
     CentroCostoForm,
+    DepartamentoForm,
     EstadoDispositivoForm,
     FabricanteForm,
     ModeloForm,
     TipoDispositivoForm,
 )
 from .htmx import htmx_success_or_redirect, htmx_trigger_response
-from .models import CentroCosto, EstadoDispositivo, Fabricante, Modelo, TipoDispositivo
+from .models import CentroCosto, Departamento, EstadoDispositivo, Fabricante, Modelo, TipoDispositivo
 
 
 class FabricanteFormBaseView(LoginRequiredMixin, PermissionRequiredMixin, View):
@@ -72,7 +73,7 @@ class FabricanteDeleteView(LoginRequiredMixin, PermissionRequiredMixin, View):
     def _delete(self, pk):
         fabricante = get_object_or_404(Fabricante, pk=pk)
         if fabricante.modelos.exists():
-            return HttpResponse("No se puede eliminar: tiene modelos asociados", status=400)
+            return htmx_trigger_response({"showNotification": {"message": "No se puede eliminar: tiene modelos asociados", "type": "error"}})
         fabricante.delete()
         return htmx_trigger_response({"fabricanteListChanged": True, "showNotification": "Fabricante eliminado"})
 
@@ -194,7 +195,12 @@ class ModeloCreateView(CatalogCreateViewBase):
     def get_initial(self, request):
         initial = {}
         if request.GET.get("fabricante_id"):
-            initial["fabricante"] = request.GET.get("fabricante_id")
+            fabricante_id = request.GET.get("fabricante_id")
+            initial["fabricante"] = fabricante_id
+            # Preseleccionar tipo desde el primer modelo existente del fabricante (si existe)
+            modelo_existente = Modelo.objects.filter(fabricante_id=fabricante_id).select_related("tipo_dispositivo").first()
+            if modelo_existente:
+                initial["tipo_dispositivo"] = modelo_existente.tipo_dispositivo_id
         return initial
 
 
@@ -219,7 +225,7 @@ class ModeloDeleteView(CatalogDeleteViewBase):
 
     def get_protection_response(self, obj):
         if Dispositivo.objects.filter(modelo=obj).exists():
-            return HttpResponse("Protegido: Existen dispositivos de este modelo", status=400)
+            return htmx_trigger_response({"showNotification": {"message": "Protegido: Existen dispositivos de este modelo", "type": "error"}})
         return None
 
 
@@ -247,8 +253,8 @@ class TipoDeleteView(CatalogDeleteViewBase):
     trigger_payload = {"tipoListChanged": True, "showNotification": "Tipo de dispositivo eliminado"}
 
     def get_protection_response(self, obj):
-        if Dispositivo.objects.filter(tipo=obj).exists():
-            return htmx_trigger_response({"showNotification": "Protegido: Existen dispositivos de este tipo"})
+        if Dispositivo.objects.filter(modelo__tipo_dispositivo=obj).exists():
+            return htmx_trigger_response({"showNotification": {"message": "Protegido: Existen dispositivos de este tipo", "type": "error"}})
         return None
 
 
@@ -295,5 +301,35 @@ class EstadoDeleteView(CatalogDeleteViewBase):
 
     def get_protection_response(self, obj):
         if Dispositivo.objects.filter(estado=obj).exists():
-            return htmx_trigger_response({"showNotification": "Protegido: Existen dispositivos en este estado"})
+            return htmx_trigger_response({"showNotification": {"message": "Protegido: Existen dispositivos en este estado", "type": "error"}})
+        return None
+
+
+class DepartamentoCreateView(CatalogCreateViewBase):
+    permission_required = "core.add_departamento"
+    form_class = DepartamentoForm
+    template_name = "core/partials/departamento_form.html"
+    success_url = "core:departamento_list"
+    trigger_payload = {"departamentoListChanged": True, "showNotification": "Departamento creado"}
+
+
+class DepartamentoUpdateView(CatalogUpdateViewBase):
+    permission_required = "core.change_departamento"
+    model = Departamento
+    form_class = DepartamentoForm
+    template_name = "core/partials/departamento_form.html"
+    success_url = "core:departamento_list"
+    context_object_name = "departamento"
+    trigger_payload = {"departamentoListChanged": True, "showNotification": "Departamento actualizado"}
+
+
+class DepartamentoDeleteView(CatalogDeleteViewBase):
+    permission_required = "core.delete_departamento"
+    model = Departamento
+    trigger_payload = {"departamentoListChanged": True, "showNotification": "Departamento eliminado"}
+
+    def get_protection_response(self, obj):
+        from colaboradores.models import Colaborador
+        if Colaborador.objects.filter(departamento=obj).exists():
+            return htmx_trigger_response({"showNotification": {"message": "Protegido: Existen colaboradores en este departamento", "type": "error"}})
         return None

@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %}Suministros | JMIE{% endblock %}
+{% block section_name %}Suministros{% endblock %}
+
+{% block content %}
+<div class="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700"
+     x-data="{ toastMessage: '', toastType: '', showToast: false }"
+     @showtoast.window="
+        toastMessage = $event.detail.message;
+        toastType = $event.detail.type;
+        showToast = true;
+        setTimeout(() => showToast = false, 4000)
+     ">
+
+    <!-- Toast -->
+    <div x-show="showToast" x-transition
+         class="fixed top-6 right-6 z-[60] px-6 py-4 rounded-xl border shadow-2xl flex items-center gap-3"
+         :class="toastType === 'success' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : (toastType === 'error' ? 'bg-red-500/10 border-red-500/20 text-red-400' : 'bg-blue-500/10 border-blue-500/20 text-blue-400')">
+        <span class="material-symbols-outlined" x-text="toastType === 'success' ? 'check_circle' : (toastType === 'error' ? 'error' : 'info')"></span>
+        <span class="text-sm font-bold" x-text="toastMessage"></span>
+    </div>
+
+    <c-page-header title="Gestión de Suministros" subtitle="Inventario de insumos, repuestos y consumibles.">
+        {% if perms.suministros.add_suministro %}
+        <a href="{% url 'suministros:suministro_create' %}" class="px-4 py-2.5 bg-jmie-orange text-white text-xs font-black rounded-xl hover:brightness-110 shadow-[0_4px_20px_rgba(237,139,0,0.2)] transition-all flex items-center">
+            <span class="material-symbols-outlined text-sm mr-2 leading-none">add</span>
+            Nuevo Suministro
+        </a>
+        {% endif %}
+    </c-page-header>
+
+    <!-- Filtros -->
+    <div class="bg-surface-container-low p-6 rounded-xl border border-white/5 space-y-6">
+        <form hx-get="{% url 'suministros:suministro_list' %}"
+              hx-target="#tabla-wrapper"
+              hx-trigger="change delay:200ms, keyup changed delay:500ms from:input[name='q']"
+              hx-push-url="true"
+              class="space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <c-search-input label="Búsqueda" wrapper_class="md:col-span-2" value="{{ query }}" placeholder="Buscar por nombre, SKU o marca..." />
+                <div class="space-y-2">
+                    <c-form-label>Categoría</c-form-label>
+                    <select name="categoria" class="w-full bg-surface-container-high border-[1px] border-white/5 rounded-lg px-4 py-3 text-on-background appearance-none">
+                        <option value="">Todas las categorías</option>
+                        {% for cat in categorias %}
+                        <option value="{{ cat.pk }}" {% if categoria_id == cat.pk|stringformat:"s" %}selected{% endif %}>{{ cat.nombre }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <c-glass-panel loader_label="Cargando...">
+        <div class="overflow-x-auto">
+            <div id="tabla-wrapper"
+                 hx-get="{% url 'suministros:suministro_list' %}"
+                 hx-trigger="refreshSuministroList from:body"
+                 hx-target="#tabla-wrapper"
+                 hx-swap="innerHTML">
+                {% include "suministros/partials/suministro_list_table.html" %}
+            </div>
+        </div>
+    </c-glass-panel>
+</div>
+
+<!-- Modal container global -->
+<div id="modal-container" class="relative z-50"></div>
+{% endblock %}

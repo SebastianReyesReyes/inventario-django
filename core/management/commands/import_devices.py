@@ -145,6 +145,10 @@ class Command(BaseCommand):
                         modelo, _ = Modelo.objects.get_or_create(
                             nombre=modelo_nombre, fabricante=fabricante
                         )
+                        # Vinculamos el tipo al modelo si aún no lo tiene
+                        if modelo.tipo_dispositivo_id is None:
+                            modelo.tipo_dispositivo = tipo
+                            modelo.save(update_fields=['tipo_dispositivo'])
                         colaborador = self._find_colaborador(propietario_nombre)
 
                         if dry_run:
@@ -161,7 +165,6 @@ class Command(BaseCommand):
                         dispositivo, created = Dispositivo.objects.update_or_create(
                             numero_serie=numero_serie,
                             defaults={
-                                'tipo': tipo,
                                 'estado': estado,
                                 'modelo': modelo,
                                 'propietario_actual': colaborador,

@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}{{ titulo }} | JMIE{% endblock %}
+{% block section_name %}Suministros{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <c-page-header title="{{ titulo }}" subtitle="Complete los datos del suministro.">
+        <a href="{% url 'suministros:suministro_list' %}" class="px-4 py-2.5 rounded-xl border border-white/10 text-on-background hover:bg-white/5 transition-all text-xs font-bold">
+            Volver al Listado
+        </a>
+    </c-page-header>
+
+    <c-glass-panel>
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="md:col-span-2">
+                    <c-form-label>Nombre</c-form-label>
+                    {{ form.nombre }}
+                    {% if form.nombre.errors %}<p class="mt-1 text-xs text-red-400">{{ form.nombre.errors.0 }}</p>{% endif %}
+                </div>
+                <div>
+                    <c-form-label>Categoría</c-form-label>
+                    {{ form.categoria }}
+                    {% if form.categoria.errors %}<p class="mt-1 text-xs text-red-400">{{ form.categoria.errors.0 }}</p>{% endif %}
+                </div>
+                <div>
+                    <c-form-label>Código Interno / SKU</c-form-label>
+                    {{ form.codigo_interno }}
+                </div>
+                <div>
+                    <c-form-label>Marca</c-form-label>
+                    {{ form.marca }}
+                </div>
+                <div>
+                    <c-form-label>Unidad de Medida</c-form-label>
+                    {{ form.unidad_medida }}
+                </div>
+                <div>
+                    <c-form-label>Stock Mínimo</c-form-label>
+                    {{ form.stock_minimo }}
+                </div>
+                <div class="flex items-center gap-3 p-4 bg-white/5 border border-white/5 rounded-xl">
+                    {{ form.es_alternativo }}
+                    <label for="{{ form.es_alternativo.id_for_label }}" class="text-xs font-bold text-on-surface cursor-pointer">
+                        Es insumo alternativo / genérico
+                    </label>
+                </div>
+                <div class="md:col-span-2">
+                    <c-form-label>Modelos Compatibles</c-form-label>
+                    {{ form.modelos_compatibles }}
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-3 pt-6 border-t border-white/5">
+                <a href="{% url 'suministros:suministro_list' %}" class="px-5 py-2.5 rounded-xl border border-white/10 text-on-background hover:bg-white/5 transition-all text-xs font-bold">
+                    Cancelar
+                </a>
+                <button type="submit" class="px-6 py-2.5 rounded-xl bg-jmie-orange text-white font-black uppercase tracking-widest text-[10px] hover:brightness-110 shadow-[0_4px_15px_rgba(237,139,0,0.3)] transition-all">
+                    {{ action }}
+                </button>
+            </div>
+        </form>
+    </c-glass-panel>
+</div>
+{% endblock %}

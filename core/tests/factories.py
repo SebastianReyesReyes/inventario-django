@@ -51,10 +51,11 @@ class FabricanteFactory(factory.django.DjangoModelFactory):
 class ModeloFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Modelo
-        django_get_or_create = ('nombre', 'fabricante')
+        django_get_or_create = ('nombre', 'fabricante', 'tipo_dispositivo')
     
     nombre = factory.Sequence(lambda n: f"Modelo {n}")
     fabricante = factory.SubFactory(FabricanteFactory)
+    tipo_dispositivo = factory.SubFactory(TipoDispositivoFactory)
 
 class DepartamentoFactory(factory.django.DjangoModelFactory):
     class Meta:
@@ -90,7 +91,6 @@ class DispositivoFactory(factory.django.DjangoModelFactory):
         model = Dispositivo
     
     numero_serie = factory.Sequence(lambda n: f"SN-{n:08d}")
-    tipo = factory.SubFactory(TipoDispositivoFactory)
     estado = factory.SubFactory(EstadoDispositivoFactory)
     modelo = factory.SubFactory(ModeloFactory)
     centro_costo = factory.SubFactory(CentroCostoFactory)

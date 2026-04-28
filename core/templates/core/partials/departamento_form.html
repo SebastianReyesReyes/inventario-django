@@ -1,0 +1,81 @@
+<div 
+    x-data="{ open: true }" 
+    x-show="open" 
+    @modal-close.window="open = false"
+    @departamentoListChanged.window="open = false"
+    class="fixed inset-0 z-50 overflow-y-auto" 
+    aria-labelledby="modal-title" role="dialog" aria-modal="true"
+    x-cloak
+>
+    <!-- Overlay -->
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div 
+            x-show="open" 
+            x-transition:enter="ease-out duration-300" 
+            x-transition:enter-start="opacity-0" 
+            x-transition:enter-end="opacity-100" 
+            x-transition:leave="ease-in duration-200" 
+            x-transition:leave-start="opacity-100" 
+            x-transition:leave-end="opacity-0"
+            class="fixed inset-0 bg-background/80 backdrop-blur-md transition-opacity border-none" 
+            @click="open = false"
+            aria-hidden="true"
+        ></div>
+
+        <!-- Modal Content -->
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+        <div 
+            x-show="open" 
+            x-transition:enter="ease-out duration-300" 
+            x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" 
+            x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100" 
+            x-transition:leave="ease-in duration-200" 
+            x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100" 
+            x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+            class="inline-block align-bottom bg-surface-container rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full border border-white/5"
+        >
+            <form 
+                hx-post="{% if departamento %}{% url 'core:departamento_update' departamento.pk %}{% else %}{% url 'core:departamento_create' %}{% endif %}"
+                hx-swap="none"
+            >
+                {% csrf_token %}
+                <div class="p-8 pb-6 bg-surface-container">
+                    <div class="flex items-center mb-6">
+                        <div class="p-3 bg-jmie-orange/10 text-jmie-orange rounded-xl border border-jmie-orange/20 shadow-[0_0_15px_rgba(237,139,0,0.15)]">
+                            <span class="material-symbols-outlined text-[28px]">{% if departamento %}edit_note{% else %}apartment{% endif %}</span>
+                        </div>
+                        <div class="ml-4">
+                            <h3 class="text-xl font-black text-on-background" id="modal-title">{% if departamento %}Editar Departamento{% else %}Nuevo Departamento{% endif %}</h3>
+                            <p class="text-sm font-bold text-jmie-gray mt-1">{% if departamento %}Modifica el nombre del departamento.{% else %}Añade un nuevo departamento al sistema.{% endif %}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-[11px] font-bold text-jmie-gray uppercase tracking-widest mb-2 px-1">Nombre</label>
+                            {{ form.nombre }}
+                            {% if form.nombre.errors %}
+                                <p class="text-error text-xs font-bold mt-1.5 flex items-center">
+                                    <span class="material-symbols-outlined text-[14px] mr-1">error</span>
+                                    {{ form.nombre.errors.0 }}
+                                </p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-surface-container-high/50 border-t border-white/5 px-8 py-5 flex flex-row-reverse gap-3">
+                    <button type="submit" class="inline-flex items-center justify-center py-2.5 px-6 border border-transparent shadow-[0_0_10px_rgba(237,139,0,0.2)] text-sm font-bold rounded-lg text-white bg-jmie-orange hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-background focus:ring-jmie-orange transition-all">
+                        {% if departamento %}Actualizar{% else %}Guardar Departamento{% endif %}
+                    </button>
+                    <button @click="open = false" type="button" class="inline-flex items-center justify-center py-2.5 px-6 border border-white/10 text-sm font-bold rounded-lg text-on-surface bg-transparent hover:bg-white/5 focus:outline-none transition-all">
+                        Cancelar
+                    </button>
+                    <div class="htmx-indicator flex items-center pr-4">
+                        <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-jmie-orange"></div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

@@ -82,7 +82,6 @@ class TestDispositivoSignals:
         notebook = Notebook.objects.create(
             numero_serie="NB-SIGNAL-123",
             propietario_actual=colaborador,
-            tipo=DispositivoFactory().tipo,
             estado=DispositivoFactory().estado,
             modelo=DispositivoFactory().modelo,
             centro_costo=DispositivoFactory().centro_costo,

@@ -1,0 +1,47 @@
+{% extends "core/base_catalogo.html" %}
+
+{% block section_name %}Catálogo de Departamentos{% endblock %}
+
+{% block catalogo_nombre %}Organización{% endblock %}
+{% block catalogo_titulo %}Departamentos{% endblock %}
+{% block catalogo_descripcion %}Definición de departamentos para la asignación de colaboradores.{% endblock %}
+
+{% block header_actions %}
+    {% if perms.core.add_departamento %}
+    <c-btn-primary hx-get="{% url 'core:departamento_create' %}" hx-target="#modal-container">
+        <span class="material-symbols-outlined mr-2 text-[18px]">add</span>
+        Nuevo Departamento
+    </c-btn-primary>
+    {% endif %}
+{% endblock %}
+
+{% block refresh_url %}{% url 'core:departamento_list' %}{% endblock %}
+{% block refresh_trigger %}departamentoListChanged{% endblock %}
+
+{% block table_head %}
+    <c-th>Nombre</c-th>
+    <c-th>Colaboradores</c-th>
+{% endblock %}
+
+{% block table_body %}
+    {% for departamento in departamentos %}
+    <tr class="hover:bg-white/[0.03] transition-colors group">
+        <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-on-background">
+            {{ departamento.nombre }}
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap">
+            <span class="text-xs font-black text-jmie-gray uppercase tracking-widest">{{ departamento.colaborador_set.count }}</span>
+        </td>
+        <td class="px-6 py-4 text-right">
+            {% load action_tags %}
+            {% render_actions departamento 'catalog' %}
+        </td>
+    </tr>
+    {% empty %}
+    <tr>
+        <td colspan="3">
+            <c-empty-state icon="apartment" title="Sin Departamentos" subtitle="No hay departamentos definidos en el sistema." />
+        </td>
+    </tr>
+    {% endfor %}
+{% endblock %}

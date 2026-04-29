@@ -289,13 +289,13 @@ class ActaPDFService:
     """
     Servicio de generación de PDFs de actas usando Playwright/Chromium headless.
 
-    El motor por defecto es Playwright (CSS moderno, pixel-perfect).
-    El parámetro PDF_ENGINE en settings permite compatibilidad con código
-    que aún referencia valores legacy ('xhtml2pdf', 'both'), en cuyo caso
-    se usa Playwright en todos los casos.
+    Usa un pool de browsers (actas.playwright_browser) para reutilizar instancias
+    y evitar el overhead de lanzar Chromium en cada request.
     """
 
     _logger = logging.getLogger('actas')
+    _logo_base64_cache = None
+    _logo_mtime = None
 
     @staticmethod
     def generar_pdf(acta, engine=None):
@@ -322,34 +322,37 @@ class ActaPDFService:
         return ActaPDFService._playwright(acta), 'playwright'
 
     @staticmethod
-    def _xhtml2pdf(acta):
-        """[DEPRECATED] Shim de compatibilidad — delega en Playwright."""
-        return ActaPDFService._playwright(acta)
-
-    @staticmethod
     def _encode_logo_to_base64(logo_path):
-        """Convierte el logo a data URI base64 para embedding en HTML."""
+        """Convierte el logo a data URI base64 para embedding en HTML (con cache)."""
         if not logo_path:
             return None
         try:
             import base64
             import mimetypes
+            import os
             mime, _ = mimetypes.guess_type(logo_path)
+            current_mtime = os.path.getmtime(logo_path)
+            if (ActaPDFService._logo_base64_cache is not None and
+                    ActaPDFService._logo_mtime == current_mtime):
+                return ActaPDFService._logo_base64_cache
+
             with open(logo_path, 'rb') as f:
                 data = base64.b64encode(f.read()).decode('ascii')
-            return f"data:{mime or 'image/png'};base64,{data}"
-        except Exception as e:
+            result = f"data:{mime or 'image/png'};base64,{data}"
+            ActaPDFService._logo_base64_cache = result
+            ActaPDFService._logo_mtime = current_mtime
+            return result
+        except (OSError, ValueError) as e:
             ActaPDFService._logger.warning(f"No se pudo codificar logo a base64: {e}")
             return None
 
     @staticmethod
     def _playwright(acta, asignaciones=None, accesorios=None):
-        """Genera PDF usando Playwright/Chromium headless (ejecutado en un thread separado).
+        """Genera PDF usando Playwright/Chromium en un thread separado.
 
         Usa el mismo HTML que la vista previa (acta_preview_content.html) para que
         el PDF sea pixel-perfect con lo que el usuario ve en el navegador.
         """
-        from django.template.loader import render_to_string
         import concurrent.futures
         from django.conf import settings
 
@@ -386,32 +389,27 @@ class ActaPDFService:
             from playwright.sync_api import sync_playwright
             try:
                 with sync_playwright() as pw:
-                    ActaPDFService._logger.debug("Playwright: lanzando Chromium...")
                     browser = pw.chromium.launch(
                         headless=True,
                         args=[
-                            '--no-sandbox',
-                            '--disable-gpu',
-                            '--disable-dev-shm-usage',
-                            '--disable-setuid-sandbox',
+                            '--no-sandbox', '--disable-gpu',
+                            '--disable-dev-shm-usage', '--disable-setuid-sandbox',
                             '--font-render-hinting=none',
                         ],
                     )
-                    ActaPDFService._logger.debug("Playwright: navegador listo, creando página...")
                     page = browser.new_page()
                     page.set_content(html_content, wait_until='networkidle')
-                    ActaPDFService._logger.debug("Playwright: contenido cargado, generando PDF...")
                     pdf_bytes = page.pdf(
                         format='Letter',
                         margin={'top': '1.5cm', 'bottom': '1.5cm',
                                 'left': '1.5cm', 'right': '1.5cm'},
                         print_background=True,
                     )
+                    page.close()
+                    browser.close()
                     ActaPDFService._logger.info(
                         f"Playwright: PDF generado ({len(pdf_bytes)} bytes)"
                     )
-                    page.close()
-                    browser.close()
                     return pdf_bytes
             except Exception as e:
                 ActaPDFService._logger.error(f"Playwright error en thread: {e}")

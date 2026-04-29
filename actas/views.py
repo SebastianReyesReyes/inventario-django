@@ -1,3 +1,5 @@
+import logging
+
 from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse
 from django.conf import settings
@@ -5,11 +7,14 @@ from django.contrib.auth.decorators import login_required, permission_required
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.template.loader import render_to_string
+from django.utils.html import escape
 
 from .models import Acta
 from .forms import ActaCrearForm
 from .services import ActaService, ActaPDFService
 from core.htmx import htmx_trigger_response
+
+logger = logging.getLogger('actas')
 
 
 def _render_acta_error(message):
@@ -113,10 +118,11 @@ def acta_preview(request):
         })
 
     except ValidationError as e:
-        error_html = _render_acta_error(str(e.message if hasattr(e, 'message') else e))
+        error_html = _render_acta_error(str(e))
         return HttpResponse(error_html)
-    except Exception as e:
-        error_html = _render_acta_error(f'Error: {str(e)}')
+    except Exception:
+        logger.exception("Error en preview de acta")
+        error_html = _render_acta_error('Error interno al generar la vista previa.')
         return HttpResponse(error_html)
 
 
@@ -145,9 +151,11 @@ def acta_preview_pdf(request):
         response['Content-Disposition'] = 'inline; filename="preview.pdf"'
         return response
     except ValidationError as e:
-        return HttpResponse(str(e.message if hasattr(e, 'message') else e), status=400)
-    except Exception as e:
-        return HttpResponse(f"Error al generar PDF: {str(e)}", status=500)
+        logger.warning("Error de validación en preview PDF: %s", e)
+        return HttpResponse("Datos inválidos para generar PDF de preview", status=400)
+    except Exception:
+        logger.exception("Error generando preview PDF")
+        return HttpResponse("Error interno al generar el PDF. Intente nuevamente.", status=500)
 
 
 @login_required
@@ -176,10 +184,11 @@ def acta_create(request):
                 return htmx_trigger_response('actaCreated')
                 
             except ValidationError as e:
-                error_html = _render_acta_error(str(e.message if hasattr(e, 'message') else e))
+                error_html = _render_acta_error(str(e))
                 return HttpResponse(error_html)
-            except Exception as e:
-                error_html = _render_acta_error(f'Error: {str(e)}')
+            except Exception:
+                logger.exception("Error creando acta")
+                error_html = _render_acta_error('Error interno al crear el acta.')
                 return HttpResponse(error_html)
 
     else:
@@ -209,8 +218,9 @@ def acta_pdf(request, pk):
         response = HttpResponse(pdf_content, content_type='application/pdf')
         response['Content-Disposition'] = f'inline; filename="Acta_{acta.folio}.pdf"'
         return response
-    except Exception as e:
-        return HttpResponse(f'Error al generar PDF: {str(e)}', status=500)
+    except Exception:
+        logger.exception("Error generando PDF para acta %s", pk)
+        return HttpResponse('Error interno al generar el PDF. Intente nuevamente.', status=500)
 
 @login_required
 @permission_required('actas.change_acta', raise_exception=True)
@@ -278,6 +288,8 @@ def ministros_por_colaborador(request, colaborador_pk):
     for m in ministros:
         # Marcamos como seleccionado si es el único
         selected = 'selected' if ministros.count() == 1 else ''
-        options_html += f'<option value="{m.pk}" {selected}>{m.nombre_completo} ({m.cargo or "Sin Cargo"})</option>'
-    
+        nombre = escape(m.nombre_completo)
+        cargo = escape(m.cargo) if m.cargo else "Sin Cargo"
+        options_html += f'<option value="{m.pk}" {selected}>{nombre} ({cargo})</option>'
+
     return HttpResponse(options_html)

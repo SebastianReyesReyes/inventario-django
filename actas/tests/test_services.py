@@ -7,6 +7,12 @@ from core.tests.factories import (
     EntregaAccesorioFactory, ActaFactory
 )
 
+try:
+    from playwright.sync_api import sync_playwright  # noqa: F401
+    HAS_PLAYWRIGHT = True
+except ImportError:
+    HAS_PLAYWRIGHT = False
+
 @pytest.mark.django_db
 class TestActaService:
     def test_crear_acta_success(self):
@@ -89,6 +95,8 @@ class TestActaService:
         pendientes = ActaService.obtener_pendientes(colaborador.pk)
         assert h_pendiente in pendientes
         assert h_con_acta not in pendientes
+    @pytest.mark.skipif(not HAS_PLAYWRIGHT, reason="Playwright not installed")
+    @pytest.mark.slow
     def test_generar_pdf(self):
         """Verificar que el servicio genera contenido PDF sin errores"""
         acta = ActaFactory()
@@ -278,6 +286,8 @@ class TestActaPDFService:
         assert Acta.objects.count() == initial_count
 
 
+@pytest.mark.skipif(not HAS_PLAYWRIGHT, reason="Playwright not installed")
+@pytest.mark.slow
 class TestPlaywrightBrowserPool:
     """Tests unitarios para el pool de Chromium."""
 

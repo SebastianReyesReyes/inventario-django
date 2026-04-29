@@ -71,13 +71,18 @@ def acta_list(request):
 @login_required
 @permission_required('actas.add_acta', raise_exception=True)
 def acta_preview(request):
-    """Genera la vista previa HTML de un acta sin persistir en BD."""
-    if request.method != 'POST':
+    """Genera la vista previa HTML de un acta sin persistir en BD.
+    Soporta POST (desde HTMX) y GET (para abrir en nueva pestaña)."""
+    if request.method == 'POST':
+        data = request.POST
+    elif request.method == 'GET':
+        data = request.GET
+    else:
         return HttpResponse("Método no permitido", status=405)
 
-    form = ActaCrearForm(request.POST)
-    asignacion_ids = request.POST.getlist('asignaciones')
-    accesorio_ids = request.POST.getlist('accesorios')
+    form = ActaCrearForm(data)
+    asignacion_ids = data.getlist('asignaciones')
+    accesorio_ids = data.getlist('accesorios')
 
     if not form.is_valid():
         error_html = _render_acta_error("Corrija los errores del formulario antes de previsualizar.")
@@ -94,9 +99,16 @@ def acta_preview(request):
             ministro_de_fe=form.cleaned_data.get('ministro_de_fe'),
         )
 
+        # GET → renderizar página completa en nueva pestaña (para comparar con PDF)
+        if request.method == 'GET':
+            return render(request, 'actas/partials/acta_preview_fullpage.html', {
+                'preview_html': preview_html,
+                'acta': form.cleaned_data['colaborador'],  # fallback para title
+            })
+
         return render(request, 'actas/partials/acta_preview_sideover.html', {
             'preview_html': preview_html,
-            'form_data': request.POST,
+            'form_data': data,
         })
 
     except ValidationError as e:
@@ -105,6 +117,36 @@ def acta_preview(request):
     except Exception as e:
         error_html = _render_acta_error(f'Error: {str(e)}')
         return HttpResponse(error_html)
+
+
+@login_required
+@permission_required('actas.add_acta', raise_exception=True)
+def acta_preview_pdf(request):
+    """Genera un PDF de preview (sin persistir) para comparar con la vista HTML."""
+    form = ActaCrearForm(request.GET)
+    asignacion_ids = request.GET.getlist('asignaciones')
+    accesorio_ids = request.GET.getlist('accesorios')
+
+    if not form.is_valid():
+        return HttpResponse("Datos inválidos para generar PDF de preview", status=400)
+
+    try:
+        pdf_bytes = ActaService.generar_preview_pdf(
+            colaborador=form.cleaned_data['colaborador'],
+            tipo_acta=form.cleaned_data['tipo_acta'],
+            asignacion_ids=asignacion_ids,
+            creado_por=request.user,
+            observaciones=form.cleaned_data.get('observaciones'),
+            accesorio_ids=accesorio_ids,
+            ministro_de_fe=form.cleaned_data.get('ministro_de_fe'),
+        )
+        response = HttpResponse(pdf_bytes, content_type='application/pdf')
+        response['Content-Disposition'] = 'inline; filename="preview.pdf"'
+        return response
+    except ValidationError as e:
+        return HttpResponse(str(e.message if hasattr(e, 'message') else e), status=400)
+    except Exception as e:
+        return HttpResponse(f"Error al generar PDF: {str(e)}", status=500)
 
 
 @login_required

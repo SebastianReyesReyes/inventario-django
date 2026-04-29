@@ -146,9 +146,19 @@ class ActaService:
         )
 
     @staticmethod
+    def _render_pdf(html):
+        """Helper interno: convierte HTML a bytes de PDF usando xhtml2pdf."""
+        from io import BytesIO
+        buffer = BytesIO()
+        pisa_status = pisa.CreatePDF(html, dest=buffer)
+        if pisa_status.err:
+            raise RuntimeError("Error al generar PDF con xhtml2pdf")
+        return buffer.getvalue()
+
+    @staticmethod
     def generar_pdf(acta):
         """
-        Genera el contenido binario del PDF corporativo para un acta.
+        Genera el contenido binario del PDF corporativo para un acta persistida.
 
         Args:
             acta: Instancia de Acta (debe tener relaciones cargadas).
@@ -172,15 +182,63 @@ class ActaService:
         }
 
         html = render_to_string('actas/partials/acta_pdf.html', context)
+        return ActaService._render_pdf(html)
 
-        from io import BytesIO
-        buffer = BytesIO()
-        pisa_status = pisa.CreatePDF(html, dest=buffer)
+    @staticmethod
+    def generar_preview_pdf(colaborador, tipo_acta, asignacion_ids, creado_por,
+                             observaciones=None, accesorio_ids=None, ministro_de_fe=None):
+        """
+        Genera un PDF de preview (sin persistir) usando el mismo motor que el PDF real.
 
-        if pisa_status.err:
-            raise RuntimeError(f"Error al generar PDF para acta {acta.folio}")
+        Args:
+            colaborador, tipo_acta, asignacion_ids, creado_por: mismos que generar_preview_html.
+            observaciones, accesorio_ids, ministro_de_fe: opcionales.
 
-        return buffer.getvalue()
+        Returns:
+            bytes: Contenido binario del PDF.
+        """
+        from dispositivos.models import HistorialAsignacion, EntregaAccesorio
+
+        asignaciones = HistorialAsignacion.objects.filter(
+            pk__in=asignacion_ids,
+            colaborador=colaborador,
+            acta__isnull=True,
+        ).select_related(
+            'dispositivo__modelo__tipo_dispositivo',
+            'dispositivo__modelo__fabricante',
+            'dispositivo__modelo',
+        )
+
+        accesorios = []
+        if accesorio_ids:
+            accesorios = list(EntregaAccesorio.objects.filter(
+                pk__in=accesorio_ids,
+                colaborador=colaborador,
+                acta__isnull=True
+            ))
+
+        acta_preview = Acta(
+            colaborador=colaborador,
+            tipo_acta=tipo_acta,
+            creado_por=creado_por,
+            observaciones=observaciones or '',
+            ministro_de_fe=ministro_de_fe,
+            fecha=timezone.now(),
+        )
+        acta_preview.folio = f"ACT-{timezone.now().year}-PENDIENTE"
+
+        logo_path = finders.find('img/LogoColor.png')
+
+        context = {
+            'acta': acta_preview,
+            'asignaciones': asignaciones,
+            'accesorios': accesorios,
+            'logo_path': logo_path,
+            'fecha_actual': timezone.now(),
+        }
+
+        html = render_to_string('actas/partials/acta_pdf.html', context)
+        return ActaService._render_pdf(html)
 
     @staticmethod
     def generar_preview_html(colaborador, tipo_acta, asignacion_ids, creado_por,

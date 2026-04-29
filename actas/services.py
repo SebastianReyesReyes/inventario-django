@@ -399,9 +399,8 @@ class ActaPDFService:
 
     @staticmethod
     def _playwright(acta):
-        """Genera PDF usando Playwright/Chromium headless."""
+        """Genera PDF usando Playwright/Chromium headless (ejecutado en un thread separado)."""
         from django.template.loader import render_to_string
-        from .playwright_browser import get_browser
 
         asignaciones = ActaService.obtener_asignaciones_para_pdf(acta)
         accesorios = acta.accesorios.all()
@@ -415,20 +414,36 @@ class ActaPDFService:
             'fecha_actual': timezone.now(),
         })
 
-        browser = get_browser()
-        page = browser.new_page()
-        try:
-            page.set_content(html, wait_until='networkidle')
-            pdf_bytes = page.pdf(
-                format='Letter',
-                margin={
-                    'top': '1.5cm',
-                    'bottom': '1.5cm',
-                    'left': '1.5cm',
-                    'right': '1.5cm',
-                },
-                print_background=True,
-            )
-            return pdf_bytes
-        finally:
-            page.close()
+        # Aislar Playwright en un thread para evitar que el event loop asyncio
+        # contamine el thread principal de Django (produce SynchronousOnlyOperation)
+        import concurrent.futures
+
+        def _render_in_thread(html_content, timeout_ms):
+            from playwright.sync_api import sync_playwright
+            with sync_playwright() as pw:
+                browser = pw.chromium.launch(
+                    headless=True,
+                    args=[
+                        '--no-sandbox',
+                        '--disable-gpu',
+                        '--disable-dev-shm-usage',
+                        '--disable-setuid-sandbox',
+                        '--font-render-hinting=none',
+                    ],
+                )
+                page = browser.new_page()
+                page.set_content(html_content, wait_until='networkidle')
+                pdf_bytes = page.pdf(
+                    format='Letter',
+                    margin={'top': '1.5cm', 'bottom': '1.5cm',
+                            'left': '1.5cm', 'right': '1.5cm'},
+                    print_background=True,
+                )
+                page.close()
+                browser.close()
+                return pdf_bytes
+
+        timeout = getattr(settings, 'PLAYWRIGHT_BROWSER_TIMEOUT', 15000) / 1000
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+            future = executor.submit(_render_in_thread, html, timeout)
+            return future.result(timeout=timeout + 5)

@@ -4,6 +4,8 @@ Capa de servicios para la app Actas.
 Contiene toda la lógica de negocio separada de las vistas (HTTP) y los modelos (persistencia).
 Siguiendo el patrón Service Layer recomendado por django-patterns skill.
 """
+import logging
+
 from django.db import transaction
 from django.core.exceptions import ValidationError
 from django.contrib.staticfiles import finders
@@ -344,3 +346,89 @@ class ActaService:
             colaborador_id=colaborador_pk,
             acta__isnull=True
         )
+
+
+class ActaPDFService:
+    """
+    Servicio multi-engine para generación de PDFs de actas.
+
+    Decide el motor según settings.PDF_ENGINE:
+    - "xhtml2pdf"  → motor actual (fallback, seguro)
+    - "playwright" → Chromium headless (CSS moderno)
+    - "both"       → genera ambos para comparación A/B
+
+    Si Playwright falla, revierte automáticamente a xhtml2pdf.
+    """
+
+    _logger = logging.getLogger('actas')
+
+    @staticmethod
+    def generar_pdf(acta, engine=None):
+        """
+        Punto de entrada único para generación de PDF.
+
+        Args:
+            acta: Instancia de Acta con relaciones cargadas.
+            engine: "xhtml2pdf", "playwright", "both", o None (usa settings).
+
+        Returns:
+            bytes o dict: PDF binario, o {"xhtml2pdf": bytes, "playwright": bytes}
+        """
+        from django.conf import settings
+
+        engine = engine or getattr(settings, 'PDF_ENGINE', 'xhtml2pdf')
+
+        if engine == 'both':
+            return {
+                'xhtml2pdf': ActaPDFService._xhtml2pdf(acta),
+                'playwright': ActaPDFService._playwright(acta),
+            }
+        elif engine == 'playwright':
+            try:
+                return ActaPDFService._playwright(acta)
+            except Exception:
+                ActaPDFService._logger.exception("Playwright falló, usando xhtml2pdf como fallback")
+                return ActaPDFService._xhtml2pdf(acta)
+        else:
+            return ActaPDFService._xhtml2pdf(acta)
+
+    @staticmethod
+    def _xhtml2pdf(acta):
+        """Genera PDF usando el motor legacy xhtml2pdf (sin cambios)."""
+        return ActaService.generar_pdf(acta)
+
+    @staticmethod
+    def _playwright(acta):
+        """Genera PDF usando Playwright/Chromium headless."""
+        from django.template.loader import render_to_string
+        from .playwright_browser import get_browser
+
+        asignaciones = ActaService.obtener_asignaciones_para_pdf(acta)
+        accesorios = acta.accesorios.all()
+        logo_path = finders.find('img/LogoColor.png')
+
+        html = render_to_string('actas/playwright/pdf_shell.html', {
+            'acta': acta,
+            'asignaciones': asignaciones,
+            'accesorios': accesorios,
+            'logo_path': logo_path,
+            'fecha_actual': timezone.now(),
+        })
+
+        browser = get_browser()
+        page = browser.new_page()
+        try:
+            page.set_content(html, wait_until='networkidle')
+            pdf_bytes = page.pdf(
+                format='Letter',
+                margin={
+                    'top': '1.5cm',
+                    'bottom': '1.5cm',
+                    'left': '1.5cm',
+                    'right': '1.5cm',
+                },
+                print_background=True,
+            )
+            return pdf_bytes
+        finally:
+            page.close()

@@ -180,3 +180,145 @@ class TestActaService:
         h1.refresh_from_db()
         assert h1.acta is None
         assert Acta.objects.count() == 0
+
+
+class TestActaPDFService:
+    """Tests unitarios para ActaPDFService (feature flag de PDF engine)."""
+
+    @pytest.fixture
+    def acta_para_pdf(self, db):
+        """Crea un acta con relaciones completas para pruebas de PDF."""
+        colaborador = ColaboradorFactory()
+        creado_por = ColaboradorFactory()
+        acta = ActaFactory(
+            colaborador=colaborador,
+            creado_por=creado_por,
+            tipo_acta='ENTREGA',
+        )
+        HistorialAsignacionFactory(acta=acta, colaborador=colaborador)
+        return acta
+
+    def test_defaults_to_xhtml2pdf(self, acta_para_pdf, settings):
+        """Verifica que el engine por defecto es xhtml2pdf."""
+        settings.PDF_ENGINE = 'xhtml2pdf'
+        from actas.services import ActaPDFService
+        pdf = ActaPDFService.generar_pdf(acta_para_pdf)
+        assert isinstance(pdf, bytes)
+        assert len(pdf) > 0
+
+    def test_xhtml2pdf_delegates_to_acta_service(self, acta_para_pdf, monkeypatch, settings):
+        """Verifica que el engine xhtml2pdf delega en ActaService.generar_pdf()."""
+        from actas.services import ActaPDFService, ActaService
+        
+        called = []
+        def spy(*args, **kwargs):
+            called.append(True)
+            return b'fake-pdf'
+        monkeypatch.setattr(ActaService, 'generar_pdf', spy)
+        settings.PDF_ENGINE = 'xhtml2pdf'
+
+        ActaPDFService.generar_pdf(acta_para_pdf)
+
+        assert len(called) == 1
+
+    def test_both_mode_returns_dict(self, acta_para_pdf, monkeypatch, settings):
+        """Verifica que 'both' devuelve un dict con ambos PDFs."""
+        from actas.services import ActaPDFService
+        monkeypatch.setattr(ActaPDFService, '_playwright', lambda acta: b'playwright-pdf')
+        monkeypatch.setattr(ActaPDFService, '_xhtml2pdf', lambda acta: b'xhtml2pdf-pdf')
+        settings.PDF_ENGINE = 'both'
+
+        result = ActaPDFService.generar_pdf(acta_para_pdf)
+
+        assert isinstance(result, dict)
+        assert result == {'xhtml2pdf': b'xhtml2pdf-pdf', 'playwright': b'playwright-pdf'}
+
+    def test_playwright_generates_pdf(self, acta_para_pdf, monkeypatch, settings):
+        """Verifica que el engine playwright genera un PDF binario."""
+        from actas.services import ActaPDFService
+        monkeypatch.setattr(ActaPDFService, '_playwright', lambda acta: b'playwright-output')
+        settings.PDF_ENGINE = 'playwright'
+
+        pdf = ActaPDFService.generar_pdf(acta_para_pdf)
+
+        assert pdf == b'playwright-output'
+
+    def test_playwright_fallback_on_error(self, acta_para_pdf, monkeypatch, settings):
+        """Verifica que si Playwright falla, se revierte a xhtml2pdf."""
+        from actas.services import ActaPDFService
+        monkeypatch.setattr(ActaPDFService, '_xhtml2pdf', lambda acta: b'fallback-pdf')
+        monkeypatch.setattr(
+            ActaPDFService, '_playwright',
+            lambda acta: (_ for _ in ()).throw(RuntimeError('Browser crash'))
+        )
+        settings.PDF_ENGINE = 'playwright'
+
+        pdf = ActaPDFService.generar_pdf(acta_para_pdf)
+
+        assert pdf == b'fallback-pdf'
+
+    def test_engine_param_overrides_setting(self, acta_para_pdf, monkeypatch, settings):
+        """Verifica que el parámetro engine sobrescribe settings.PDF_ENGINE."""
+        settings.PDF_ENGINE = 'playwright'
+        from actas.services import ActaPDFService, ActaService
+
+        called = []
+        monkeypatch.setattr(ActaService, 'generar_pdf', lambda acta: called.append(True) or b'ok')
+
+        ActaPDFService.generar_pdf(acta_para_pdf, engine='xhtml2pdf')
+
+        assert len(called) == 1
+
+    def test_no_acta_instance_leaks(self, acta_para_pdf, settings):
+        """Verifica que generar_pdf() no crea ni modifica actas en BD."""
+        initial_count = Acta.objects.count()
+        settings.PDF_ENGINE = 'xhtml2pdf'
+        from actas.services import ActaPDFService
+
+        ActaPDFService.generar_pdf(acta_para_pdf)
+
+        assert Acta.objects.count() == initial_count
+
+
+class TestPlaywrightBrowserPool:
+    """Tests unitarios para el pool de Chromium."""
+
+    def setup_method(self):
+        """Limpia el pool antes de cada test."""
+        from actas.playwright_browser import shutdown_pool
+        shutdown_pool()
+
+    def teardown_method(self):
+        """Limpia el pool después de cada test."""
+        from actas.playwright_browser import shutdown_pool
+        shutdown_pool()
+
+    def test_get_browser_returns_playwright_browser(self):
+        """Verifica que get_browser() devuelve una instancia de Chromium usable."""
+        from actas.playwright_browser import get_browser
+        browser = get_browser()
+        assert browser is not None
+        page = browser.new_page()
+        page.close()
+        assert browser.is_connected()
+
+    def test_browser_reuse_same_instance(self):
+        """Verifica que la misma instancia se reusa en llamadas sucesivas."""
+        from actas.playwright_browser import get_browser, _browser_pool
+        b1 = get_browser()
+        b2 = get_browser()
+        assert b1 is b2
+        assert len(_browser_pool) == 1
+
+    def test_shutdown_pool_clears_all(self):
+        """Verifica que shutdown_pool() cierra todas las instancias y vacía el pool."""
+        from actas.playwright_browser import get_browser, shutdown_pool, _browser_pool
+
+        b1 = get_browser()
+        assert len(_browser_pool) == 1
+        assert b1.is_connected()
+
+        shutdown_pool()
+
+        assert len(_browser_pool) == 0
+        assert not b1.is_connected()

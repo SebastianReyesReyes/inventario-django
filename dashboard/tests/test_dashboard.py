@@ -2,7 +2,7 @@ import pytest
 from django.urls import reverse
 from core.tests.factories import (
     ColaboradorFactory, DispositivoFactory, 
-    EstadoDispositivoFactory, TipoDispositivoFactory
+    EstadoDispositivoFactory, TipoDispositivoFactory, ModeloFactory
 )
 from core.models import EstadoDispositivo, TipoDispositivo
 
@@ -19,10 +19,13 @@ class TestDashboardAnalytics:
         self.tipo_nb = TipoDispositivoFactory(nombre='Notebook')
         self.tipo_sp = TipoDispositivoFactory(nombre='Smartphone')
         
-        # Crear dispositivos con diferentes estados y tipos
-        DispositivoFactory.create_batch(3, estado=self.est_disponible, tipo=self.tipo_nb)
-        DispositivoFactory.create_batch(2, estado=self.est_reparacion, tipo=self.tipo_sp)
-        DispositivoFactory.create_batch(1, estado=self.est_baja, tipo=self.tipo_nb)
+        self.modelo_nb = ModeloFactory(tipo_dispositivo=self.tipo_nb)
+        self.modelo_sp = ModeloFactory(tipo_dispositivo=self.tipo_sp)
+
+        # Crear dispositivos con diferentes estados y modelos
+        DispositivoFactory.create_batch(3, estado=self.est_disponible, modelo=self.modelo_nb)
+        DispositivoFactory.create_batch(2, estado=self.est_reparacion, modelo=self.modelo_sp)
+        DispositivoFactory.create_batch(1, estado=self.est_baja, modelo=self.modelo_nb)
 
     def test_dashboard_metrics_no_filter(self, client, setup_data):
         """Validar que el dashboard cuenta correctamente sin filtros aplicados"""

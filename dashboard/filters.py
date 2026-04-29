@@ -17,6 +17,7 @@ class AnaliticaInventarioFilter(django_filters.FilterSet):
     
     # Filtros por relaciones
     tipo = django_filters.ModelChoiceFilter(
+        field_name='modelo__tipo_dispositivo',
         queryset=TipoDispositivo.objects.all(),
         empty_label="Todos los Tipos",
         widget=forms.Select(attrs={'class': 'bg-surface-container-high border-none rounded-lg text-[10px] font-black uppercase tracking-widest text-on-background focus:ring-jmie-orange/50 px-3 py-2'})

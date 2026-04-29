@@ -1,15 +1,20 @@
+import json
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse
 from django.contrib.auth.decorators import login_required, permission_required
-from django.db import IntegrityError
 
-from .models import Fabricante, TipoDispositivo, Modelo, CentroCosto, EstadoDispositivo
+
+from .models import Fabricante, TipoDispositivo, Modelo, CentroCosto, EstadoDispositivo, Departamento
 from .filters import DashboardFilterSet
 from dispositivos.models import Dispositivo, BitacoraMantenimiento, HistorialAsignacion
 from .htmx import htmx_trigger_response
 from .catalog_views import (
     CentroCostoCreateView,
     CentroCostoUpdateView,
+    DepartamentoCreateView,
+    DepartamentoDeleteView,
+    DepartamentoUpdateView,
     EstadoCreateView,
     EstadoDeleteView,
     EstadoUpdateView,
@@ -87,21 +92,40 @@ fabricante_delete = FabricanteDeleteView.as_view()
 
 
 @login_required
-@permission_required('dispositivos.add_dispositivo', raise_exception=True)
+@permission_required('core.add_modelo', raise_exception=True)
+@login_required
+@permission_required('core.add_modelo', raise_exception=True)
 def ajax_modelo_create_inline(request, pk):
-    """Crea un modelo nuevo asociado a un fabricante desde la lista de fabricantes."""
-    fabricante = get_object_or_404(Fabricante, pk=pk)
-    nombre = request.POST.get('nuevo_modelo_nombre', '').strip()
+    """Compatibilidad: redirige al modal estándar de creación de modelo."""
+    response = HttpResponse(status=204)
+    response['HX-Redirect'] = f"/catalogos/modelos/crear/?fabricante_id={pk}"
+    return response
 
+
+@login_required
+@permission_required('core.change_modelo', raise_exception=True)
+def ajax_modelo_update_inline(request, pk):
+    """Actualiza el nombre de un modelo desde el inline de fabricantes."""
+    modelo = get_object_or_404(Modelo, pk=pk)
+    nombre = request.POST.get('nombre', '').strip()
     if nombre:
-        modelo = Modelo.objects.filter(fabricante=fabricante, nombre__iexact=nombre).first()
-        if not modelo:
-            try:
-                Modelo.objects.create(nombre=nombre, fabricante=fabricante)
-            except IntegrityError:
-                pass
+        modelo.nombre = nombre
+        modelo.save()
+    return render(request, 'core/partials/fabricante_modelos_inline.html', {'fabricante': modelo.fabricante})
 
-    return render(request, 'core/partials/fabricante_modelos_inline.html', {'fabricante': fabricante})
+
+@login_required
+@permission_required('core.delete_modelo', raise_exception=True)
+def ajax_modelo_delete_inline(request, pk):
+    """Elimina un modelo desde el inline de fabricantes."""
+    modelo = get_object_or_404(Modelo, pk=pk)
+    fabricante = modelo.fabricante
+    if Dispositivo.objects.filter(modelo=modelo).exists():
+        return htmx_trigger_response({"showNotification": {"message": "Protegido: Existen dispositivos de este modelo", "type": "error"}})
+    modelo.delete()
+    response = render(request, 'core/partials/fabricante_modelos_inline.html', {'fabricante': fabricante})
+    response["HX-Trigger"] = json.dumps({"showNotification": {"message": f"Modelo '{modelo.nombre}' eliminado", "type": "success"}})
+    return response
 
 # --- MODELOS ---
 
@@ -165,6 +189,54 @@ def estado_list(request):
 estado_create = EstadoCreateView.as_view()
 estado_edit = EstadoUpdateView.as_view()
 estado_delete = EstadoDeleteView.as_view()
+
+# --- DEPARTAMENTOS ---
+
+@login_required
+def departamento_list(request):
+    departamentos = Departamento.objects.all().order_by('nombre')
+    return render(request, 'core/departamento_list.html', {'departamentos': departamentos})
+
+departamento_create = DepartamentoCreateView.as_view()
+departamento_edit = DepartamentoUpdateView.as_view()
+departamento_delete = DepartamentoDeleteView.as_view()
+
+@login_required
+def catalogo_import_modal(request):
+    """Modal para importar catálogos desde CSV."""
+    return render(request, 'core/partials/catalogo_import_modal.html')
+
+
+@login_required
+@permission_required('core.add_fabricante', raise_exception=True)
+def catalogo_import_process(request):
+    """Procesa el archivo CSV subido desde la UI."""
+    if request.method != 'POST':
+        return HttpResponse("Método no permitido", status=405)
+
+    archivo = request.FILES.get('archivo_csv')
+    if not archivo:
+        return render(request, 'core/partials/catalogo_import_result.html', {
+            'error': 'No se seleccionó ningún archivo.',
+        })
+
+    if not archivo.name.lower().endswith('.csv'):
+        return render(request, 'core/partials/catalogo_import_result.html', {
+            'error': 'El archivo debe tener extensión .csv',
+        })
+
+    try:
+        from core.services import importar_catalogos_desde_csv
+        resultado = importar_catalogos_desde_csv(archivo)
+    except Exception as e:
+        return render(request, 'core/partials/catalogo_import_result.html', {
+            'error': f'Error al procesar el archivo: {e}',
+        })
+
+    return render(request, 'core/partials/catalogo_import_result.html', {
+        'resultado': resultado,
+    })
+
 
 def error_403(request, exception=None):
     """

@@ -28,7 +28,6 @@ class NotebookFactory(factory.django.DjangoModelFactory):
         model = Notebook
 
     numero_serie = factory.Sequence(lambda n: f"NB-SN-{n:06d}")
-    tipo = factory.SubFactory(TipoDispositivoFactory, nombre="Notebook", sigla="NB")
     estado = factory.SubFactory(EstadoDispositivoFactory, nombre="Disponible")
     modelo = factory.SubFactory(ModeloFactory)
     centro_costo = factory.SubFactory(CentroCostoFactory)
@@ -49,7 +48,6 @@ class SmartphoneFactory(factory.django.DjangoModelFactory):
         model = Smartphone
 
     numero_serie = factory.Sequence(lambda n: f"SP-SN-{n:06d}")
-    tipo = factory.SubFactory(TipoDispositivoFactory, nombre="Smartphone", sigla="SP")
     estado = factory.SubFactory(EstadoDispositivoFactory, nombre="Disponible")
     modelo = factory.SubFactory(ModeloFactory)
     centro_costo = factory.SubFactory(CentroCostoFactory)
@@ -67,7 +65,6 @@ class MonitorFactory(factory.django.DjangoModelFactory):
         model = Monitor
 
     numero_serie = factory.Sequence(lambda n: f"MON-SN-{n:06d}")
-    tipo = factory.SubFactory(TipoDispositivoFactory, nombre="Monitor", sigla="MON")
     estado = factory.SubFactory(EstadoDispositivoFactory, nombre="Disponible")
     modelo = factory.SubFactory(ModeloFactory)
     centro_costo = factory.SubFactory(CentroCostoFactory)

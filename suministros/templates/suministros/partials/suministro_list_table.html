@@ -1,0 +1,32 @@
+<table class="w-full text-left border-collapse">
+    <thead>
+        <tr class="bg-white/[0.02] border-b border-white/5 text-jmie-gray uppercase text-[10px] font-black tracking-widest">
+            <th class="px-6 py-4">Nombre / SKU</th>
+            <th class="px-6 py-4">Categoría</th>
+            <th class="px-6 py-4">Stock</th>
+            <th class="px-6 py-4">Umbral</th>
+            <th class="px-6 py-4 text-right">Acciones</th>
+        </tr>
+    </thead>
+    <tbody class="divide-y divide-white/5">
+        {% include "suministros/partials/suministro_list_results.html" %}
+    </tbody>
+</table>
+
+{% if page_obj.has_other_pages %}
+<div class="px-6 py-4 bg-white/[0.01] border-t border-white/5 flex items-center justify-between">
+    <span class="text-[10px] font-bold text-jmie-gray uppercase tracking-tighter">
+        Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+    </span>
+    <div class="flex gap-2">
+        {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query }}{% endif %}{% if categoria_id %}&categoria={{ categoria_id }}{% endif %}"
+           class="px-3 py-1.5 rounded-lg bg-white/5 text-[10px] font-black uppercase tracking-widest text-jmie-gray hover:bg-white/10 transition-all">Anterior</a>
+        {% endif %}
+        {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query }}{% endif %}{% if categoria_id %}&categoria={{ categoria_id }}{% endif %}"
+           class="px-3 py-1.5 rounded-lg bg-white/5 text-[10px] font-black uppercase tracking-widest text-jmie-gray hover:bg-white/10 transition-all">Siguiente</a>
+        {% endif %}
+    </div>
+</div>
+{% endif %}

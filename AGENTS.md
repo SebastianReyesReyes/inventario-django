@@ -1,73 +1,86 @@
-# AGENTS.md - Inventario JMIE
+# AGENTS.md — Inventario JMIE
 
-## Stack real (actual)
-- Django 6.0.2 + HTMX + Alpine.js + Tailwind (SSR, sin SPA).
-- Pruebas con `pytest`, `pytest-django`, `factory-boy`, `pytest-playwright`.
-- Base de datos local: SQLite (`db.sqlite3`).
+## Stack
+- Django 6.0.2 + HTMX + Alpine.js + Tailwind CSS (SSR, no SPA).
+- SQLite local (`db.sqlite3` o ruta definida por `DB_PATH`).
+- Tests: `pytest`, `pytest-django`, `factory-boy`, `pytest-playwright`.
+- Componentes UI vía `django-cotton`.
 
-## Estructura del proyecto
+## Estructura
 ```
-inventario_jmie/     # settings, urls, arranque del proyecto
-core/                # utilidades globales, catálogos base, helpers HTMX
-colaboradores/       # AUTH_USER_MODEL (Colaborador)
-dispositivos/        # inventario, mantenimientos, asignaciones, accesorios
-actas/               # lógica legal/documental (service layer)
-dashboard/           # métricas, filtros y exportación
-tests_e2e/           # E2E Playwright + Page Objects
+inventario_jmie/   # settings, urls, wsgi
+├── core/          # catálogos base, helpers HTMX, templatetags, templates base, Cotton components
+├── colaboradores/ # AUTH_USER_MODEL = Colaborador
+├── dispositivos/  # inventario polimórfico, mantenimientos, asignaciones, accesorios, QR
+├── actas/         # actas legales, firma digital PDF, folios
+└── dashboard/     # métricas, filtros, exportación Excel/CSV, drill-down
 ```
 
 ## Setup rápido (Windows)
-- `python -m venv venv && .\venv\Scripts\Activate.ps1`
-- `pip install -r requirements.txt`
-- Copiar `.env.example` a `.env` y rellenar al menos `DJANGO_SECRET_KEY` (el sistema falla al arrancar si está vacía o usa placeholder).
-- `python manage.py makemigrations && python manage.py migrate`
-- `python manage.py runserver`
+```powershell
+python -m venv venv && .\venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+cp .env.example .env
+python manage.py makemigrations && python manage.py migrate
+python manage.py runserver
+```
 
-### Variables de entorno importantes
-- `DJANGO_SECRET_KEY` — Obligatoria. Debe ser una clave segura (>30 chars, sin prefijos inseguros).
-- `DEBUG` — `True`/`False`. En producción se fuerzan validaciones adicionales (ej. `ALLOWED_HOSTS` sin `*`).
-- `ALLOWED_HOSTS` — Lista separada por comas. No puede estar vacía cuando `DEBUG=False`.
-- `DB_PATH` — Opcional. Permite cambiar la ubicación de `db.sqlite3` (útil para Docker).
+### ⚠️ Gotcha crítico: SECRET_KEY
+- `.env.example` y la documentación referencian `DJANGO_SECRET_KEY`, pero **`settings.py` lee `SECRET_KEY`** (`os.getenv('SECRET_KEY')`).
+- **Debes definir `SECRET_KEY=` en `.env`** (no `DJANGO_SECRET_KEY`). El sistema hace *fail-fast* al arrancar si está vacía, es un placeholder inseguro (`django-insecure-`, `change-me`, etc.), o si `ALLOWED_HOSTS` contiene `*` cuando `DEBUG=False`.
+- Otras variables: `DEBUG`, `ALLOWED_HOSTS`, `DB_PATH` (opcional), `DATABASE_URL`.
 
 ## Comandos clave
 ```bash
+# Tests (con coverage por defecto, ver pytest.ini)
 pytest
-pytest -m "not e2e"
+pytest -m "not e2e"                    # excluye E2E
 pytest -m e2e --headed --browser chromium
 pytest path\to\test.py::test_name
+
+# Importación masiva desde CSV
+python manage.py import_devices ruta.csv --dry-run
+
+# Docker
+# Primera vez: docker compose up -d --build
+# Migraciones: docker compose exec web python manage.py migrate
 ```
 
 ## Convenciones críticas
-- **Service Layer**: lógica de negocio compleja en `services.py`, no en views.
-- **ORM performance**: usar `select_related()` / `prefetch_related()` en listados con relaciones.
-- **Transacciones**: envolver escrituras multi-modelo en `transaction.atomic()`. Si una operación secundaria (ej. generación de acta) puede fallar independientemente, usar un bloque atómico separado para no revertir la escritura principal.
-- **Soft delete de usuarios**: `Colaborador.delete()` desactiva (`esta_activo`/`is_active`), no borra fila.
-- **Logging**: El proyecto configura loggers por app (`dispositivos`, `actas`, `colaboradores`, `core`) hacia `inventario.log`. Revisar este archivo para trazabilidad.
+- **Service Layer**: lógica de negocio compleja (especialmente si toca ≥2 modelos o requiere atomicidad) va en `services.py`, no en views.
+- **Transacciones**: escrituras multi-modelo dentro de `transaction.atomic()`. Si una operación secundaria (ej. generación de acta) puede fallar independientemente, usar un bloque atómico separado para no revertir la principal.
+- **ORM performance**: usar `select_related()` / `prefetch_related()` en listados con relaciones. Ver `DispositivoQuerySet.con_detalles()` como patrón.
+- **Soft delete de usuarios**: `Colaborador.delete()` desactiva (`esta_activo`/`is_active`), no borra la fila.
+- **Logging**: loggers por app escriben a `inventario.log` en raíz. Revisar este archivo para trazabilidad.
 
 ## HTMX
 - Responder con HTML parcial (no JSON para flujos de UI).
 - Reutilizar helpers de `core/htmx.py` (`htmx_trigger_response`, `htmx_render_or_redirect`, `htmx_success_or_redirect`, `htmx_redirect_or_redirect`).
-- En mutaciones, preferir `204 + HX-Trigger` para refrescar tabla/toast cuando aplique.
+- En mutaciones exitosas, preferir `204 + HX-Trigger` para refrescar tabla/toast.
+- Al capturar `ProtectedError` / `IntegrityError` en delete/toggle, devolver HTML del modal con error + `HX-Trigger` para toast (no silenciar con 400).
 
 ## Naming de URLs (obligatorio)
-- CRUD debe seguir: `[modelname]_[action]` usando `model_name` real en minúscula.
+- CRUD debe seguir: **`[model_name]_[action]`** usando `model_name` real en minúsculas.
+- Ejemplos válidos: `dispositivo_list`, `tipodispositivo_create`, `centrocosto_toggle_activa`.
 - Esto es requerido por `core/templatetags/action_tags.py` (`reverse(f"{app_label}:{model_name}_{action}", ...)`).
-- Si no se respeta, se rompe `{% render_actions %}` con `NoReverseMatch`.
+- **Si no se respeta, se rompe `{% render_actions %}` con `NoReverseMatch` (Error 500).**
 
 ## Formularios
-- Patrón base: heredar de `core.forms.BaseStyledForm` para consistencia visual.
-- Atributos HTMX/Alpine van definidos en el `__init__` del form/widget.
+- Heredar de `core.forms.BaseStyledForm` para consistencia visual Tailwind.
+- Atributos HTMX/Alpine van en el `__init__` del form/widget.
 
 ## Testing
 - Usar `core/tests/factories.py` como fuente principal de datos de prueba.
 - Marcadores disponibles: `e2e`, `integration`, `unit`.
-- E2E usa `live_server` y `tests_e2e/pages/` (Page Object Model).
+- E2E usa `live_server` y `tests_e2e/pages/` (Page Object Model). `conftest.py` de E2E setea `DJANGO_ALLOW_ASYNC_UNSAFE=true`.
+- `pytest.ini` incluye `--cov=. --cov-report=term-missing --reuse-db` por defecto.
 
-## Higiene de dependencias
-- Si una dependencia no tiene uso verificable en código/flujo actual, se elimina de `requirements.txt`.
-- Dependencias opcionales deben tener caso de uso concreto y referencia de roadmap.
-- Revisar dependencias cada 4–6 semanas.
+## Docker / Deploy
+- Piloto UAT con Docker Compose + Nginx + Gunicorn. Ver `ops/deploy/README_DEPLOY.md`.
+- El contenedor corre con usuario `django` (UID 999); el directorio `data/` debe tener permisos de escritura para ese UID.
 
 ## Referencias útiles
-- Guía dev: `docs/dev_guide/`
-- Guía de pruebas: `.agents/notes/testing_guide.md`
+- `docs/dev_guide/01_tech_stack_y_entorno.md`
+- `docs/dev_guide/02_patrones_y_arquitectura.md`
+- `docs/dev_guide/URL_CONVENTIONS.md`
+- `ops/deploy/README_DEPLOY.md`

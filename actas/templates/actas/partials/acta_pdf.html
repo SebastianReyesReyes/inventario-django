@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 {% load acta_tags %}
+
 <head>
     <meta charset="UTF-8">
     <style>
@@ -8,38 +9,46 @@
             size: letter;
             margin: 1.5cm;
         }
+
         body {
             font-family: Arial, sans-serif;
             font-size: 9pt;
             line-height: 1.3;
             color: #222;
         }
+
         .header {
             border-bottom: 2px solid #003594;
             padding-bottom: 10pt;
             margin-bottom: 15pt;
         }
+
         .logo {
             float: left;
             width: 130pt;
         }
+
         .acta-info {
             float: right;
             text-align: right;
         }
+
         .acta-info h1 {
             font-size: 16pt;
             margin: 0;
             color: #003594;
             text-transform: uppercase;
         }
+
         .acta-info p {
             margin: 1pt 0;
             font-weight: bold;
         }
+
         .clear {
             clear: both;
         }
+
         .section-title {
             background-color: #f1f3f8;
             padding: 4pt 8pt;
@@ -49,11 +58,13 @@
             margin: 12pt 0 4pt 0;
             border-left: 3pt solid #ED8B00;
         }
+
         table {
             width: 100%;
             border-collapse: collapse;
             margin-bottom: 10pt;
         }
+
         table th {
             background-color: #003594;
             color: white;
@@ -62,48 +73,58 @@
             text-transform: uppercase;
             text-align: left;
         }
+
         table td {
             border: 0.5pt solid #ccc;
             padding: 5pt;
             font-size: 7.5pt;
         }
+
         .clauses {
             font-size: 8pt;
             text-align: justify;
             margin-top: 15pt;
         }
+
         .clauses h3 {
             font-size: 8.5pt;
             margin-bottom: 3pt;
             color: #003594;
             border-bottom: 0.5pt solid #eee;
         }
+
         .clauses ol {
             margin-top: 2pt;
             padding-left: 12pt;
         }
+
         .clauses li {
             margin-bottom: 3pt;
         }
+
         .signatures {
             margin-top: 30pt;
             page-break-inside: avoid;
         }
+
         .signature-row {
             width: 100%;
             margin-bottom: 20pt;
         }
+
         .signature-box {
             width: 30%;
             float: left;
             text-align: center;
             margin-right: 3%;
         }
+
         .signature-line {
             border-top: 0.5pt solid #333;
             margin-top: 35pt;
             padding-top: 4pt;
         }
+
         .footer-legal {
             margin-top: 20pt;
             border-top: 0.5pt solid #ddd;
@@ -114,16 +135,18 @@
             font-style: italic;
             page-break-inside: avoid;
         }
+
         .observation-box {
-            font-size: 8pt; 
-            min-height: 30pt; 
-            padding: 5pt; 
+            font-size: 8pt;
+            min-height: 30pt;
+            padding: 5pt;
             border: 0.5pt solid #ccc;
             background-color: #fafafa;
             page-break-inside: avoid;
         }
     </style>
 </head>
+
 <body>
     <div class="header">
         <div class="logo">
@@ -175,7 +198,7 @@
             {% for asig in asignaciones %}
             <tr>
                 <td>{{ asig.dispositivo.identificador_interno }}</td>
-                <td>{{ asig.dispositivo.tipo.nombre }}</td>
+                <td>{{ asig.dispositivo.modelo.tipo_dispositivo.nombre }}</td>
                 <td>{{ asig.dispositivo.modelo }}</td>
                 <td>{{ asig.dispositivo.numero_serie }}</td>
                 <td>{{ asig.condicion_fisica|default:"Sin daños" }}</td>
@@ -207,32 +230,41 @@
     </table>
     {% endif %}
 
-    <!-- OBSERVACIONES -->
+    <!-- OBSERVACIONES
     {% if acta.observaciones %}
     <div class="section-title">Notas del Responsable</div>
     <div class="observation-box">
         {{ acta.observaciones|linebreaks }}
     </div>
-    {% endif %}
+    {% endif %} -->
 
     <!-- CLÁUSULAS LEGALES -->
     <div class="clauses">
         {% if acta.tipo_acta == 'ENTREGA' %}
-            <h3>1. Cláusulas de Responsabilidad de Entrega</h3>
-            <ol>
-                <li>El colaborador recibe los equipos en óptimas condiciones, asumiendo su cuidado y custodia.</li>
-                <li><strong>Ciberseguridad (Ley 21.663):</strong> El usuario es responsable de mantener la confidencialidad de sus credenciales y reportar pérdida o robo en un plazo máximo de 3 horas al área TI.</li>
-                <li><strong>Prohibiciones:</strong> Se prohíbe el uso de los activos para fines distintos a los laborales, la manipulación de hardware o la instalación de software no autorizado.</li>
-                <li><strong>Privacidad (Ley 21.719):</strong> Sus datos personales son tratados bajo bases legales de cumplimiento contractual TI. Puede ejercer sus derechos ARCO-POL mediante solicitud formal.</li>
-            </ol>
+        <h3>1. Cláusulas de Responsabilidad de Entrega</h3>
+        <ol>
+            <li>El colaborador recibe los equipos en óptimas condiciones, asumiendo su cuidado y custodia.</li>
+            <li><strong>Ciberseguridad (Ley 21.663):</strong> El usuario es responsable de mantener la confidencialidad
+                de sus credenciales y reportar pérdida o robo en un plazo máximo de 3 horas al área TI.</li>
+            <li><strong>Prohibiciones:</strong> Se prohíbe el uso de los activos para fines distintos a los laborales,
+                la manipulación de hardware o la instalación de software no autorizado.</li>
+            <li><strong>Privacidad (Ley 21.719):</strong> Sus datos personales son tratados bajo bases legales de
+                cumplimiento contractual TI. Puede ejercer sus derechos ARCO-POL mediante solicitud formal.</li>
+        </ol>
         {% else %}
-            <h3>1. Consentimiento de Borrado y Responsabilidad</h3>
-            <ol>
-                <li>La recepción de los equipos por parte de JMIE no exime al colaborador de responsabilidad por daños ocultos o dolo detectados en revisiones técnicas posteriores (plazo 48h).</li>
-                <li><strong>Autorización de Borrado:</strong> El colaborador autoriza expresamente el borrado permanente e irreversible de todos los datos alojados en el equipo una vez entregado, liberando a JMIE de cualquier responsabilidad por pérdida de información personal no respaldada.</li>
-                <li><strong>Confidencialidad Post-Empleo:</strong> Se recuerda al colaborador que la obligación de confidencialidad sobre secretos industriales y datos de clientes persiste indefinidamente tras la devolución del activo.</li>
-                <li><strong>No Portabilidad de Datos:</strong> El colaborador declara bajo juramento no haber extraído, copiado o transferido información corporativa sensible a medios externos antes de esta entrega.</li>
-            </ol>
+        <h3>1. Consentimiento de Borrado y Responsabilidad</h3>
+        <ol>
+            <li>La recepción de los equipos por parte de JMIE no exime al colaborador de responsabilidad por daños
+                ocultos o dolo detectados en revisiones técnicas posteriores.</li>
+            <li><strong>Autorización de Borrado:</strong> El colaborador autoriza expresamente el borrado permanente e
+                irreversible de todos los datos alojados en el equipo una vez entregado, liberando a JMIE de cualquier
+                responsabilidad por pérdida de información personal no respaldada.</li>
+            <li><strong>Confidencialidad Post-Empleo:</strong> Se recuerda al colaborador que la obligación de
+                confidencialidad sobre secretos industriales y datos de clientes persiste indefinidamente tras la
+                devolución del activo.</li>
+            <li><strong>No Portabilidad de Datos:</strong> El colaborador declara bajo juramento no haber extraído,
+                copiado o transferido información corporativa sensible a medios externos antes de esta entrega.</li>
+        </ol>
         {% endif %}
     </div>
 
@@ -251,7 +283,8 @@
             <!-- COLABORADOR -->
             <div class="signature-box" style="margin-left: 2%;">
                 <div class="signature-line">
-                    <strong>{% if acta.tipo_acta == 'ENTREGA' %}Recibí Conforme (Colaborador){% else %}Entrego Conforme (Colaborador){% endif %}</strong><br>
+                    <strong>{% if acta.tipo_acta == 'ENTREGA' %}Recibí Conforme (Colaborador){% else %}Entrego Conforme
+                        (Colaborador){% endif %}</strong><br>
                     {{ acta.colaborador.nombre_completo }}<br>
                     RUT: {{ acta.colaborador.rut|format_rut }}
                 </div>
@@ -276,4 +309,5 @@
         Identificador Único (Folio): {{ acta.folio }}
     </div>
 </body>
+
 </html>

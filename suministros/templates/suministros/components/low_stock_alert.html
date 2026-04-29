@@ -1,0 +1,24 @@
+{% if bajo_stock_count > 0 %}
+<div class="p-4 bg-amber-500/5 border border-amber-500/10 rounded-xl">
+    <div class="flex items-center gap-3 mb-3">
+        <span class="material-symbols-outlined text-amber-400">warning</span>
+        <h4 class="text-sm font-black text-on-background tracking-tight">Alerta de Stock Bajo</h4>
+        <span class="ml-auto px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-400 text-[10px] font-black uppercase tracking-wider">{{ bajo_stock_count }}</span>
+    </div>
+    <ul class="space-y-2">
+        {% for s in bajo_stock_items %}
+        <li class="flex items-center justify-between text-xs">
+            <a href="{% url 'suministros:suministro_detail' s.pk %}" class="text-jmie-gray hover:text-jmie-orange transition-colors font-bold truncate max-w-[70%]">
+                {{ s.nombre }}
+            </a>
+            {% include "suministros/partials/stock_badge.html" with suministro=s only %}
+        </li>
+        {% endfor %}
+    </ul>
+    {% if bajo_stock_count > 5 %}
+    <a href="{% url 'suministros:suministro_list' %}?alerta=bajo_stock" class="mt-3 block text-[10px] font-black uppercase tracking-widest text-jmie-orange hover:underline">
+        Ver todos los alertas →
+    </a>
+    {% endif %}
+</div>
+{% endif %}

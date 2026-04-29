@@ -1,0 +1,47 @@
+<table class="w-full text-left border-collapse">
+    <thead>
+        <tr class="bg-white/[0.02] border-b border-white/5 text-jmie-gray uppercase text-[10px] font-black tracking-widest">
+            <th class="px-4 py-3">Fecha</th>
+            <th class="px-4 py-3">Tipo</th>
+            <th class="px-4 py-3">Cantidad</th>
+            <th class="px-4 py-3">Registrado por</th>
+            <th class="px-4 py-3">Notas</th>
+        </tr>
+    </thead>
+    <tbody class="divide-y divide-white/5">
+        {% for m in page_obj %}
+        <tr class="hover:bg-white/[0.02] transition-colors">
+            <td class="px-4 py-3 text-xs text-jmie-gray">{{ m.fecha|date:"d/m/Y H:i" }}</td>
+            <td class="px-4 py-3">
+                <span class="px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-wider
+                    {% if m.tipo_movimiento == 'ENTRADA' %}bg-emerald-500/10 text-emerald-400 border border-emerald-500/20
+                    {% elif m.tipo_movimiento == 'SALIDA' %}bg-blue-500/10 text-blue-400 border border-blue-500/20
+                    {% elif m.tipo_movimiento == 'AJUSTE_POS' %}bg-amber-500/10 text-amber-400 border border-amber-500/20
+                    {% else %}bg-red-500/10 text-red-400 border border-red-500/20{% endif %}">
+                    {{ m.get_tipo_movimiento_display }}
+                </span>
+            </td>
+            <td class="px-4 py-3 text-xs font-bold text-on-background">{{ m.cantidad }}</td>
+            <td class="px-4 py-3 text-xs text-jmie-gray">{{ m.registrado_por.get_full_name|default:m.registrado_por.username|default:"—" }}</td>
+            <td class="px-4 py-3 text-xs text-jmie-gray max-w-xs truncate">{{ m.notas|default:"—" }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="5" class="px-4 py-8 text-center text-xs text-jmie-gray font-bold">Sin movimientos registrados</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% if page_obj.has_other_pages %}
+<div class="px-4 py-3 bg-white/[0.01] border-t border-white/5 flex items-center justify-between">
+    <span class="text-[10px] text-jmie-gray font-bold">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+    <div class="flex gap-2">
+        {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}&_partial=movimientos" class="px-3 py-1.5 rounded-lg bg-white/5 text-[10px] font-black text-jmie-gray hover:bg-white/10 transition-all">Anterior</a>
+        {% endif %}
+        {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}&_partial=movimientos" class="px-3 py-1.5 rounded-lg bg-white/5 text-[10px] font-black text-jmie-gray hover:bg-white/10 transition-all">Siguiente</a>
+        {% endif %}
+    </div>
+</div>
+{% endif %}

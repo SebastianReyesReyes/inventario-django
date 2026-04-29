@@ -1,12 +1,27 @@
 from django import forms
 from django.urls import reverse_lazy
 from .models import Dispositivo, HistorialAsignacion, EntregaAccesorio
-from core.models import Fabricante, Modelo
-from core.forms import BaseStyledForm
 from colaboradores.models import Colaborador
+from core.models import Fabricante, Modelo, TipoDispositivo
+from core.forms import BaseStyledForm
 
 class DispositivoForm(BaseStyledForm):
-    # Campo extra no persistido para filtrar por marca en la UI
+    # Campos extra no persistidos para filtrar modelos en la UI
+    tipo = forms.ModelChoiceField(
+        queryset=TipoDispositivo.objects.all(),
+        required=False,
+        label="Tipo de Equipo",
+        widget=forms.Select(attrs={
+            'class': 'w-full bg-surface-container-high border-[1px] border-white/5 rounded-lg px-4 py-3 text-on-background',
+            'x-model': 'tipoEquipoId',
+            '@change': 'updateTipoEquipo()',
+            'hx-get': reverse_lazy('dispositivos:ajax_get_modelos'),
+            'hx-include': '#id_fabricante',
+            'hx-target': '#id_modelo',
+            'hx-trigger': 'change',
+        })
+    )
+    
     fabricante = forms.ModelChoiceField(
         queryset=Fabricante.objects.all(),
         required=False,
@@ -14,6 +29,7 @@ class DispositivoForm(BaseStyledForm):
         widget=forms.Select(attrs={
             'class': 'w-full bg-surface-container-high border-[1px] border-white/5 rounded-lg px-4 py-3 text-on-background focus:border-jmie-blue transition-all',
             'hx-get': reverse_lazy('dispositivos:ajax_get_modelos'),
+            'hx-include': '#id_tipo',
             'hx-target': '#id_modelo',
             'hx-trigger': 'change',
             '@change': 'fabricanteId = $event.target.value'
@@ -32,19 +48,13 @@ class DispositivoForm(BaseStyledForm):
     class Meta:
         model = Dispositivo
         fields = [
-            'numero_serie', 'tipo', 
+            'numero_serie', 
             'fabricante', 'modelo', 'estado', 'propietario_actual', 
             'centro_costo', 'fecha_compra', 'valor_contable', 'notas_condicion',
             'generar_acta'
         ]
         widgets = {
-
             'numero_serie': forms.TextInput(attrs={'class': 'w-full bg-surface-container-high border-[1px] border-white/5 rounded-lg px-4 py-3 text-on-background', 'placeholder': 'Número de serie único'}),
-            'tipo': forms.Select(attrs={
-                'class': 'w-full bg-surface-container-high border-[1px] border-white/5 rounded-lg px-4 py-3 text-on-background',
-                'x-model': 'tipoEquipoId',
-                '@change': 'updateTipoEquipo()'
-            }),
             'modelo': forms.Select(attrs={'class': 'w-full bg-surface-container-high border-[1px] border-white/5 rounded-lg px-4 py-3 text-on-background'}),
             'estado': forms.Select(attrs={'class': 'w-full bg-surface-container-high border-[1px] border-white/5 rounded-lg px-4 py-3 text-on-background'}),
             'propietario_actual': forms.Select(attrs={'class': 'w-full bg-surface-container-high border-[1px] border-white/5 rounded-lg px-4 py-3 text-on-background'}),
@@ -63,21 +73,38 @@ class DispositivoForm(BaseStyledForm):
             raise forms.ValidationError("Este número de serie ya está registrado.")
         return serie
 
-
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Si no hay fabricante seleccionado todavía (o no es un POST con data), 
-        # dejamos los modelos vacíos para obligar a seleccionar marca primero.
-        if 'fabricante' in self.data:
+        
+        # Filtro combinado de modelos
+        modelo_qs = Modelo.objects.all()
+        has_filter = False
+        
+        if 'fabricante' in self.data and self.data.get('fabricante'):
             try:
                 fabricante_id = int(self.data.get('fabricante'))
-                self.fields['modelo'].queryset = Modelo.objects.filter(fabricante_id=fabricante_id).order_by('nombre')
+                modelo_qs = modelo_qs.filter(fabricante_id=fabricante_id)
+                has_filter = True
             except (ValueError, TypeError):
-                self.fields['modelo'].queryset = Modelo.objects.none()
-        elif self.instance.pk:
-            self.fields['modelo'].queryset = self.instance.modelo.fabricante.modelos.order_by('nombre')
+                pass
+                
+        if 'tipo' in self.data and self.data.get('tipo'):
+            try:
+                tipo_id = int(self.data.get('tipo'))
+                modelo_qs = modelo_qs.filter(tipo_dispositivo_id=tipo_id)
+                has_filter = True
+            except (ValueError, TypeError):
+                pass
+
+        if has_filter:
+            self.fields['modelo'].queryset = modelo_qs.order_by('nombre')
+        elif self.instance.pk and self.instance.modelo:
+            self.fields['modelo'].queryset = Modelo.objects.filter(
+                fabricante=self.instance.modelo.fabricante,
+                tipo_dispositivo=self.instance.modelo.tipo_dispositivo
+            ).order_by('nombre')
             self.initial['fabricante'] = self.instance.modelo.fabricante
+            self.initial['tipo'] = self.instance.modelo.tipo_dispositivo
         else:
             self.fields['modelo'].queryset = Modelo.objects.none()
 

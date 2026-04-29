@@ -12,7 +12,7 @@ class DispositivoQuerySet(models.QuerySet):
     
     def con_detalles(self):
         return self.select_related(
-            'tipo', 'estado', 'modelo', 'modelo__fabricante', 
+            'estado', 'modelo', 'modelo__fabricante', 'modelo__tipo_dispositivo',
             'propietario_actual', 'centro_costo'
         )
 
@@ -20,7 +20,6 @@ class Dispositivo(models.Model):
     identificador_interno = models.CharField(max_length=50, unique=True, blank=True, verbose_name="ID Interno (Auto)")
     numero_serie = models.CharField(max_length=100, unique=True, verbose_name="Número de Serie")
     
-    tipo = models.ForeignKey(TipoDispositivo, on_delete=models.PROTECT)
     estado = models.ForeignKey(EstadoDispositivo, on_delete=models.PROTECT)
     modelo = models.ForeignKey(Modelo, on_delete=models.PROTECT)
     
@@ -47,8 +46,8 @@ class Dispositivo(models.Model):
     def save(self, *args, **kwargs):
         if not self.identificador_interno:
             prefix = getattr(config, 'CLI_PREFIX_ID', 'JMIE')
-            # Obtenemos la sigla del tipo de dispositivo
-            sigla = self.tipo.sigla if self.tipo and self.tipo.sigla else "EQUIP"
+            # Obtenemos la sigla del tipo de dispositivo a través del modelo
+            sigla = self.modelo.tipo_dispositivo.sigla if self.modelo and self.modelo.tipo_dispositivo and self.modelo.tipo_dispositivo.sigla else "EQUIP"
             
             # Buscamos el último dispositivo con la misma sigla para seguir la secuencia
             last_device = Dispositivo.objects.filter(

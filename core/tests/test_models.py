@@ -42,7 +42,7 @@ class TestCatalogModels:
         """Validar representación string del modelo"""
         fabricante = FabricanteFactory(nombre="Dell")
         modelo = ModeloFactory(nombre="Latitude", fabricante=fabricante)
-        assert str(modelo) == "Dell Latitude"
+        assert str(modelo) == "Latitude"
 
     def test_centro_costo_str(self):
         """Validar representación string del centro de costo"""

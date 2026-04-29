@@ -165,12 +165,13 @@ class TestDispositivoIdentificadorGeneration:
 
     def test_identificador_uses_tipo_sigla(self):
         """El identificador interno usa la sigla del tipo de dispositivo."""
-        from core.tests.factories import TipoDispositivoFactory
+        from core.tests.factories import TipoDispositivoFactory, ModeloFactory
 
         tipo = TipoDispositivoFactory(nombre="Notebook", sigla="NB")
+        modelo = ModeloFactory(tipo_dispositivo=tipo)
         dispositivo = DispositivoFactory(
             estado=EstadoDisponibleFactory(),
-            tipo=tipo,
+            modelo=modelo,
             propietario_actual=None,
         )
 
@@ -178,11 +179,12 @@ class TestDispositivoIdentificadorGeneration:
 
     def test_identificador_is_unique(self):
         """Dos dispositivos del mismo tipo tienen identificadores únicos."""
-        from core.tests.factories import TipoDispositivoFactory
+        from core.tests.factories import TipoDispositivoFactory, ModeloFactory
 
         tipo = TipoDispositivoFactory(nombre="Monitor", sigla="MON")
-        disp1 = DispositivoFactory(estado=EstadoDisponibleFactory(), tipo=tipo, propietario_actual=None)
-        disp2 = DispositivoFactory(estado=EstadoDisponibleFactory(), tipo=tipo, propietario_actual=None)
+        modelo = ModeloFactory(tipo_dispositivo=tipo)
+        disp1 = DispositivoFactory(estado=EstadoDisponibleFactory(), modelo=modelo, propietario_actual=None)
+        disp2 = DispositivoFactory(estado=EstadoDisponibleFactory(), modelo=modelo, propietario_actual=None)
 
         assert disp1.identificador_interno != disp2.identificador_interno
 

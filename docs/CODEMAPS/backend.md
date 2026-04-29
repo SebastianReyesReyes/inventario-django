@@ -95,8 +95,9 @@ if generar_acta:
 - django-constance 4.3.5
 - django-cotton 2.6.2
 - qrcode 8.2
-- xhtml2pdf 0.2.17
+- playwright 1.58.0
 - pyHanko 0.33.0
+- pypdf 6.7.2
 
 ## Related Areas
 

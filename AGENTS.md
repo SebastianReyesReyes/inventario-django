@@ -12,8 +12,9 @@ inventario_jmie/   # settings, urls, wsgi
 ├── core/          # catálogos base, helpers HTMX, templatetags, templates base, Cotton components
 ├── colaboradores/ # AUTH_USER_MODEL = Colaborador
 ├── dispositivos/  # inventario polimórfico, mantenimientos, asignaciones, accesorios, QR
-├── actas/         # actas legales, firma digital PDF, folios
-└── dashboard/     # métricas, filtros, exportación Excel/CSV, drill-down
+├── actas/         # actas legales, firma digital PDF (Playwright), folios
+├── dashboard/     # métricas, filtros, exportación Excel/CSV, drill-down
+└── suministros/   # gestión de suministros y compatibilidad con dispositivos
 ```
 
 ## Setup rápido (Windows)

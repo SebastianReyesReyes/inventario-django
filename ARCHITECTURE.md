@@ -2,225 +2,282 @@
 
 ## Overview
 
-Sistema de gestión de inventario de equipos tecnológicos para JMIE. Administra dispositivos polimórficos (notebooks, smartphones, servidores, etc.), asignaciones a colaboradores, mantenimientos, actas legales con firma digital, y métricas operativas. Arquitectura SSR con Django 6, HTMX, Alpine.js y Tailwind CSS.
+Inventario JMIE is a Django 6 server-side rendered (SSR) web application for managing IT asset inventory, personnel assignments, maintenance logs, legal delivery/return acts (with digital PDF signing), and analytics dashboards. It uses HTMX + Alpine.js + Tailwind CSS for interactive UI without building a SPA.
 
 ## Tech Stack
 
-| Capa | Tecnología |
-|------|-----------|
-| Backend | Django 6.0.2, Python 3.12 |
-| Frontend | HTMX 1.x, Alpine.js 3.x, Tailwind CSS 3.x (CDN Play) |
-| UI Components | django-cotton 2.6.2 |
-| Forms | django-crispy-forms + crispy-tailwind |
-| Database | SQLite (local/Docker), configurable vía `DB_PATH` |
-| Auth | Django built-in (`Colaborador` como `AUTH_USER_MODEL`) |
-| PDF / Firma | xhtml2pdf, pyHanko, reportlab |
-| QR | qrcode + Pillow |
-| Import/Export | django-import-export, tablib, openpyxl |
-| Config dinámica | django-constance (backend DB) |
-| Testing | pytest, pytest-django, factory-boy, pytest-playwright |
-| Deploy | Docker Compose + Nginx + Gunicorn |
+| Layer | Technology | Version / Notes |
+|-------|-----------|-----------------|
+| Framework | Django | 6.0.2 |
+| Language | Python | 3.11+ |
+| Database | SQLite | Local file (`db.sqlite3` or `DB_PATH` env) |
+| Frontend | HTMX + Alpine.js + Tailwind CSS | SSR, no SPA |
+| UI Components | django-cotton | Reusable components in `templates/cotton/` |
+| Forms | django-crispy-forms + crispy-tailwind | Styled forms via `BaseStyledForm` |
+| Auth | Django built-in | Custom `Colaborador` user model |
+| Dynamic Config | django-constance | `CLI_PREFIX_ID` for auto IDs |
+| Image Handling | django-imagekit | Thumbnails & processing |
+| Import/Export | django-import-export | CSV/Excel bulk operations |
+| Testing | pytest, pytest-django, factory-boy, pytest-playwright | `--cov=. --reuse-db` default |
+| PDF Signing | pyHanko, pypdf, reportlab | Digital signature on legal acts |
+| QR Codes | qrcode | Equipment QR generation |
+| Deployment | Docker Compose + Nginx + Gunicorn | UAT pilot ready |
 
 ## Directory Structure
 
 ```
 inventario-django/
-├── inventario_jmie/          # Configuración Django
-│   ├── settings.py           # Settings con validación fail-fast de SECRET_KEY y ALLOWED_HOSTS
-│   ├── urls.py               # Root URLconf, incluye apps + auth views
-│   ├── wsgi.py               # Entry point producción
-│   └── asgi.py               # Entry point async
-├── core/                     # Catálogos base, utilidades globales, templates base
-│   ├── models.py             # TipoDispositivo, EstadoDispositivo, Fabricante, Modelo, CentroCosto, Departamento
-│   ├── views.py              # Home, dashboard drill-down, catálogos (FBV + CBV)
-│   ├── catalog_views.py      # CBVs para CRUD de catálogos
-│   ├── forms.py              # BaseStyledForm (Tailwind auto-styling)
-│   ├── htmx.py               # Helpers HTMX: is_htmx, htmx_trigger_response, htmx_render_or_redirect
-│   ├── utils.py              # Utilidades transversales
-│   ├── filters.py            # Filtros django-filter
+├── inventario_jmie/          # Project config: settings, root urls, WSGI/ASGI
+│   ├── settings.py
+│   ├── urls.py
+│   └── wsgi.py / asgi.py
+│
+├── core/                     # Base catalogs, HTMX helpers, shared template tags, Cotton base
+│   ├── models.py             # TipoDispositivo, EstadoDispositivo, Fabricante, Modelo, Departamento, CentroCosto
+│   ├── htmx.py               # HTMX response helpers (htmx_trigger_response, htmx_render_or_redirect, etc.)
+│   ├── forms.py              # BaseStyledForm (Tailwind-styled base form)
+│   ├── catalog_views.py      # Shared CBVs for catalog CRUD
 │   ├── templatetags/         # action_tags, nav_tags, ui_tags, url_tags
-│   ├── management/commands/  # import_devices, load_entra_users, seed_cc
-│   └── tests/factories.py    # Factory-boy: fuente principal de datos de prueba
+│   ├── management/commands/  # import_devices, seed_db, setup_groups, reset_db, etc.
+│   └── tests/factories.py    # Shared factory-boy factories
+│
 ├── colaboradores/            # AUTH_USER_MODEL = Colaborador
-│   ├── models.py             # Extensión de AbstractUser con RUT, cargo, soft-delete
-│   ├── views.py              # Gestión de colaboradores
-│   └── tests/factories.py    # ColaboradorFactory
-├── dispositivos/             # Inventario polimórfico, trazabilidad, QR
-│   ├── models.py             # Dispositivo + especializados (Notebook, Smartphone, etc.)
-│   ├── views.py              # CRUD + trazabilidad (asignar, reasignar, devolver) + AJAX
-│   ├── services.py           # DispositivoFactory, TrazabilidadService (capa de servicios)
-│   ├── forms.py              # Forms técnicos por tipo de dispositivo
-│   ├── signals.py            # Señales Django
-│   └── tests/                # Unit, integration, edge cases, signals
-├── actas/                    # Actas legales, firma digital, folios
-│   ├── models.py             # Acta con folio correlativo y blindaje de firma
-│   ├── services.py           # ActaService: creación, firma digital, PDF
-│   └── templatetags/         # acta_tags
-├── dashboard/                # Métricas, filtros analíticos, exportación Excel/CSV
-│   ├── views.py              # Vistas de reportes y gráficos
-│   ├── services.py           # Lógica de agregación y exportación
-│   └── filters.py            # AnaliticaInventarioFilter
-├── suministros/              # Gestión de suministros y compatibilidad con dispositivos
-│   ├── models.py             # CategoríaSuministro, Suministro
-│   └── services.py           # Lógica de negocio
-├── templates/                # Templates globales
-│   ├── base.html             # Layout principal con contenedores HTMX (#modal-container, #side-over-container)
-│   ├── auth/                 # Login/logout
-│   ├── cotton/               # Componentes reutilizables django-cotton
-│   └── partials/             # Partials globales
-├── tests_e2e/                # E2E con Playwright (Page Object Model)
-│   ├── pages/inventory_pages.py
-│   ├── conftest.py           # Configura DJANGO_ALLOW_ASYNC_UNSAFE
-│   └── test_*.py             # Flujos E2E
-├── ops/                      # Infraestructura
-│   ├── deploy/               # systemd, nginx, scripts de instalación
+│   ├── models.py             # Custom user extending AbstractUser with soft-delete (esta_activo)
+│   ├── views.py              # CRUD + export
+│   └── tests/
+│
+├── dispositivos/             # Polymorphic inventory, maintenance, assignments, accessories, QR
+│   ├── models.py             # Dispositivo (base) + Notebook, Smartphone, etc. + BitacoraMantenimiento + HistorialAsignacion
+│   ├── services.py           # DispositivoFactory (form resolution), TrazabilidadService (assign/return)
+│   ├── signals.py            # Signal handlers for assignments/events
+│   ├── forms.py              # DispositivoForm, NotebookTechForm, AsignacionForm, DevolucionForm, AccesorioForm
+│   ├── views.py              # FBV for device CRUD, assignments, QR, HTMX partials
+│   └── templates/dispositivos/ + partials/
+│
+├── actas/                    # Legal acts (delivery/return/destruction), PDF generation, folios, digital signature
+│   ├── services.py           # ActaService, ActaPDFService (PDF gen & signing)
+│   ├── models.py             # Acta, FolioCounter
+│   ├── playwright_browser.py # PDF rendering via Playwright
+│   └── templatetags/acta_tags.py
+│
+├── dashboard/                # Metrics, Chart.js, Excel/CSV export, drill-down
+│   ├── services.py           # Aggregation/metric logic
+│   ├── filters.py            # AnaliticaInventarioFilter
+│   └── templates/dashboard/ + partials/
+│
+├── suministros/              # Supplies management (additional domain)
+│   ├── models.py, services.py, views.py, forms.py, templates/
+│
+├── templates/                # Global templates: base.html, auth, error pages, Cotton components
+│   ├── base.html             # Master layout (loads HTMX, Alpine.js, Tailwind)
+│   ├── cotton/               # Reusable UI components (btn_primary, glass_panel, paginator, etc.)
+│   └── partials/             # Shared partials (action_buttons.html)
+│
+├── static/                   # Static assets (fonts, images)
+├── media/                    # User uploads (device photos)
+│
+├── tests_e2e/                # Playwright E2E tests with Page Object Model
+│   ├── conftest.py           # E2E fixtures, sets DJANGO_ALLOW_ASYNC_UNSAFE=true
+│   ├── pages/                # Page Object classes (inventory_pages, suministros_pages)
+│   └── test_*.py             # Flow tests (inventory, maintenance, actas, full lifecycle)
+│
+├── docs/                     # Technical docs, architecture maps, dev guides
+│   └── dev_guide/
+│
+├── ops/                      # Deployment & operations
+│   ├── deploy/               # Nginx, Gunicorn, systemd, README_DEPLOY.md
 │   └── docker/               # entrypoint.sh, nginx.conf
-├── docs/                     # Documentación técnica
-│   ├── dev_guide/            # Guías numeradas (stack, patrones, testing)
-│   ├── CODEMAPS/             # Mapas de código por capa
-│   ├── ARQUITECTURA_TECNICA.md
-│   └── STYLE_GUIDE.md        # Design tokens Tailwind
-└── static/                   # CSS, JS, imágenes, fuentes locales
+│
+├── manage.py
+├── requirements.txt
+├── pytest.ini
+├── docker-compose.yml
+└── Dockerfile
 ```
 
 ## Core Components
 
-### 1. `core` — Infraestructura Global
-- **Catálogos base**: `TipoDispositivo`, `EstadoDispositivo`, `Fabricante`, `Modelo`, `CentroCosto`, `Departamento`
-- **HTMX helpers** (`core/htmx.py`): `is_htmx()`, `htmx_trigger_response()`, `htmx_render_or_redirect()`, `htmx_success_or_redirect()`, `htmx_redirect_or_redirect()`
-- **BaseStyledForm** (`core/forms.py`): Aplica clases Tailwind automáticamente a widgets de formulario
-- **Templatetags críticos**:
-  - `action_tags.py`: `{% render_actions obj %}` genera botones Ver/Editar/Eliminar. **Depende estrictamente de la convención de URLs `[model_name]_[action]`**.
-  - `nav_tags.py`, `ui_tags.py`, `url_tags.py`: Helpers de UI
-- **Management commands**: `import_devices` (CSV masivo), `load_entra_users`, `seed_cc`
+### Domain Apps
 
-### 2. `dispositivos` — Inventario y Trazabilidad
-- **Modelo base**: `Dispositivo` con identificador automático `PREFIX-SIGLA-NNNN` (ej: `JMIE-NB-0001`)
-- **Herencia polimórfica**: Multi-table inheritance Django
-  - `Notebook`, `Smartphone`, `Impresora`, `Servidor`, `EquipoRed`, `Monitor`
-- **QuerySet custom**: `DispositivoQuerySet` con `.activos()`, `.con_detalles()`
-- **Trazabilidad**: `HistorialAsignacion`, `BitacoraMantenimiento`, `EntregaAccesorio`
-- **Factory pattern**: `DispositivoFactory` resuelve formulario técnico según tipo
-- **Service layer**: `TrazabilidadService` encapsula asignar, reasignar, devolver, entregar_accesorio con `transaction.atomic()`
+| App | Responsibility | Key Models |
+|-----|---------------|------------|
+| `core` | Shared catalogs, HTMX utilities, template tags, management commands | `TipoDispositivo`, `EstadoDispositivo`, `Fabricante`, `Modelo`, `Departamento`, `CentroCosto` |
+| `colaboradores` | Personnel & authentication | `Colaborador` (custom user) |
+| `dispositivos` | Polymorphic IT asset inventory, assignments, maintenance | `Dispositivo`, `Notebook`, `Smartphone`, `BitacoraMantenimiento`, `HistorialAsignacion` |
+| `actas` | Legal acts, PDF generation, digital signature | `Acta`, `FolioCounter` |
+| `dashboard` | Analytics, exports, drill-downs | Filters & aggregation services |
+| `suministros` | Supplies/consumables tracking | Supply-specific models |
 
-### 3. `colaboradores` — Identidad y Acceso
-- `Colaborador(AbstractUser)`: Extiende usuario Django con `rut`, `cargo`, `departamento`, `centro_costo`, `azure_id`
-- **Soft delete**: `delete()` desactiva (`esta_activo = False`, `is_active = False`) sin borrar fila
-- `AUTH_USER_MODEL = 'colaboradores.Colaborador'`
+### Service Layer
 
-### 4. `actas` — Documentos Legales
-- `Acta` con folio correlativo `ACT-{YYYY}-{NNNN}`
-- **Blindaje de firma**: Si `firmada=True`, `save()` lanza `ValidationError`
-- **Firma digital**: `ActaService.firmar_acta()` con pyHanko
-- **Generación PDF**: xhtml2pdf desde templates HTML
-- Tipos: `ENTREGA`, `DEVOLUCION`, `DESTRUCCIÓN`
+Complex business logic lives in `*/services.py`, not in views:
 
-### 5. `dashboard` — Inteligencia Operativa
-- Métricas, gráficos Chart.js con drill-down a listados filtrados
-- Exportación Excel/CSV
-- Reutiliza `AnaliticaInventarioFilter` de `dashboard/filters.py`
+- **`dispositivos/services.py`**
+  - `DispositivoFactory` — Resolves the correct form class (e.g., `NotebookForm`) from `tipo_id` or instance.
+  - `TrazabilidadService` — Encapsulates atomic operations for `asignar`, `reasignar`, `devolver`. All use `@transaction.atomic`.
 
-### 6. `suministros` — Gestión de Insumos
-- `CategoriaSuministro`, `Suministro`
-- Campos de compatibilidad con tipos de dispositivo
+- **`actas/services.py`**
+  - `ActaService` — Creates acts with folio numbering, links assignments.
+  - `ActaPDFService` — Renders act HTML to PDF and applies digital signatures using `pyHanko`.
+
+- **`dashboard/services.py`**
+  - Aggregation logic for metrics and chart data.
+
+### HTMX Architecture
+
+The UI is server-rendered with HTMX for partial updates:
+
+- **Helpers**: `core/htmx.py` provides `htmx_trigger_response`, `htmx_render_or_redirect`, `htmx_success_or_redirect`, `htmx_redirect_or_redirect`.
+- **Partials**: HTML fragments live in `*/templates/*/partials/` (tables, forms, side-overs, modals).
+- **Response Pattern**: On successful mutations, prefer `204 No Content` + `HX-Trigger` to refresh tables or show toasts.
+- **Error Handling**: When `ProtectedError` or `IntegrityError` occurs on delete/toggle, return the modal HTML with the error + `HX-Trigger` for a toast.
+
+### Template Tags
+
+- **`core/templatetags/action_tags.py`** — `{% render_actions obj 'inventory' %}` dynamically generates View/Edit/Delete/Toggle buttons by resolving URLs using the convention `app:modelname_action`.
+- **`core/templatetags/ui_tags.py`** — UI helpers.
+- **`actas/templatetags/acta_tags.py`** — Acta-specific formatting.
 
 ## Data Flow
 
-### Flujo HTMX (Interacción UI)
+### Request Flow (Typical List View)
+
 ```
-Usuario → Click/Búsqueda → HTMX request → Django View
-    → Service Layer (si ≥2 modelos o transacción)
-    → ORM → SQLite
-    → Responde HTML parcial (no JSON)
-    → HTMX swapea DOM objetivo (#modal-container, #side-over-container, tabla)
+Browser (HTMX request)
+  → Nginx (ops/deploy/)
+  → Gunicorn → Django WSGI
+    → Middleware (django_htmx.HtmxMiddleware, CSRF, Auth)
+    → URL Router (inventario_jmie/urls.py → app/urls.py)
+    → View (FBV with @login_required + @permission_required)
+      → Filter (django-filter FilterSet)
+      → QuerySet (.con_detalles() with select_related/prefetch_related)
+      → Pagination (custom paginator)
+    → Template Renderer
+      → If HTMX: render partial template (partials/_table.html)
+      → If full page: render full template (dispositivo_list.html)
+    → HttpResponse (or 204 + HX-Trigger for mutations)
 ```
 
-### Flujo de Trazabilidad (Asignación/Reasignación/Devolución)
+### Assignment Flow
+
 ```
-Vista de Dispositivo → TrazabilidadService
-    → transaction.atomic()
-        1. Crea/actualiza HistorialAsignacion
-        2. Actualiza Dispositivo.estado + propietario_actual
-    → (bloque separado) ActaService.crear_acta()
-        → Genera Acta con folio correlativo
-    → Responde con HX-Trigger + partial de éxito
+User submits AsignacionForm (HTMX)
+  → dispositivo_asignar view
+    → TrazabilidadService.asignar(dispositivo, form, creado_por)
+      → @transaction.atomic
+      → Creates HistorialAsignacion
+      → Updates Dispositivo.estado → "Asignado"
+      → Updates Dispositivo.propietario_actual
+      → If generar_acta: calls ActaService.crear_acta(...)
+        → Generates Acta with folio
+        → Generates signed PDF via ActaPDFService
+    → Returns 204 + HX-Trigger {"showToast": "Asignado correctamente"}
 ```
 
-### Flujo de Creación de Dispositivo
-```
-dispositivo_create view → DispositivoFactory.create_form_instance()
-    → Resuelve form según tipo (NotebookForm, SmartphoneForm, etc.)
-    → transaction.atomic(): guarda dispositivo base + subclase
-    → (bloque separado) Si generar_acta + propietario: ActaService.crear_acta()
-    → Renderiza detalle con modal de acta o redirect
-```
+### Auto-ID Generation
+
+On `Dispositivo.save()`:
+1. Reads `config.CLI_PREFIX_ID` (django-constance, default `JMIE`).
+2. Reads `modelo.tipo_dispositivo.sigla` (e.g., `NTBK`).
+3. Finds the last device with that prefix.
+4. Generates next sequential ID: `JMIE-NTBK-00001`.
 
 ## External Integrations
 
-| Servicio | Uso | Ubicación |
-|----------|-----|-----------|
-| SQLite | Base de datos principal | Configurable vía `DB_PATH` o `DATABASE_URL` |
-| Azure AD (Entra ID) | Carga de usuarios | `core/management/commands/load_entra_users.py` |
-| pyHanko | Firma digital de PDFs | `actas/services.py` |
-| xhtml2pdf / reportlab | Generación de PDFs | `actas/services.py` |
-| Nginx | Reverse proxy + static files | `ops/docker/nginx.conf`, `ops/deploy/nginx_inventario.conf` |
+| Service | Purpose | Location |
+|---------|---------|----------|
+| SQLite | Primary database | `DB_PATH` env or `db.sqlite3` |
+| Nginx | Reverse proxy & static files | `ops/deploy/nginx_inventario.conf` |
+| Gunicorn | WSGI HTTP server | `ops/deploy/gunicorn_inventario.service` |
+| Docker | Containerization | `Dockerfile`, `docker-compose.yml` |
+
+No external APIs (REST/GraphQL) are consumed at runtime. The app is self-contained.
 
 ## Configuration
 
 ### Environment Variables (`.env`)
-```bash
-# CRÍTICO: settings.py lee SECRET_KEY (no DJANGO_SECRET_KEY)
-SECRET_KEY=cambia-por-una-clave-segura-de-al-menos-50-caracteres
-DEBUG=True
-ALLOWED_HOSTS=localhost,127.0.0.1
-DATABASE_URL=sqlite:///db.sqlite3
-# DB_PATH=/data/db.sqlite3   # Opcional para Docker
-```
 
-### Configuración Dinámica
-- `django-constance` con backend DB para configuraciones editables en runtime
-- `CLI_PREFIX_ID`: prefijo para identificadores internos de equipos (default: `JMIE`)
+| Variable | Required | Purpose |
+|----------|----------|---------|
+| `SECRET_KEY` | Yes | Django secret key (fail-fast if missing/placeholder) |
+| `DEBUG` | Yes | `True`/`False` |
+| `ALLOWED_HOSTS` | Yes | Comma-separated hosts |
+| `DB_PATH` | No | Custom SQLite path (default: `db.sqlite3` in root) |
+| `DATABASE_URL` | No | Alternative DB connection string |
 
-### Logging
-- Loggers por app escriben a `inventario.log` en raíz del proyecto
-- Apps con logger: `dispositivos`, `actas`, `colaboradores`, `core`, `suministros`
+**Critical**: `settings.py` reads `SECRET_KEY` from `os.getenv('SECRET_KEY')`, NOT `DJANGO_SECRET_KEY`. The `.env.example` incorrectly names it `DJANGO_SECRET_KEY`; you must define `SECRET_KEY=` in `.env`.
+
+### Django Settings
+
+- `AUTH_USER_MODEL = 'colaboradores.Colaborador'`
+- `django_htmx` middleware active for HTMX detection.
+- `django-cotton` for reusable UI components.
+- `django-constance` with database backend for `CLI_PREFIX_ID`.
+- `USE_X_FORWARDED_HOST = True` and `SECURE_PROXY_SSL_HEADER` for Docker/Nginx.
+
+### Fail-Fast Security Checks
+
+`settings.py` raises `ImproperlyConfigured` on startup if:
+- `SECRET_KEY` is missing, empty, or starts with `django-insecure-` / `change-me` / `your-secret-key`.
+- `ALLOWED_HOSTS` is empty.
+- `ALLOWED_HOSTS` contains `*` when `DEBUG=False`.
 
 ## Build & Deploy
 
-### Desarrollo local (Windows)
+### Local Development (Windows)
+
 ```powershell
 python -m venv venv && .\venv\Scripts\Activate.ps1
 pip install -r requirements.txt
-cp .env.example .env
-# Editar .env: SECRET_KEY=...
-python manage.py makemigrations && python manage.py migrate
+cp .env.example .env          # Edit SECRET_KEY!
+python manage.py makemigrations
+python manage.py migrate
 python manage.py runserver
 ```
 
-### Tests
+### Testing
+
 ```bash
-pytest                              # Todo con coverage
-pytest -m "not e2e"                # Excluye E2E
+pytest                          # All tests with coverage
+pytest -m "not e2e"            # Exclude E2E
 pytest -m e2e --headed --browser chromium
 ```
 
-### Docker (Piloto UAT)
+### Docker
+
 ```bash
-docker compose up -d --build       # Primera vez
+# First time
+docker compose up -d --build
+
+# Migrations
 docker compose exec web python manage.py migrate
 ```
-- Contenedor corre con usuario `django` (UID 999)
-- Volumen `./data` para persistencia SQLite
-- Healthcheck en `/login/`
 
-### Deploy tradicional
-- Ver `ops/deploy/README_DEPLOY.md`
-- Servicio systemd Gunicorn + Nginx
+### Production Deploy
 
-## Decisiones Arquitectónicas Clave
+See `ops/deploy/README_DEPLOY.md`. Stack:
+- Docker Compose (web + nginx containers)
+- Gunicorn with `gunicorn_inventario.service`
+- Nginx with `nginx_inventario.conf`
+- SQLite volume mounted at `data/`
+- Container runs as `django` user (UID 999); `data/` must be writable by that UID.
 
-1. **Herencia manual (multi-table)**: Se prefirió sobre CTI o JSONField para mantener integridad referencial y queries eficientes con `select_related`.
-2. **Service Layer obligatorio**: Cualquier lógica que toque ≥2 modelos o requiera atomicidad va en `services.py`.
-3. **Transacciones separadas**: Operación principal y generación de acta usan `transaction.atomic()` independientes para evitar revertir el registro principal si falla el acta.
-4. **HTMX sobre JSON**: Todas las respuestas de UI son HTML parciales (HATEOAS). JSON solo para APIs externas.
-5. **Soft delete de usuarios**: Protege el historial de asignaciones y actas legales.
+### Management Commands
+
+| Command | Purpose |
+|---------|---------|
+| `python manage.py import_devices ruta.csv --dry-run` | Bulk device import |
+| `python manage.py seed_db` | Seed catalogs & test data |
+| `python manage.py setup_groups` | Create Django auth groups |
+| `python manage.py reset_db` | Reset database (dev only) |
+| `python manage.py import_catalogos` | Import catalogs from CSV |
+| `python manage.py load_entra_users` | Sync users from Entra ID |
+
+## Key Architectural Decisions
+
+1. **SSR over SPA**: HTMX + Alpine.js keeps the frontend simple and tightly coupled to Django templates.
+2. **FBV over CBV**: Function-Based Views are preferred for business logic; CBVs are only used for repetitive catalog CRUD via `core/catalog_views.py`.
+3. **Service Layer**: Multi-model or atomic operations are centralized in `services.py` with explicit `@transaction.atomic`.
+4. **Soft Delete**: `Colaborador.delete()` sets `esta_activo=False` and `is_active=False` to preserve historical records.
+5. **Polymorphic Inventory**: `Dispositivo` is the base table; `Notebook`, `Smartphone`, etc. use multi-table inheritance.
+6. **URL Convention Enforcement**: The `[modelname]_[action]` URL naming pattern is critical because `render_actions` depends on it for automatic button generation.

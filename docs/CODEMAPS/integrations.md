@@ -1,14 +1,14 @@
 # Integrations Codemap
 
-**Last Updated:** 2026-04-24
-**Entry Points:** `actas/services.py`, `dispositivos/views.py`, `core/management/commands/import_devices.py`
+**Last Updated:** 2026-04-29
+**Entry Points:** `actas/services.py`, `actas/playwright_browser.py`, `dispositivos/views.py`, `core/management/commands/import_devices.py`
 
 ## External Services
 
 | Service | Purpose | Library | Location |
 |---------|---------|---------|----------|
-| **PDF Generation** | Generación de actas legales en PDF | xhtml2pdf, ReportLab | `actas/services.py` |
-| **Digital Signature** | Firma digital de PDFs | pyHanko | `actas/services.py` |
+| **PDF Generation** | Generación de actas legales en PDF | Playwright/Chromium | `actas/services.py`, `actas/playwright_browser.py` |
+| **Digital Signature** | Firma digital de PDFs | pyHanko, pypdf | `actas/services.py` |
 | **QR Code** | Códigos QR para equipos | qrcode | `dispositivos/views.py` (`dispositivo_qr`) |
 | **Image Processing** | Thumbnails y procesamiento de fotos | django-imagekit, Pillow | `dispositivos/models.py` (`foto_equipo`) |
 | **MCP Server** | Google SecOps integration (opcional) | django-mcp-server | `settings.py` |
@@ -30,18 +30,28 @@ ActaService.crear_acta()
     └── 4. Vincular EntregaAccesorio (si aplica)
            └── accesorio.acta = acta
 
-ActaService.generar_pdf(acta)
+ActaPDFService.generar_pdf(acta)
     │
     ├── 1. Obtener datos del acta + relaciones
     │
     ├── 2. Renderizar template HTML
-    │      └── render_to_string('actas/pdf/acta_template.html')
+    │      └── render_to_string('actas/playwright/pdf_wrapper.html')
     │
-    ├── 3. Convertir HTML → PDF
-    │      └── xhtml2pdf.pisa.CreatePDF()
+    ├── 3. Convertir HTML → PDF (Playwright/Chromium)
+    │      └── playwright_browser.get_browser()
+    │          └── page.set_content(html)
+    │              └── page.pdf(format='A4')
     │
     └── 4. Retornar bytes del PDF
 ```
+
+### Playwright Browser Pool
+
+`actas/playwright_browser.py` manages a singleton pool of headless Chromium browsers:
+
+- `get_browser()` — Returns a shared browser instance (creates one if needed).
+- `shutdown_pool()` — Gracefully closes the browser pool.
+- Thread-isolated: Playwright calls run in a separate thread to avoid Django's `SyncOnlyOperation`.
 
 ## QR Code Generation
 
@@ -105,9 +115,9 @@ LOGGING = {
 
 | Package | Version | Purpose |
 |---------|---------|---------|
-| xhtml2pdf | 0.2.17 | HTML → PDF conversion |
-| reportlab | 4.4.10 | PDF generation library |
+| playwright | 1.58.0 | HTML → PDF via headless Chromium |
 | pyHanko | 0.33.0 | Digital PDF signing |
+| pypdf | 6.7.2 | PDF manipulation & signature verification |
 | qrcode | 8.2 | QR code generation |
 | pillow | 12.1.1 | Image processing |
 | django-imagekit | 6.1.0 | Image thumbnails |

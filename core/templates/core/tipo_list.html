@@ -26,7 +26,7 @@
 {% endblock %}
 
 {% block table_body %}
-    {% for tipo in tipos %}
+    {% for tipo in page_obj %}
     <tr class="hover:bg-white/[0.03] transition-colors group">
         <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-on-background">
             {{ tipo.nombre }}

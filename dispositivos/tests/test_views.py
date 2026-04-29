@@ -90,6 +90,45 @@ class TestDispositivoViews:
         assert response.status_code == 200
         assert "UNIQUE-SN-123" in response.content.decode('utf-8')
 
+    def test_dispositivo_list_returns_page_obj(self, client):
+        user = ColaboradorFactory(username='adminpage', is_staff=True, is_superuser=True)
+        user.set_password('password')
+        user.save()
+        client.login(username='adminpage', password='password')
+        for i in range(25):
+            DispositivoFactory(identificador_interno=f"JMIE-NOT-{i:05d}")
+        url = reverse('dispositivos:dispositivo_list')
+        response = client.get(url)
+        assert response.status_code == 200
+        assert 'page_obj' in response.context
+        assert response.context['page_obj'].paginator.per_page == 20
+
+    def test_dispositivo_list_invalid_page_fallback(self, client):
+        user = ColaboradorFactory(username='adminfallback', is_staff=True, is_superuser=True)
+        user.set_password('password')
+        user.save()
+        client.login(username='adminfallback', password='password')
+        DispositivoFactory()
+        url = reverse('dispositivos:dispositivo_list')
+        response = client.get(url, {'page': 'xyz'})
+        assert response.status_code == 200
+        assert response.context['page_obj'].number == 1
+
+    def test_dispositivo_list_htmx_pagination(self, client):
+        user = ColaboradorFactory(username='adminhtmx', is_staff=True, is_superuser=True)
+        user.set_password('password')
+        user.save()
+        client.login(username='adminhtmx', password='password')
+        for i in range(25):
+            DispositivoFactory(identificador_interno=f"JMIE-NOT-{i:05d}")
+        url = reverse('dispositivos:dispositivo_list')
+        response = client.get(url, {'page': '2'}, HTTP_HX_REQUEST='true')
+        assert response.status_code == 200
+        assert 'dispositivos/partials/dispositivo_list_table.html' in [t.name for t in response.templates]
+        assert response.context['page_obj'].number == 2
+        html = response.content.decode('utf-8')
+        assert 'JMIE-NOT-00020' in html
+
 
 @pytest.mark.django_db
 class TestTrazabilidadViews:

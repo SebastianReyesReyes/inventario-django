@@ -19,6 +19,7 @@ from .forms import (
 )
 from .services import DispositivoFactory, TrazabilidadService
 from core.htmx import htmx_render_or_redirect, htmx_redirect_or_redirect, is_htmx
+from core.pagination import paginate_queryset
 
 @login_required
 @permission_required('dispositivos.add_dispositivo', raise_exception=True)
@@ -152,8 +153,10 @@ def dispositivo_list(request):
         sort_field = f'-{sort_field}'
     dispositivos = dispositivos.order_by(sort_field)
         
+    page_obj = paginate_queryset(request, dispositivos, per_page=20)
     context = {
-        'dispositivos': dispositivos,
+        'page_obj': page_obj,
+        'dispositivos': page_obj,
         'filter': filterset,
         'tipos': TipoDispositivo.objects.all(),
         'estados': EstadoDispositivo.objects.all(),
@@ -538,17 +541,12 @@ def dispositivo_delete(request, pk):
                 "asignaciones, actas o mantenimientos asociados."
             )
             if is_htmx(request):
-                # Devolvemos el modal actualizado con el mensaje de error
-                # y disparámos el Toast vía HX-Trigger.
-                response = render(
-                    request,
-                    'dispositivos/partials/dispositivo_confirm_delete.html',
-                    {'dispositivo': dispositivo, 'error': error_msg},
+                from core.htmx import htmx_trigger_response
+                # Devolvemos 204 para no alterar el DOM y disparamos el toast de error
+                return htmx_trigger_response(
+                    trigger={'show-notification': {'message': error_msg, 'type': 'error'}},
+                    status=204
                 )
-                response['HX-Trigger'] = json.dumps(
-                    {'show-notification': {'value': error_msg}}
-                )
-                return response
 
             messages.error(request, error_msg)
             return redirect('dispositivos:dispositivo_list')

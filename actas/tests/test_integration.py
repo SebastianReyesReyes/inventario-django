@@ -74,6 +74,7 @@ class TestActaCreationWithAccessories:
 
 @pytest.mark.integration
 @pytest.mark.django_db
+@pytest.mark.slow
 class TestActaPDFGeneration:
     """Generación de PDF para distintos tipos de acta."""
 

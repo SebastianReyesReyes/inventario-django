@@ -1,0 +1,227 @@
+{% load acta_tags %}
+{% load static %}
+
+{# acta_preview_content.html — Renderiza el mismo contenido que el PDF pero con CSS responsive para el side-over #}
+<style>
+    .preview-document {
+        font-family: Arial, sans-serif;
+        font-size: 10pt;
+        line-height: 1.4;
+        color: #222;
+        position: relative;
+        background: white;
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        overflow: hidden;
+    }
+
+    /* === Modo PDF: limpio, sin sombra, footer al fondo === */
+    .preview-document.pdf-mode {
+        border-radius: 0;
+        box-shadow: none;
+        padding: 0;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+    }
+    .preview-document.pdf-mode .footer-legal {
+        margin-top: auto;
+    }
+
+    .preview-document .watermark {
+        position: absolute;
+        top: 40%;
+        left: 50%;
+        transform: translate(-50%, -50%) rotate(-20deg);
+        font-size: 72pt;
+        font-weight: 900;
+        color: #e5e7eb;
+        text-transform: uppercase;
+        letter-spacing: 8px;
+        pointer-events: none;
+        z-index: 1;
+        opacity: 0.7;
+        user-select: none;
+    }
+
+    /* === Header: 3 columnas — logo | título centrado | folio === */
+    .preview-document .header {
+        display: grid;
+        grid-template-columns: 130px 1fr 130px;
+        align-items: flex-start;
+        gap: 16px;
+        border-bottom: 2px solid #003594;
+        padding-bottom: 12px;
+        margin-bottom: 16px;
+        position: relative;
+        z-index: 2;
+    }
+
+    .preview-document .logo {
+        font-size: 18pt;
+        font-weight: bold;
+        color: #003594;
+        max-width: 130px;
+    }
+
+    .preview-document .logo img {
+        max-width: 100%;
+        height: auto;
+    }
+
+    .preview-document .acta-title {
+        text-align: center;
+        align-self: center;
+    }
+
+    .preview-document .acta-title h1 {
+        font-size: 14pt;
+        margin: 0;
+        color: #003594;
+        text-transform: uppercase;
+    }
+
+    .preview-document .acta-meta {
+        text-align: right;
+    }
+
+    .preview-document .acta-meta p {
+        margin: 2pt 0;
+        font-weight: bold;
+        font-size: 9pt;
+    }
+
+    .preview-document .clear {
+        clear: both;
+    }
+
+    .preview-document .section-title {
+        background-color: #f1f3f8;
+        padding: 6pt 10pt;
+        font-weight: bold;
+        text-transform: uppercase;
+        font-size: 8.5pt;
+        margin: 14pt 0 6pt 0;
+        border-left: 3pt solid #ED8B00;
+    }
+
+    .preview-document table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 10pt;
+        font-size: 8pt;
+    }
+
+    .preview-document table th {
+        background-color: #003594;
+        color: white;
+        font-size: 7.5pt;
+        padding: 6pt;
+        text-transform: uppercase;
+        text-align: left;
+        font-weight: bold;
+    }
+
+    .preview-document table td {
+        border: 0.5pt solid #ddd;
+        padding: 5pt;
+        font-size: 8pt;
+    }
+
+    .preview-document .clauses {
+        font-size: 8.5pt;
+        text-align: justify;
+        margin-top: 12pt;
+        position: relative;
+        z-index: 2;
+    }
+
+    .preview-document .clauses h3 {
+        font-size: 9pt;
+        margin-bottom: 4pt;
+        color: #003594;
+        border-bottom: 0.5pt solid #eee;
+    }
+
+    .preview-document .clauses ol {
+        margin-top: 3pt;
+        padding-left: 14pt;
+    }
+
+    .preview-document .clauses li {
+        margin-bottom: 3pt;
+    }
+
+    .preview-document .signatures {
+        margin-top: 24pt;
+        display: flex;
+        justify-content: space-between;
+        gap: 16pt;
+        flex-wrap: wrap;
+        position: relative;
+        z-index: 2;
+    }
+
+    .preview-document .signature-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 16pt;
+        flex-wrap: wrap;
+        width: 100%;
+    }
+
+    .preview-document .signature-box {
+        flex: 1;
+        min-width: 120pt;
+        text-align: center;
+    }
+
+    .preview-document .signature-line {
+        border-top: 0.5pt solid #333;
+        margin-top: 28pt;
+        padding-top: 4pt;
+        font-size: 8pt;
+    }
+
+    .preview-document .footer-legal {
+        margin-top: 16pt;
+        border-top: 0.5pt solid #ddd;
+        padding-top: 8pt;
+        font-size: 7pt;
+        color: #888;
+        text-align: center;
+        font-style: italic;
+        position: relative;
+        z-index: 2;
+    }
+
+    .preview-document .observation-box {
+        font-size: 8pt;
+        min-height: 30pt;
+        padding: 5pt;
+        border: 0.5pt solid #ccc;
+        background-color: #fafafa;
+    }
+
+    .preview-document .folio-badge {
+        display: inline-block;
+        background: #003594;
+        color: white;
+        padding: 2pt 8pt;
+        border-radius: 4pt;
+        font-size: 8pt;
+        font-weight: bold;
+    }
+
+    .preview-document .folio-pendiente {
+        background: #f59e0b !important;
+    }
+</style>
+
+<div class="preview-document {% if pdf_mode %}pdf-mode{% endif %}">
+    {% if not pdf_mode %}
+    <div class="watermark">PRELIMINAR</div>
+    {% endif %}
+    {% include "actas/partials/acta_pdf_body.html" %}
+</div>

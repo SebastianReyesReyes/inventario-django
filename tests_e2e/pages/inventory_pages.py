@@ -108,6 +108,7 @@ class ActasPage:
         self.table = page.locator('table')
         self.generate_button = page.locator('a:has-text("Generar Acta"), button:has-text("Generar Acta")')
         self.modal = page.locator('#modal-container, [role="dialog"]')
+        self.sideover = page.locator('text=Vista Previa del Acta').locator('xpath=ancestor::div[contains(@class, "fixed")]')
 
     def navigate(self, base_url):
         self.page.goto(f"{base_url}/actas/")
@@ -128,8 +129,32 @@ class ActasPage:
         checkbox = self.page.locator('input[name="asignaciones"]').first
         checkbox.check()
 
+    def click_preview(self):
+        """Hace clic en el botón Previsualizar Acta."""
+        self.page.click('button:has-text("Previsualizar Acta")')
+
+    def click_confirm(self):
+        """Hace clic en Confirmar y Generar Acta dentro del side-over."""
+        self.page.click('button:has-text("Confirmar y Generar Acta")')
+
+    def click_volver_a_editar(self):
+        """Hace clic en Volver a Editar dentro del side-over."""
+        self.page.click('button:has-text("Volver a Editar")')
+
+    def expect_sideover_visible(self):
+        expect(self.page.locator('text=Vista Previa del Acta')).to_be_visible()
+
+    def expect_sideover_hidden(self):
+        expect(self.page.locator('text=Vista Previa del Acta')).not_to_be_visible()
+
+    def expect_preview_contains(self, text):
+        expect(self.page.locator('.preview-document')).to_contain_text(text)
+
     def submit(self):
-        self.page.click('button:has-text("Emitir Acta")')
+        """Flujo completo: preview + confirmar (para compatibilidad con tests antiguos)."""
+        self.click_preview()
+        self.expect_sideover_visible()
+        self.click_confirm()
 
     def expect_acta_in_list(self, text):
         expect(self.page.locator('#search-results, table')).to_contain_text(text)

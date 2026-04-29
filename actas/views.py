@@ -1,14 +1,20 @@
+import logging
+
 from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse
+from django.conf import settings
 from django.contrib.auth.decorators import login_required, permission_required
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.template.loader import render_to_string
+from django.utils.html import escape
 
 from .models import Acta
 from .forms import ActaCrearForm
-from .services import ActaService
+from .services import ActaService, ActaPDFService
 from core.htmx import htmx_trigger_response
+
+logger = logging.getLogger('actas')
 
 
 def _render_acta_error(message):
@@ -70,6 +76,90 @@ def acta_list(request):
 
 @login_required
 @permission_required('actas.add_acta', raise_exception=True)
+def acta_preview(request):
+    """Genera la vista previa HTML de un acta sin persistir en BD.
+    Soporta POST (desde HTMX) y GET (para abrir en nueva pestaña)."""
+    if request.method == 'POST':
+        data = request.POST
+    elif request.method == 'GET':
+        data = request.GET
+    else:
+        return HttpResponse("Método no permitido", status=405)
+
+    form = ActaCrearForm(data)
+    asignacion_ids = data.getlist('asignaciones')
+    accesorio_ids = data.getlist('accesorios')
+
+    if not form.is_valid():
+        error_html = _render_acta_error("Corrija los errores del formulario antes de previsualizar.")
+        return HttpResponse(error_html)
+
+    try:
+        preview_html = ActaService.generar_preview_html(
+            colaborador=form.cleaned_data['colaborador'],
+            tipo_acta=form.cleaned_data['tipo_acta'],
+            asignacion_ids=asignacion_ids,
+            creado_por=request.user,
+            observaciones=form.cleaned_data.get('observaciones'),
+            accesorio_ids=accesorio_ids,
+            ministro_de_fe=form.cleaned_data.get('ministro_de_fe'),
+        )
+
+        # GET → renderizar página completa en nueva pestaña (para comparar con PDF)
+        if request.method == 'GET':
+            return render(request, 'actas/partials/acta_preview_fullpage.html', {
+                'preview_html': preview_html,
+                'acta': form.cleaned_data['colaborador'],  # fallback para title
+            })
+
+        return render(request, 'actas/partials/acta_preview_sideover.html', {
+            'preview_html': preview_html,
+            'form_data': data,
+        })
+
+    except ValidationError as e:
+        error_html = _render_acta_error(str(e))
+        return HttpResponse(error_html)
+    except Exception:
+        logger.exception("Error en preview de acta")
+        error_html = _render_acta_error('Error interno al generar la vista previa.')
+        return HttpResponse(error_html)
+
+
+@login_required
+@permission_required('actas.add_acta', raise_exception=True)
+def acta_preview_pdf(request):
+    """Genera un PDF de preview (sin persistir) usando el engine configurado."""
+    form = ActaCrearForm(request.GET)
+    asignacion_ids = request.GET.getlist('asignaciones')
+    accesorio_ids = request.GET.getlist('accesorios')
+
+    if not form.is_valid():
+        return HttpResponse("Datos inválidos para generar PDF de preview", status=400)
+
+    try:
+        pdf_bytes = ActaPDFService.generar_preview_pdf(
+            colaborador=form.cleaned_data['colaborador'],
+            tipo_acta=form.cleaned_data['tipo_acta'],
+            asignacion_ids=asignacion_ids,
+            creado_por=request.user,
+            observaciones=form.cleaned_data.get('observaciones'),
+            accesorio_ids=accesorio_ids,
+            ministro_de_fe=form.cleaned_data.get('ministro_de_fe'),
+        )
+        response = HttpResponse(pdf_bytes, content_type='application/pdf')
+        response['Content-Disposition'] = 'inline; filename="preview.pdf"'
+        return response
+    except ValidationError as e:
+        logger.warning("Error de validación en preview PDF: %s", e)
+        return HttpResponse("Datos inválidos para generar PDF de preview", status=400)
+    except Exception:
+        logger.exception("Error generando preview PDF")
+        return HttpResponse("Error interno al generar el PDF. Intente nuevamente.", status=500)
+
+
+@login_required
+@permission_required('actas.add_acta', raise_exception=True)
 def acta_create(request):
     """Crea una nueva acta vinculando asignaciones seleccionadas usando ActaService."""
     if request.method == 'POST':
@@ -94,10 +184,11 @@ def acta_create(request):
                 return htmx_trigger_response('actaCreated')
                 
             except ValidationError as e:
-                error_html = _render_acta_error(str(e.message if hasattr(e, 'message') else e))
+                error_html = _render_acta_error(str(e))
                 return HttpResponse(error_html)
-            except Exception as e:
-                error_html = _render_acta_error(f'Error: {str(e)}')
+            except Exception:
+                logger.exception("Error creando acta")
+                error_html = _render_acta_error('Error interno al crear el acta.')
                 return HttpResponse(error_html)
 
     else:
@@ -119,16 +210,17 @@ def acta_detail(request, pk):
 @login_required
 @permission_required('actas.view_acta', raise_exception=True)
 def acta_pdf(request, pk):
-    """Genera el PDF legal corporativo usando ActaService."""
+    """Genera el PDF legal corporativo usando ActaPDFService (Playwright/Chromium)."""
     try:
         acta, _ = ActaService.obtener_acta_con_relaciones(pk)
-        pdf_content = ActaService.generar_pdf(acta)
-        
+        pdf_content = ActaPDFService.generar_pdf(acta)
+
         response = HttpResponse(pdf_content, content_type='application/pdf')
         response['Content-Disposition'] = f'inline; filename="Acta_{acta.folio}.pdf"'
         return response
-    except Exception as e:
-        return HttpResponse(f'Error al generar PDF: {str(e)}', status=500)
+    except Exception:
+        logger.exception("Error generando PDF para acta %s", pk)
+        return HttpResponse('Error interno al generar el PDF. Intente nuevamente.', status=500)
 
 @login_required
 @permission_required('actas.change_acta', raise_exception=True)
@@ -196,6 +288,8 @@ def ministros_por_colaborador(request, colaborador_pk):
     for m in ministros:
         # Marcamos como seleccionado si es el único
         selected = 'selected' if ministros.count() == 1 else ''
-        options_html += f'<option value="{m.pk}" {selected}>{m.nombre_completo} ({m.cargo or "Sin Cargo"})</option>'
-    
+        nombre = escape(m.nombre_completo)
+        cargo = escape(m.cargo) if m.cargo else "Sin Cargo"
+        options_html += f'<option value="{m.pk}" {selected}>{nombre} ({cargo})</option>'
+
     return HttpResponse(options_html)

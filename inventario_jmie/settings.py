@@ -246,3 +246,15 @@ LOGGING = {
         },
     },
 }
+
+# ─────────────────────────────────────────────────────
+# Playwright PDF Configuration
+# ─────────────────────────────────────────────────────
+# Playwright: timeout máximo para generación de PDF (ms)
+PLAYWRIGHT_BROWSER_TIMEOUT = int(os.getenv('PLAYWRIGHT_BROWSER_TIMEOUT', '15000'))
+
+# Playwright: segundos de inactividad antes de cerrar una instancia de Chromium
+PLAYWRIGHT_BROWSER_TTL = int(os.getenv('PLAYWRIGHT_BROWSER_TTL', '120'))
+
+# Playwright: máximo de instancias de Chromium concurrentes en el pool
+PLAYWRIGHT_POOL_MAX_SIZE = int(os.getenv('PLAYWRIGHT_POOL_MAX_SIZE', '2'))

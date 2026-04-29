@@ -255,3 +255,101 @@ class TestActaViews:
         assert response.context['page_obj'].paginator.per_page == 10
         html = response.content.decode('utf-8')
         assert '<c-paginator' in html or 'Página 1 de' in html
+
+    def test_acta_preview_post_success_returns_sideover(self, client):
+        """Verificar que preview retorna side-over HTML con el acta renderizado"""
+        user = ColaboradorFactory(is_staff=True, is_superuser=True)
+        user.set_password('password')
+        user.save()
+        client.login(username=user.username, password='password')
+
+        colaborador = ColaboradorFactory()
+        asignacion = HistorialAsignacionFactory(colaborador=colaborador, acta=None)
+
+        url = reverse('actas:acta_preview')
+        response = client.post(
+            url,
+            {
+                'colaborador': colaborador.pk,
+                'tipo_acta': 'ENTREGA',
+                'observaciones': 'Preview test',
+                'asignaciones': [asignacion.pk],
+            },
+            HTTP_HX_REQUEST='true'
+        )
+
+        assert response.status_code == 200
+        html = response.content.decode('utf-8')
+        # Debe contener el side-over
+        assert 'Vista Previa del Acta' in html
+        assert 'Documento Preliminar' in html
+        # Debe contener datos del colaborador y equipo
+        assert colaborador.nombre_completo in html
+        assert str(asignacion.dispositivo.numero_serie) in html
+        # No debe crear acta en BD
+        from actas.models import Acta
+        assert Acta.objects.count() == 0
+
+    def test_acta_preview_post_sin_asignaciones_returns_oob_error(self, client):
+        """Verificar que preview sin asignaciones retorna error OOB"""
+        user = ColaboradorFactory(is_staff=True, is_superuser=True)
+        user.set_password('password')
+        user.save()
+        client.login(username=user.username, password='password')
+
+        colaborador = ColaboradorFactory()
+
+        url = reverse('actas:acta_preview')
+        response = client.post(
+            url,
+            {
+                'colaborador': colaborador.pk,
+                'tipo_acta': 'ENTREGA',
+                'observaciones': 'Sin equipos',
+            },
+            HTTP_HX_REQUEST='true'
+        )
+
+        assert response.status_code == 200
+        html = response.content.decode('utf-8')
+        assert 'id="acta-errors"' in html
+        assert 'hx-swap-oob="true"' in html
+
+    def test_acta_preview_post_form_invalid_returns_oob_error(self, client):
+        """Verificar que preview con form inválido retorna error OOB"""
+        user = ColaboradorFactory(is_staff=True, is_superuser=True)
+        user.set_password('password')
+        user.save()
+        client.login(username=user.username, password='password')
+
+        url = reverse('actas:acta_preview')
+        response = client.post(
+            url,
+            {
+                'tipo_acta': 'ENTREGA',
+                # Falta colaborador (campo requerido)
+            },
+            HTTP_HX_REQUEST='true'
+        )
+
+        assert response.status_code == 200
+        html = response.content.decode('utf-8')
+        assert 'id="acta-errors"' in html
+        assert 'hx-swap-oob="true"' in html
+
+    def test_acta_preview_requires_login(self, client):
+        """Verificar que preview requiere autenticación"""
+        url = reverse('actas:acta_preview')
+        response = client.post(url)
+        assert response.status_code == 302  # Redirect a login
+
+    def test_acta_preview_requires_permission(self, client):
+        """Verificar que preview requiere permiso add_acta"""
+        user = ColaboradorFactory(is_staff=False, is_superuser=False)
+        user.set_password('password')
+        user.save()
+        client.login(username=user.username, password='password')
+
+        url = reverse('actas:acta_preview')
+        response = client.post(url)
+        assert response.status_code == 403

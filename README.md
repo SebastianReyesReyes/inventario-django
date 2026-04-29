@@ -11,10 +11,11 @@ python -m venv venv
 
 # 2. Instalar dependencias
 pip install -r requirements.txt
+playwright install chromium  # Requerido para generación de PDFs
 
 # 3. Configurar variables de entorno
 cp .env.example .env
-# Editar .env: rellenar DJANGO_SECRET_KEY con un valor seguro (>30 chars).
+# Editar .env: rellenar SECRET_KEY con un valor seguro (>30 chars).
 # Opcional: definir DB_PATH si deseas ubicar la base de datos fuera de la raíz.
 
 # 4. Migraciones e inicio
@@ -27,7 +28,7 @@ python manage.py runserver
 
 | Variable | Requerida | Descripción |
 |----------|-----------|-------------|
-| `DJANGO_SECRET_KEY` | Sí | Clave segura (>30 chars, sin prefijos como `django-insecure-`). El sistema falla al arrancar si está vacía o usa placeholder. |
+| `SECRET_KEY` | Sí | Clave segura (>30 chars, sin prefijos como `django-insecure-`). El sistema falla al arrancar si está vacía o usa placeholder. **Nota:** `settings.py` lee `SECRET_KEY`, no `DJANGO_SECRET_KEY`. |
 | `DEBUG` | No | `True`/`False`. En producción se fuerzan validaciones adicionales. |
 | `ALLOWED_HOSTS` | Sí (cuando `DEBUG=False`) | Lista separada por comas. No puede estar vacía ni contener `*` en producción. |
 | `DB_PATH` | No | Permite cambiar la ubicación de `db.sqlite3` (útil para Docker). |
@@ -44,15 +45,16 @@ Ver [docs/CODEMAPS/INDEX.md](docs/CODEMAPS/INDEX.md) para el mapa detallado.
 | `core` | Catálogos base (fabricantes, tipos, estados, modelos, centros de costo), utilidades HTMX, templates base, componentes Cotton |
 | `colaboradores` | Modelo de usuario personalizado (`Colaborador`), gestión de personal, roles y centros de costo |
 | `dispositivos` | Inventario de equipos (Notebook, Smartphone, Monitor, Impresora, Servidor, EquipoRed), mantenimientos, asignaciones, accesorios |
-| `actas` | Generación de actas legales (ENTREGA, DEVOLUCIÓN, DESTRUCCIÓN), firma digital, exportación PDF |
+| `actas` | Generación de actas legales (ENTREGA, DEVOLUCIÓN, DESTRUCCIÓN), firma digital, exportación PDF (Playwright) |
 | `dashboard` | Métricas, filtros analíticos, gráficos Chart.js, reportes y exportación |
+| `suministros` | Gestión de suministros y compatibilidad con dispositivos |
 
 ### Stack Tecnológico
 
 - **Backend:** Django 6.0.2, Django REST Framework, django-htmx, django-cotton, django-constance, django-filter, django-import-export
 - **Frontend:** HTMX, Alpine.js, Tailwind CSS
 - **Base de datos:** SQLite (local), configurable vía `DB_PATH`
-- **Reportes:** xhtml2pdf, ReportLab, pyHanko (firma digital PDF)
+- **PDF:** Playwright/Chromium (renderizado HTML→PDF), pyHanko (firma digital), pypdf
 - **QR:** qrcode
 - **Testing:** pytest, pytest-django, factory-boy, pytest-playwright
 - **Otros:** django-crispy-forms, crispy-tailwind, django-imagekit, django-debug-toolbar
@@ -62,7 +64,7 @@ Ver [docs/CODEMAPS/INDEX.md](docs/CODEMAPS/INDEX.md) para el mapa detallado.
 - **Inventario polimórfico:** Dispositivo base con modelos especializados (Notebook, Smartphone, Monitor, Impresora, Servidor, EquipoRed)
 - **Identificadores automáticos:** Formato `JMIE-SIGLA-00001` configurable vía Django Constance
 - **Trazabilidad completa:** Historial de asignaciones con actas legales vinculadas
-- **Generación de actas PDF:** Folio correlativo, firma digital, ministro de fe
+- **Generación de actas PDF:** Folio correlativo, renderizado con Playwright/Chromium, firma digital con pyHanko
 - **Códigos QR:** Generación dinámica por equipo para escaneo rápido
 - **Dashboard analítico:** Gráficos Chart.js con drill-down a listados filtrados
 - **Importación masiva:** Comando `import_devices` para carga desde CSV
@@ -146,4 +148,4 @@ docker-compose -f docker-compose.yml up -d
 4. Actualizar documentación si cambian APIs o flujos
 
 ---
-*Última actualización: 24 de abril de 2026*
+*Última actualización: 29 de abril de 2026*

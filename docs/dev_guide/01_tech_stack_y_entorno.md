@@ -23,8 +23,9 @@ Bienvenido al proyecto **Inventario JMIE**. Este documento te ayudará a entende
 - **Playwright (`pytest-playwright`):** Utilizado para las pruebas de E2E (End-to-End). Playwright realiza flujos automatizados para comprobar los diálogos, modales HTMX o cambios renderizados por Alpine.js.
 
 ### Reportes
-- **xHtml2Pdf / ReportLab:** Dedicado a la rasterización y diseño de plantillas HTML para exportar documentos PDF (Actas, Entregas, Inventario seriado).
+- **Playwright/Chromium:** Generación de PDFs mediante renderizado HTML→PDF. Usa un pool de browsers headless para performance.
 - **pyHanko:** Firma digital de documentos PDF con certificado.
+- **pypdf:** Manipulación de PDFs (verificación de firmas, extracción).
 - **qrcode:** Generación de códigos QR para cada dispositivo.
 
 ## Flujo Básico de Configuración del Entorno de Desarrollo (Local)
@@ -40,12 +41,13 @@ Bienvenido al proyecto **Inventario JMIE**. Este documento te ayudará a entende
  2. **Instalar Dependencias:**
     ```bash
     pip install -r requirements.txt
+    playwright install chromium  # Requerido para generación de PDFs
     ```
 
  3. **Configurar Variables de Entorno:**
     ```bash
     cp .env.example .env
-    # Editar .env: rellenar DJANGO_SECRET_KEY con un valor seguro (>30 chars).
+    # Editar .env: rellenar SECRET_KEY con un valor seguro (>30 chars).
     # Opcional: definir DB_PATH si deseas ubicar la base de datos fuera de la raíz.
     ```
 

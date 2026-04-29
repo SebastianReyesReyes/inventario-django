@@ -393,57 +393,181 @@ class ActaPDFService:
             return ActaPDFService._xhtml2pdf(acta)
 
     @staticmethod
+    def generar_pdf_con_info(acta, engine=None):
+        """
+        Igual que generar_pdf() pero retorna también el motor real usado.
+
+        Returns:
+            tuple: (bytes, str) — PDF binario y motor real ('playwright' o 'xhtml2pdf')
+        """
+        from django.conf import settings
+        engine = engine or getattr(settings, 'PDF_ENGINE', 'xhtml2pdf')
+
+        if engine == 'both':
+            return ActaPDFService.generar_pdf(acta, engine='both'), 'both'
+        elif engine == 'playwright':
+            try:
+                return ActaPDFService._playwright(acta), 'playwright'
+            except Exception:
+                ActaPDFService._logger.exception("Playwright falló, usando xhtml2pdf como fallback")
+                return ActaPDFService._xhtml2pdf(acta), 'xhtml2pdf'
+        else:
+            return ActaPDFService._xhtml2pdf(acta), 'xhtml2pdf'
+
+    @staticmethod
     def _xhtml2pdf(acta):
         """Genera PDF usando el motor legacy xhtml2pdf (sin cambios)."""
         return ActaService.generar_pdf(acta)
 
     @staticmethod
-    def _playwright(acta):
-        """Genera PDF usando Playwright/Chromium headless (ejecutado en un thread separado)."""
-        from django.template.loader import render_to_string
+    def _encode_logo_to_base64(logo_path):
+        """Convierte el logo a data URI base64 para embedding en HTML."""
+        if not logo_path:
+            return None
+        try:
+            import base64
+            import mimetypes
+            mime, _ = mimetypes.guess_type(logo_path)
+            with open(logo_path, 'rb') as f:
+                data = base64.b64encode(f.read()).decode('ascii')
+            return f"data:{mime or 'image/png'};base64,{data}"
+        except Exception as e:
+            ActaPDFService._logger.warning(f"No se pudo codificar logo a base64: {e}")
+            return None
 
-        asignaciones = ActaService.obtener_asignaciones_para_pdf(acta)
-        accesorios = acta.accesorios.all()
+    @staticmethod
+    def _playwright(acta, asignaciones=None, accesorios=None):
+        """Genera PDF usando Playwright/Chromium headless (ejecutado en un thread separado).
+
+        Usa el mismo HTML que la vista previa (acta_preview_content.html) para que
+        el PDF sea pixel-perfect con lo que el usuario ve en el navegador.
+        """
+        from django.template.loader import render_to_string
+        import concurrent.futures
+        from django.conf import settings
+
+        if asignaciones is None:
+            asignaciones = ActaService.obtener_asignaciones_para_pdf(acta)
+        if accesorios is None:
+            accesorios = acta.accesorios.all()
         logo_path = finders.find('img/LogoColor.png')
 
-        html = render_to_string('actas/playwright/pdf_shell.html', {
+        # Playwright: embedder logo como base64 para evitar problemas de rutas/URLs
+        logo_data_uri = ActaPDFService._encode_logo_to_base64(logo_path)
+
+        # Renderizar el mismo HTML que la preview, pero sin watermark (pdf_mode=True)
+        preview_html = render_to_string('actas/partials/acta_preview_content.html', {
             'acta': acta,
             'asignaciones': asignaciones,
             'accesorios': accesorios,
-            'logo_path': logo_path,
+            'logo_path': logo_data_uri,
             'fecha_actual': timezone.now(),
+            'pdf_mode': True,
         })
 
-        # Aislar Playwright en un thread para evitar que el event loop asyncio
-        # contamine el thread principal de Django (produce SynchronousOnlyOperation)
-        import concurrent.futures
+        # Wrap en HTML completo para Playwright
+        html = render_to_string('actas/playwright/pdf_wrapper.html', {
+            'preview_html': preview_html,
+        })
 
-        def _render_in_thread(html_content, timeout_ms):
+        ActaPDFService._logger.info(
+            f"Iniciando generación Playwright para acta {acta.folio} "
+            f"(HTML={len(html)} chars, logo={'OK' if logo_data_uri else 'MISSING'})"
+        )
+
+        def _render_in_thread(html_content):
             from playwright.sync_api import sync_playwright
-            with sync_playwright() as pw:
-                browser = pw.chromium.launch(
-                    headless=True,
-                    args=[
-                        '--no-sandbox',
-                        '--disable-gpu',
-                        '--disable-dev-shm-usage',
-                        '--disable-setuid-sandbox',
-                        '--font-render-hinting=none',
-                    ],
-                )
-                page = browser.new_page()
-                page.set_content(html_content, wait_until='networkidle')
-                pdf_bytes = page.pdf(
-                    format='Letter',
-                    margin={'top': '1.5cm', 'bottom': '1.5cm',
-                            'left': '1.5cm', 'right': '1.5cm'},
-                    print_background=True,
-                )
-                page.close()
-                browser.close()
-                return pdf_bytes
+            try:
+                with sync_playwright() as pw:
+                    ActaPDFService._logger.debug("Playwright: lanzando Chromium...")
+                    browser = pw.chromium.launch(
+                        headless=True,
+                        args=[
+                            '--no-sandbox',
+                            '--disable-gpu',
+                            '--disable-dev-shm-usage',
+                            '--disable-setuid-sandbox',
+                            '--font-render-hinting=none',
+                        ],
+                    )
+                    ActaPDFService._logger.debug("Playwright: navegador listo, creando página...")
+                    page = browser.new_page()
+                    page.set_content(html_content, wait_until='networkidle')
+                    ActaPDFService._logger.debug("Playwright: contenido cargado, generando PDF...")
+                    pdf_bytes = page.pdf(
+                        format='Letter',
+                        margin={'top': '1.5cm', 'bottom': '1.5cm',
+                                'left': '1.5cm', 'right': '1.5cm'},
+                        print_background=True,
+                    )
+                    ActaPDFService._logger.info(
+                        f"Playwright: PDF generado ({len(pdf_bytes)} bytes)"
+                    )
+                    page.close()
+                    browser.close()
+                    return pdf_bytes
+            except Exception as e:
+                ActaPDFService._logger.error(f"Playwright error en thread: {e}")
+                raise
 
         timeout = getattr(settings, 'PLAYWRIGHT_BROWSER_TIMEOUT', 15000) / 1000
         with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
-            future = executor.submit(_render_in_thread, html, timeout)
+            future = executor.submit(_render_in_thread, html)
             return future.result(timeout=timeout + 5)
+
+    @staticmethod
+    def generar_preview_pdf(colaborador, tipo_acta, asignacion_ids, creado_por,
+                             observaciones=None, accesorio_ids=None, ministro_de_fe=None):
+        """
+        Genera un PDF de preview (sin persistir) usando el motor configurado.
+
+        Args:
+            colaborador, tipo_acta, asignacion_ids, creado_por: mismos que generar_preview_html.
+            observaciones, accesorio_ids, ministro_de_fe: opcionales.
+
+        Returns:
+            bytes: Contenido binario del PDF.
+        """
+        from django.conf import settings
+        from dispositivos.models import HistorialAsignacion, EntregaAccesorio
+
+        asignaciones = HistorialAsignacion.objects.filter(
+            pk__in=asignacion_ids,
+            colaborador=colaborador,
+            acta__isnull=True,
+        ).select_related(
+            'dispositivo__modelo__tipo_dispositivo',
+            'dispositivo__modelo__fabricante',
+            'dispositivo__modelo',
+        )
+
+        accesorios = []
+        if accesorio_ids:
+            accesorios = list(EntregaAccesorio.objects.filter(
+                pk__in=accesorio_ids,
+                colaborador=colaborador,
+                acta__isnull=True
+            ))
+
+        acta_preview = Acta(
+            colaborador=colaborador,
+            tipo_acta=tipo_acta,
+            creado_por=creado_por,
+            observaciones=observaciones or '',
+            ministro_de_fe=ministro_de_fe,
+            fecha=timezone.now(),
+        )
+        acta_preview.folio = f"ACT-{timezone.now().year}-PENDIENTE"
+
+        engine = getattr(settings, 'PDF_ENGINE', 'xhtml2pdf')
+
+        if engine == 'playwright':
+            try:
+                return ActaPDFService._playwright(acta_preview, asignaciones=asignaciones, accesorios=accesorios)
+            except Exception:
+                ActaPDFService._logger.exception("Playwright falló en preview, usando xhtml2pdf como fallback")
+                return ActaService.generar_preview_pdf(colaborador, tipo_acta, asignacion_ids, creado_por,
+                                                       observaciones, accesorio_ids, ministro_de_fe)
+        else:
+            return ActaService.generar_preview_pdf(colaborador, tipo_acta, asignacion_ids, creado_por,
+                                                   observaciones, accesorio_ids, ministro_de_fe)

@@ -16,6 +16,19 @@
         overflow: hidden;
     }
 
+    /* === Modo PDF: limpio, sin sombra, footer al fondo === */
+    .preview-document.pdf-mode {
+        border-radius: 0;
+        box-shadow: none;
+        padding: 0;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+    }
+    .preview-document.pdf-mode .footer-legal {
+        margin-top: auto;
+    }
+
     .preview-document .watermark {
         position: absolute;
         top: 40%;
@@ -32,10 +45,12 @@
         user-select: none;
     }
 
+    /* === Header: 3 columnas — logo | título centrado | folio === */
     .preview-document .header {
-        display: flex;
-        justify-content: space-between;
+        display: grid;
+        grid-template-columns: 130px 1fr 130px;
         align-items: flex-start;
+        gap: 16px;
         border-bottom: 2px solid #003594;
         padding-bottom: 12px;
         margin-bottom: 16px;
@@ -55,18 +70,23 @@
         height: auto;
     }
 
-    .preview-document .acta-info {
-        text-align: right;
+    .preview-document .acta-title {
+        text-align: center;
+        align-self: center;
     }
 
-    .preview-document .acta-info h1 {
+    .preview-document .acta-title h1 {
         font-size: 14pt;
         margin: 0;
         color: #003594;
         text-transform: uppercase;
     }
 
-    .preview-document .acta-info p {
+    .preview-document .acta-meta {
+        text-align: right;
+    }
+
+    .preview-document .acta-meta p {
         margin: 2pt 0;
         font-weight: bold;
         font-size: 9pt;
@@ -199,7 +219,9 @@
     }
 </style>
 
-<div class="preview-document">
+<div class="preview-document {% if pdf_mode %}pdf-mode{% endif %}">
+    {% if not pdf_mode %}
     <div class="watermark">PRELIMINAR</div>
+    {% endif %}
     {% include "actas/partials/acta_pdf_body.html" %}
 </div>

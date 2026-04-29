@@ -132,7 +132,7 @@ def acta_preview_pdf(request):
         return HttpResponse("Datos inválidos para generar PDF de preview", status=400)
 
     try:
-        pdf_bytes = ActaService.generar_preview_pdf(
+        pdf_bytes = ActaPDFService.generar_preview_pdf(
             colaborador=form.cleaned_data['colaborador'],
             tipo_acta=form.cleaned_data['tipo_acta'],
             asignacion_ids=asignacion_ids,
@@ -143,6 +143,7 @@ def acta_preview_pdf(request):
         )
         response = HttpResponse(pdf_bytes, content_type='application/pdf')
         response['Content-Disposition'] = 'inline; filename="preview.pdf"'
+        response['X-PDF-Engine'] = getattr(settings, 'PDF_ENGINE', 'xhtml2pdf')
         return response
     except ValidationError as e:
         return HttpResponse(str(e.message if hasattr(e, 'message') else e), status=400)
@@ -204,11 +205,11 @@ def acta_pdf(request, pk):
     """Genera el PDF legal corporativo usando ActaPDFService (feature flag)."""
     try:
         acta, _ = ActaService.obtener_acta_con_relaciones(pk)
-        pdf_content = ActaPDFService.generar_pdf(acta)
+        pdf_content, actual_engine = ActaPDFService.generar_pdf_con_info(acta)
 
         response = HttpResponse(pdf_content, content_type='application/pdf')
         response['Content-Disposition'] = f'inline; filename="Acta_{acta.folio}.pdf"'
-        response['X-PDF-Engine'] = getattr(settings, 'PDF_ENGINE', 'xhtml2pdf')
+        response['X-PDF-Engine'] = actual_engine
         return response
     except Exception as e:
         return HttpResponse(f'Error al generar PDF: {str(e)}', status=500)

@@ -183,6 +183,81 @@ class ActaService:
         return buffer.getvalue()
 
     @staticmethod
+    def generar_preview_html(colaborador, tipo_acta, asignacion_ids, creado_por,
+                              observaciones=None, accesorio_ids=None, ministro_de_fe=None):
+        """
+        Construye el contexto completo para renderizar la vista previa del acta
+        SIN persistir en base de datos.
+
+        Args:
+            colaborador: Instancia de Colaborador destinatario.
+            tipo_acta: Tipo de documento ('ENTREGA' o 'DEVOLUCION').
+            asignacion_ids: Lista de PKs de HistorialAsignacion a mostrar.
+            creado_por: Instancia de Colaborador que genera el preview.
+            observaciones: Texto libre opcional.
+            accesorio_ids: Lista de PKs de EntregaAccesorio opcional.
+            ministro_de_fe: Instancia de Colaborador opcional.
+
+        Returns:
+            str: HTML renderizado del acta en modo preview.
+
+        Raises:
+            ValidationError: Si no se seleccionan asignaciones o no son válidas.
+        """
+        if not asignacion_ids:
+            raise ValidationError("Debe seleccionar al menos una asignación.")
+
+        from dispositivos.models import HistorialAsignacion, EntregaAccesorio
+
+        asignaciones = HistorialAsignacion.objects.filter(
+            pk__in=asignacion_ids,
+            colaborador=colaborador,
+            acta__isnull=True,
+        ).select_related(
+            'dispositivo__modelo__tipo_dispositivo',
+            'dispositivo__modelo__fabricante',
+            'dispositivo__modelo',
+        )
+
+        if not asignaciones.exists():
+            raise ValidationError(
+                "Las asignaciones seleccionadas ya no están disponibles "
+                "o no pertenecen al colaborador."
+            )
+
+        accesorios = []
+        if accesorio_ids:
+            accesorios = list(EntregaAccesorio.objects.filter(
+                pk__in=accesorio_ids,
+                colaborador=colaborador,
+                acta__isnull=True
+            ))
+
+        # Construir un "acta fantasma" (unsaved) para el template
+        acta_preview = Acta(
+            colaborador=colaborador,
+            tipo_acta=tipo_acta,
+            creado_por=creado_por,
+            observaciones=observaciones or '',
+            ministro_de_fe=ministro_de_fe,
+            fecha=timezone.now(),
+        )
+        acta_preview.folio = f"ACT-{timezone.now().year}-PENDIENTE"
+
+        logo_path = finders.find('img/LogoColor.png')
+
+        context = {
+            'acta': acta_preview,
+            'asignaciones': asignaciones,
+            'accesorios': accesorios,
+            'logo_path': logo_path,
+            'fecha_actual': timezone.now(),
+            'preview': True,
+        }
+
+        return render_to_string('actas/partials/acta_preview_content.html', context)
+
+    @staticmethod
     def obtener_pendientes(colaborador_pk):
         """
         Retorna las asignaciones activas sin acta de un colaborador.

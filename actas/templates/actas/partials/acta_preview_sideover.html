@@ -1,0 +1,90 @@
+<div x-data="{ open: true }"
+     x-show="open"
+     x-cloak
+     @keydown.escape.window="open = false; setTimeout(() => $el.remove(), 300)"
+     class="fixed inset-0 z-[60] flex justify-end">
+
+    <!-- Backdrop -->
+    <div class="absolute inset-0 bg-background/60 backdrop-blur-sm"
+         @click="open = false; setTimeout(() => $el.remove(), 300)"></div>
+
+    <!-- Side-Over Panel -->
+    <div x-show="open"
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="translate-x-full"
+         x-transition:enter-end="translate-x-0"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="translate-x-0"
+         x-transition:leave-end="translate-x-full"
+         class="relative w-full max-w-2xl h-full bg-surface-container border-l border-white/10
+                shadow-[-20px_0_50px_rgba(0,0,0,0.5)] overflow-y-auto custom-scrollbar">
+
+        <!-- Header -->
+        <div class="sticky top-0 z-10 bg-surface-container/95 backdrop-blur-md p-6
+                    border-b border-white/10 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center">
+                    <span class="material-symbols-outlined text-blue-400">preview</span>
+                </div>
+                <div>
+                    <h3 class="text-lg font-black uppercase tracking-tight">Vista Previa del Acta</h3>
+                    <p class="text-[10px] text-amber-400 font-bold uppercase tracking-widest">
+                        ⚠ Documento Preliminar — No tiene validez legal
+                    </p>
+                </div>
+            </div>
+            <button @click="open = false; setTimeout(() => $el.remove(), 300)"
+                    class="text-jmie-gray hover:text-on-background transition-colors">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+
+        <!-- Preview Content -->
+        <div class="p-6">
+            {{ preview_html|safe }}
+        </div>
+
+        <!-- Footer Actions (sticky) -->
+        <div class="sticky bottom-0 bg-surface-container/95 backdrop-blur-md p-6
+                    border-t border-white/10 flex items-center justify-between">
+            <button @click="open = false; setTimeout(() => $el.remove(), 300)"
+                    class="px-6 py-2.5 text-xs font-black uppercase tracking-widest
+                           text-jmie-gray hover:text-on-background border border-white/10
+                           rounded-xl hover:bg-white/5 transition-all flex items-center gap-2">
+                <span class="material-symbols-outlined text-sm">arrow_back</span>
+                Volver a Editar
+            </button>
+
+            <form hx-post="{% url 'actas:acta_create' %}"
+                  hx-target="closest .fixed.inset-0.z-50"
+                  hx-swap="outerHTML"
+                  hx-indicator="#confirm-indicator"
+                  class="m-0 p-0">
+                {% csrf_token %}
+                {# Reenviar todos los campos del form original como hidden #}
+                {% for key, values in form_data.lists %}
+                    {% for value in values %}
+                        <input type="hidden" name="{{ key }}" value="{{ value }}">
+                    {% endfor %}
+                {% endfor %}
+
+                <button type="submit"
+                        class="px-8 py-2.5 bg-blue-600 text-white text-xs font-black
+                               uppercase tracking-widest rounded-xl hover:brightness-110
+                               shadow-[0_10px_30px_rgba(37,99,235,0.3)] transition-all
+                               flex items-center gap-2">
+                    <span class="material-symbols-outlined text-sm">check_circle</span>
+                    Confirmar y Generar Acta
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Loading indicator para confirmación -->
+<div id="confirm-indicator" class="htmx-indicator fixed inset-0 z-[70] bg-background/80 backdrop-blur-sm flex items-center justify-center">
+    <div class="flex flex-col items-center gap-3">
+        <div class="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+        <span class="text-[10px] font-black uppercase tracking-widest text-blue-400">Generando Acta...</span>
+    </div>
+</div>

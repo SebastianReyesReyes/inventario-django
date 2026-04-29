@@ -1,0 +1,314 @@
+{% load acta_tags %}
+{% load static %}
+
+{# acta_preview_content.html — Wrapper que adapta el template PDF para vista previa en side-over #}
+<style>
+    .preview-document {
+        font-family: Arial, sans-serif;
+        font-size: 10pt;
+        line-height: 1.4;
+        color: #222;
+        position: relative;
+        background: white;
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+    .preview-document .watermark {
+        position: absolute;
+        top: 35%;
+        left: 50%;
+        transform: translate(-50%, -50%) rotate(-20deg);
+        font-size: 72pt;
+        font-weight: 900;
+        color: #e5e7eb;
+        text-transform: uppercase;
+        letter-spacing: 8px;
+        pointer-events: none;
+        z-index: 1;
+        opacity: 0.7;
+    }
+    .preview-document .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        border-bottom: 2px solid #003594;
+        padding-bottom: 12px;
+        margin-bottom: 16px;
+        position: relative;
+        z-index: 2;
+    }
+    .preview-document .logo {
+        font-size: 18pt;
+        font-weight: bold;
+        color: #003594;
+    }
+    .preview-document .acta-info h1 {
+        font-size: 14pt;
+        margin: 0;
+        color: #003594;
+        text-transform: uppercase;
+        text-align: right;
+    }
+    .preview-document .acta-info p {
+        margin: 2pt 0;
+        font-weight: bold;
+        font-size: 9pt;
+        text-align: right;
+    }
+    .preview-document .section-title {
+        background-color: #f1f3f8;
+        padding: 6pt 10pt;
+        font-weight: bold;
+        text-transform: uppercase;
+        font-size: 8.5pt;
+        margin: 14pt 0 6pt 0;
+        border-left: 3pt solid #ED8B00;
+    }
+    .preview-document table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 10pt;
+        font-size: 8pt;
+    }
+    .preview-document table th {
+        background-color: #003594;
+        color: white;
+        font-size: 7.5pt;
+        padding: 6pt;
+        text-transform: uppercase;
+        text-align: left;
+        font-weight: bold;
+    }
+    .preview-document table td {
+        border: 0.5pt solid #ddd;
+        padding: 5pt;
+        font-size: 8pt;
+    }
+    .preview-document .clauses {
+        font-size: 8.5pt;
+        text-align: justify;
+        margin-top: 12pt;
+        position: relative;
+        z-index: 2;
+    }
+    .preview-document .clauses h3 {
+        font-size: 9pt;
+        margin-bottom: 4pt;
+        color: #003594;
+        border-bottom: 0.5pt solid #eee;
+    }
+    .preview-document .clauses ol {
+        margin-top: 3pt;
+        padding-left: 14pt;
+    }
+    .preview-document .clauses li {
+        margin-bottom: 3pt;
+    }
+    .preview-document .signatures {
+        margin-top: 24pt;
+        display: flex;
+        justify-content: space-between;
+        gap: 16pt;
+        flex-wrap: wrap;
+        position: relative;
+        z-index: 2;
+    }
+    .preview-document .signature-box {
+        flex: 1;
+        min-width: 120pt;
+        text-align: center;
+    }
+    .preview-document .signature-line {
+        border-top: 0.5pt solid #333;
+        margin-top: 28pt;
+        padding-top: 4pt;
+        font-size: 8pt;
+    }
+    .preview-document .footer-legal {
+        margin-top: 16pt;
+        border-top: 0.5pt solid #ddd;
+        padding-top: 8pt;
+        font-size: 7pt;
+        color: #888;
+        text-align: center;
+        font-style: italic;
+        position: relative;
+        z-index: 2;
+    }
+    .preview-document .observation-box {
+        font-size: 8pt;
+        min-height: 30pt;
+        padding: 5pt;
+        border: 0.5pt solid #ccc;
+        background-color: #fafafa;
+    }
+    .preview-document .info-table td {
+        background-color: #f9f9f9;
+    }
+    .preview-document .info-table td:first-child {
+        font-weight: bold;
+        width: 15%;
+    }
+    .preview-document .folio-badge {
+        display: inline-block;
+        background: #003594;
+        color: white;
+        padding: 2pt 8pt;
+        border-radius: 4pt;
+        font-size: 8pt;
+        font-weight: bold;
+    }
+    .preview-document .folio-pendiente {
+        background: #f59e0b !important;
+    }
+</style>
+
+<div class="preview-document">
+    <div class="watermark">PRELIMINAR</div>
+
+    <div class="header">
+        <div class="logo">
+            {% if logo_path %}
+            <img src="{% static logo_path %}" alt="Logo JMIE" style="width: 100px; height: auto;">
+            {% else %}
+            JMIE
+            {% endif %}
+        </div>
+        <div class="acta-info">
+            <h1>Acta de {{ acta.get_tipo_acta_display|cut:"Acta de " }}</h1>
+            <p>Folio: <span class="folio-badge folio-pendiente">{{ acta.folio }}</span></p>
+            <p>Fecha Emisión: {{ acta.fecha|date:"d/m/Y" }}</p>
+        </div>
+    </div>
+
+    <!-- DATOS DEL COLABORADOR -->
+    <div class="section-title">Identificación del Colaborador</div>
+    <table class="info-table">
+        <tr>
+            <td>Nombre:</td>
+            <td>{{ acta.colaborador.nombre_completo }}</td>
+            <td>RUT:</td>
+            <td>{{ acta.colaborador.rut|default:"---"|format_rut }}</td>
+        </tr>
+        <tr>
+            <td>Cargo:</td>
+            <td>{{ acta.colaborador.cargo|default:"---" }}</td>
+            <td>Obra:</td>
+            <td>{{ acta.colaborador.centro_costo|default:"Administración Central" }}</td>
+        </tr>
+    </table>
+
+    <!-- ASIGNACIONES -->
+    <div class="section-title">Detalle de Activos TI</div>
+    <table>
+        <thead>
+            <tr>
+                <th width="8%">N°</th>
+                <th width="15%">ID JMIE</th>
+                <th width="15%">Tipo</th>
+                <th width="30%">Fabricante / Modelo</th>
+                <th width="18%">N° Serie</th>
+                <th width="14%">Estado Recep.</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for asig in asignaciones %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ asig.dispositivo.identificador_interno }}</td>
+                <td>{{ asig.dispositivo.modelo.tipo_dispositivo.nombre }}</td>
+                <td>{{ asig.dispositivo.modelo.fabricante }} / {{ asig.dispositivo.modelo.nombre }}</td>
+                <td>{{ asig.dispositivo.numero_serie }}</td>
+                <td>{{ asig.condicion_fisica|default:"Sin daños" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- ACCESORIOS -->
+    {% if accesorios %}
+    <div class="section-title">Componentes y Accesorios Adicionales</div>
+    <table>
+        <thead>
+            <tr>
+                <th width="30%">Descripción</th>
+                <th width="10%">Cant.</th>
+                <th width="60%">Observaciones de Entrega/Recepción</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for acc in accesorios %}
+            <tr>
+                <td>{{ acc.tipo }}</td>
+                <td style="text-align:center;">{{ acc.cantidad }}</td>
+                <td>{{ acc.descripcion|default:"---" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+
+    <!-- OBSERVACIONES -->
+    {% if acta.observaciones %}
+    <div class="section-title">Notas del Responsable</div>
+    <div class="observation-box">
+        {{ acta.observaciones|linebreaks }}
+    </div>
+    {% endif %}
+
+    <!-- CLÁUSULAS LEGALES -->
+    <div class="clauses">
+        {% if acta.tipo_acta == 'ENTREGA' %}
+        <h3>1. Cláusulas de Responsabilidad de Entrega</h3>
+        <ol>
+            <li>El colaborador recibe los equipos en óptimas condiciones, asumiendo su cuidado y custodia.</li>
+            <li><strong>Ciberseguridad (Ley 21.663):</strong> El usuario es responsable de mantener la confidencialidad de sus credenciales y reportar pérdida o robo en un plazo máximo de 3 horas al área TI.</li>
+            <li><strong>Prohibiciones:</strong> Se prohíbe el uso de los activos para fines distintos a los laborales, la manipulación de hardware o la instalación de software no autorizado.</li>
+            <li><strong>Privacidad (Ley 21.719):</strong> Sus datos personales son tratados bajo bases legales de cumplimiento contractual TI. Puede ejercer sus derechos ARCO-POL mediante solicitud formal.</li>
+        </ol>
+        {% else %}
+        <h3>1. Consentimiento de Borrado y Responsabilidad</h3>
+        <ol>
+            <li>La recepción de los equipos por parte de JMIE no exime al colaborador de responsabilidad por daños ocultos o dolo detectados en revisiones técnicas posteriores.</li>
+            <li><strong>Autorización de Borrado:</strong> El colaborador autoriza expresamente el borrado permanente e irreversible de todos los datos alojados en el equipo una vez entregado, liberando a JMIE de cualquier responsabilidad por pérdida de información personal no respaldada.</li>
+            <li><strong>Confidencialidad Post-Empleo:</strong> Se recuerda al colaborador que la obligación de confidencialidad sobre secretos industriales y datos de clientes persiste indefinidamente tras la devolución del activo.</li>
+            <li><strong>No Portabilidad de Datos:</strong> El colaborador declara bajo juramento no haber extraído, copiado o transferido información corporativa sensible a medios externos antes de esta entrega.</li>
+        </ol>
+        {% endif %}
+    </div>
+
+    <!-- CUADRO DE FIRMAS -->
+    <div class="signatures">
+        <div class="signature-box">
+            <div class="signature-line">
+                <strong>Responsable Emisión TI</strong><br>
+                {{ acta.creado_por.nombre_completo }}<br>
+                RUT: {{ acta.creado_por.rut|format_rut }}
+            </div>
+        </div>
+
+        <div class="signature-box">
+            <div class="signature-line">
+                <strong>{% if acta.tipo_acta == 'ENTREGA' %}Recibí Conforme{% else %}Entrego Conforme{% endif %}</strong><br>
+                {{ acta.colaborador.nombre_completo }}<br>
+                RUT: {{ acta.colaborador.rut|format_rut }}
+            </div>
+        </div>
+
+        {% if acta.tipo_acta == 'DEVOLUCION' %}
+        <div class="signature-box">
+            <div class="signature-line">
+                <strong>Ministro de Fe (Terreno)</strong><br>
+                {{ acta.ministro_de_fe.nombre_completo|default:"Verificado Central" }}<br>
+                RUT: {{ acta.ministro_de_fe.rut|default:"---"|format_rut }}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="footer-legal">
+        Este documento es un registro oficial del Sistema JMIE. Su falsificación o alteración está penada por ley.<br>
+        Identificador Único (Folio): {{ acta.folio }}
+    </div>
+</div>

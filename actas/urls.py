@@ -5,6 +5,7 @@ app_name = 'actas'
 
 urlpatterns = [
     path('', views.acta_list, name='acta_list'),
+    path('preview/', views.acta_preview, name='acta_preview'),
     path('crear/', views.acta_create, name='acta_create'),
     path('<int:pk>/', views.acta_detail, name='acta_detail'),
     path('<int:pk>/pdf/', views.acta_pdf, name='acta_pdf'),

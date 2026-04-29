@@ -70,6 +70,45 @@ def acta_list(request):
 
 @login_required
 @permission_required('actas.add_acta', raise_exception=True)
+def acta_preview(request):
+    """Genera la vista previa HTML de un acta sin persistir en BD."""
+    if request.method != 'POST':
+        return HttpResponse("Método no permitido", status=405)
+
+    form = ActaCrearForm(request.POST)
+    asignacion_ids = request.POST.getlist('asignaciones')
+    accesorio_ids = request.POST.getlist('accesorios')
+
+    if not form.is_valid():
+        error_html = _render_acta_error("Corrija los errores del formulario antes de previsualizar.")
+        return HttpResponse(error_html)
+
+    try:
+        preview_html = ActaService.generar_preview_html(
+            colaborador=form.cleaned_data['colaborador'],
+            tipo_acta=form.cleaned_data['tipo_acta'],
+            asignacion_ids=asignacion_ids,
+            creado_por=request.user,
+            observaciones=form.cleaned_data.get('observaciones'),
+            accesorio_ids=accesorio_ids,
+            ministro_de_fe=form.cleaned_data.get('ministro_de_fe'),
+        )
+
+        return render(request, 'actas/partials/acta_preview_sideover.html', {
+            'preview_html': preview_html,
+            'form_data': request.POST,
+        })
+
+    except ValidationError as e:
+        error_html = _render_acta_error(str(e.message if hasattr(e, 'message') else e))
+        return HttpResponse(error_html)
+    except Exception as e:
+        error_html = _render_acta_error(f'Error: {str(e)}')
+        return HttpResponse(error_html)
+
+
+@login_required
+@permission_required('actas.add_acta', raise_exception=True)
 def acta_create(request):
     """Crea una nueva acta vinculando asignaciones seleccionadas usando ActaService."""
     if request.method == 'POST':

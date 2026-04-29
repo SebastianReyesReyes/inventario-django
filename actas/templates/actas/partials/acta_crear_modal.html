@@ -33,12 +33,10 @@
                 </button>
             </div>
 
-            <form hx-post="{% url 'actas:acta_create' %}" 
-                  hx-target="this" 
-                  hx-indicator="#form-indicator"
+            <form id="acta-form"
                   class="space-y-6">
                 {% csrf_token %}
-                
+
                 <!-- Error Container -->
                 <div id="acta-errors" class="empty:hidden"></div>
                 
@@ -87,20 +85,29 @@
                         <div class="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
                         <span class="text-[10px] font-black uppercase tracking-widest">Generando Documento...</span>
                     </div>
-                    
+
                     <div class="flex gap-3 ml-auto">
-                        <button type="button" 
+                        <button type="button"
                                 @click="open = false; setTimeout(() => { $el.remove() }, 500)"
                                 class="px-6 py-2.5 text-xs font-black uppercase tracking-widest text-jmie-gray hover:text-on-background border border-white/10 rounded-xl hover:bg-white/5 transition-all">
                             Cancelar
                         </button>
-                        <button type="submit" 
-                                class="px-8 py-2.5 bg-blue-600 text-white text-xs font-black uppercase tracking-widest rounded-xl hover:brightness-110 shadow-[0_10px_30px_rgba(37,99,235,0.2)] transition-all">
-                            Emitir Acta
+                        <button type="button"
+                                hx-post="{% url 'actas:acta_preview' %}"
+                                hx-include="#acta-form"
+                                hx-target="#preview-sideover-container"
+                                hx-swap="innerHTML"
+                                hx-indicator="#form-indicator"
+                                class="px-8 py-2.5 bg-amber-500 text-white text-xs font-black uppercase tracking-widest rounded-xl hover:brightness-110 shadow-[0_10px_30px_rgba(245,158,11,0.2)] transition-all flex items-center gap-2">
+                            <span class="material-symbols-outlined text-sm">preview</span>
+                            Previsualizar Acta
                         </button>
                     </div>
                 </div>
             </form>
+
+            <!-- Contenedor donde se inyecta el side-over de preview -->
+            <div id="preview-sideover-container"></div>
         </div>
     </div>
 </div>

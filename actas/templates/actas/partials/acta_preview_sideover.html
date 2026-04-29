@@ -2,10 +2,11 @@
      x-show="open"
      x-cloak
      @keydown.escape.window="open = false; setTimeout(() => $el.remove(), 300)"
-     class="fixed inset-0 z-[60] flex justify-end">
+     @acta-created.window="open = false; setTimeout(() => $el.remove(), 300)"
+     class="fixed inset-0 z-[60] flex justify-end pointer-events-none">
 
-    <!-- Backdrop -->
-    <div class="absolute inset-0 bg-background/60 backdrop-blur-sm"
+    <!-- Backdrop (pointer-events-auto solo en backdrop) -->
+    <div class="absolute inset-0 bg-background/60 backdrop-blur-sm pointer-events-auto"
          @click="open = false; setTimeout(() => $el.remove(), 300)"></div>
 
     <!-- Side-Over Panel -->
@@ -17,7 +18,7 @@
          x-transition:leave-start="translate-x-0"
          x-transition:leave-end="translate-x-full"
          class="relative w-full max-w-2xl h-full bg-surface-container border-l border-white/10
-                shadow-[-20px_0_50px_rgba(0,0,0,0.5)] overflow-y-auto custom-scrollbar">
+                shadow-[-20px_0_50px_rgba(0,0,0,0.5)] overflow-y-auto custom-scrollbar pointer-events-auto">
 
         <!-- Header -->
         <div class="sticky top-0 z-10 bg-surface-container/95 backdrop-blur-md p-6
@@ -46,45 +47,43 @@
 
         <!-- Footer Actions (sticky) -->
         <div class="sticky bottom-0 bg-surface-container/95 backdrop-blur-md p-6
-                    border-t border-white/10 flex items-center justify-between">
+                    border-t border-white/10 flex items-center justify-between gap-4">
+
             <button @click="open = false; setTimeout(() => $el.remove(), 300)"
                     class="px-6 py-2.5 text-xs font-black uppercase tracking-widest
                            text-jmie-gray hover:text-on-background border border-white/10
-                           rounded-xl hover:bg-white/5 transition-all flex items-center gap-2">
+                           rounded-xl hover:bg-white/5 transition-all flex items-center gap-2 shrink-0">
                 <span class="material-symbols-outlined text-sm">arrow_back</span>
                 Volver a Editar
             </button>
 
-            <form hx-post="{% url 'actas:acta_create' %}"
-                  hx-target="closest .fixed.inset-0.z-50"
-                  hx-swap="outerHTML"
-                  hx-indicator="#confirm-indicator"
-                  class="m-0 p-0">
-                {% csrf_token %}
-                {# Reenviar todos los campos del form original como hidden #}
-                {% for key, values in form_data.lists %}
-                    {% for value in values %}
-                        <input type="hidden" name="{{ key }}" value="{{ value }}">
+            <div class="flex items-center gap-3">
+                <!-- Indicador inline (HTMX maneja display:none) -->
+                <div id="confirm-indicator" class="htmx-indicator flex items-center gap-2 text-blue-400">
+                    <div class="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+                    <span class="text-[10px] font-black uppercase tracking-widest">Generando...</span>
+                </div>
+
+                <form hx-post="{% url 'actas:acta_create' %}"
+                      hx-indicator="#confirm-indicator"
+                      class="m-0 p-0 shrink-0">
+                    {% csrf_token %}
+                    {% for key, values in form_data.lists %}
+                        {% for value in values %}
+                            <input type="hidden" name="{{ key }}" value="{{ value }}">
+                        {% endfor %}
                     {% endfor %}
-                {% endfor %}
 
-                <button type="submit"
-                        class="px-8 py-2.5 bg-blue-600 text-white text-xs font-black
-                               uppercase tracking-widest rounded-xl hover:brightness-110
-                               shadow-[0_10px_30px_rgba(37,99,235,0.3)] transition-all
-                               flex items-center gap-2">
-                    <span class="material-symbols-outlined text-sm">check_circle</span>
-                    Confirmar y Generar Acta
-                </button>
-            </form>
+                    <button type="submit"
+                            class="px-8 py-2.5 bg-blue-600 text-white text-xs font-black
+                                   uppercase tracking-widest rounded-xl hover:brightness-110
+                                   shadow-[0_10px_30px_rgba(37,99,235,0.3)] transition-all
+                                   flex items-center gap-2">
+                        <span class="material-symbols-outlined text-sm">check_circle</span>
+                        Confirmar y Generar Acta
+                    </button>
+                </form>
+            </div>
         </div>
-    </div>
-</div>
-
-<!-- Loading indicator para confirmación -->
-<div id="confirm-indicator" class="htmx-indicator fixed inset-0 z-[70] bg-background/80 backdrop-blur-sm flex items-center justify-center">
-    <div class="flex flex-col items-center gap-3">
-        <div class="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-        <span class="text-[10px] font-black uppercase tracking-widest text-blue-400">Generando Acta...</span>
     </div>
 </div>

@@ -244,7 +244,8 @@ class ActaService:
         )
         acta_preview.folio = f"ACT-{timezone.now().year}-PENDIENTE"
 
-        logo_path = finders.find('img/LogoColor.png')
+        from django.templatetags.static import static
+        logo_path = static('img/LogoColor.png')
 
         context = {
             'acta': acta_preview,

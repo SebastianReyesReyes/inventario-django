@@ -1,0 +1,163 @@
+{% load acta_tags %}
+
+{# acta_pdf_body.html — Contenido compartido entre PDF (acta_pdf.html) y Preview HTML (acta_preview_content.html) #}
+
+<div class="header">
+    <div class="logo">
+        {% if logo_path %}
+        <img src="{{ logo_path }}" alt="Logo JMIE">
+        {% else %}
+        <div style="font-size: 20pt; font-weight: bold; color: #003594;">JMIE</div>
+        {% endif %}
+    </div>
+    <div class="acta-info">
+        <h1>Acta de {{ acta.get_tipo_acta_display|cut:"Acta de " }}</h1>
+        <p>Folio: {{ acta.folio }}</p>
+        <p>Fecha Emisión: {{ acta.fecha|date:"d/m/Y" }}</p>
+    </div>
+    <div class="clear"></div>
+</div>
+
+<!-- DATOS DEL COLABORADOR -->
+<div class="section-title">Identificación del Colaborador</div>
+<table>
+    <tr>
+        <td width="15%" style="font-weight:bold; background-color:#f9f9f9;">Nombre:</td>
+        <td width="35%">{{ acta.colaborador.nombre_completo }}</td>
+        <td width="15%" style="font-weight:bold; background-color:#f9f9f9;">RUT:</td>
+        <td width="35%">{{ acta.colaborador.rut|default:"---"|format_rut }}</td>
+    </tr>
+    <tr>
+        <td style="font-weight:bold; background-color:#f9f9f9;">Cargo:</td>
+        <td>{{ acta.colaborador.cargo|default:"---" }}</td>
+        <td style="font-weight:bold; background-color:#f9f9f9;">Obra:</td>
+        <td>{{ acta.colaborador.centro_costo|default:"Administración Central" }}</td>
+    </tr>
+</table>
+
+
+<!-- ASIGNACIONES -->
+<div class="section-title">Detalle de Activos TI</div>
+<table>
+    <thead>
+        <tr>
+            <th width="15%">ID JMIE</th>
+            <th width="15%">Tipo</th>
+            <th width="35%">Fabricante/ Modelo</th>
+            <th width="20%">N° Serie</th>
+            <th width="15%">Estado Recep.</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for asig in asignaciones %}
+        <tr>
+            <td>{{ asig.dispositivo.identificador_interno }}</td>
+            <td>{{ asig.dispositivo.modelo.tipo_dispositivo.nombre }}</td>
+            <td>{{ asig.dispositivo.modelo.fabricante }} / {{ asig.dispositivo.modelo.nombre }}</td>
+            <td>{{ asig.dispositivo.numero_serie }}</td>
+            <td>{{ asig.condicion_fisica|default:"Sin daños" }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<!-- ACCESORIOS -->
+{% if accesorios %}
+<div class="section-title">Componentes y Accesorios Adicionales</div>
+<table>
+    <thead>
+        <tr>
+            <th width="30%">Descripción</th>
+            <th width="10%">Cant.</th>
+            <th width="60%">Observaciones de Entrega/Recepción</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for acc in accesorios %}
+        <tr>
+            <td>{{ acc.tipo }}</td>
+            <td style="text-align:center;">{{ acc.cantidad }}</td>
+            <td>{{ acc.descripcion|default:"---" }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+
+<!-- OBSERVACIONES -->
+{% if acta.observaciones %}
+<div class="section-title">Notas del Responsable</div>
+<div class="observation-box">
+    {{ acta.observaciones|linebreaks }}
+</div>
+{% endif %}
+
+<!-- CLÁUSULAS LEGALES -->
+<div class="clauses">
+    {% if acta.tipo_acta == 'ENTREGA' %}
+    <h3>1. Cláusulas de Responsabilidad de Entrega</h3>
+    <ol>
+        <li>El colaborador recibe los equipos en óptimas condiciones, asumiendo su cuidado y custodia.</li>
+        <li><strong>Ciberseguridad (Ley 21.663):</strong> El usuario es responsable de mantener la confidencialidad
+            de sus credenciales y reportar pérdida o robo en un plazo máximo de 3 horas al área TI.</li>
+        <li><strong>Prohibiciones:</strong> Se prohíbe el uso de los activos para fines distintos a los laborales,
+            la manipulación de hardware o la instalación de software no autorizado.</li>
+        <li><strong>Privacidad (Ley 21.719):</strong> Sus datos personales son tratados bajo bases legales de
+            cumplimiento contractual TI. Puede ejercer sus derechos ARCO-POL mediante solicitud formal.</li>
+    </ol>
+    {% else %}
+    <h3>1. Consentimiento de Borrado y Responsabilidad</h3>
+    <ol>
+        <li>La recepción de los equipos por parte de JMIE no exime al colaborador de responsabilidad por daños
+            ocultos o dolo detectados en revisiones técnicas posteriores.</li>
+        <li><strong>Autorización de Borrado:</strong> El colaborador autoriza expresamente el borrado permanente e
+            irreversible de todos los datos alojados en el equipo una vez entregado, liberando a JMIE de cualquier
+            responsabilidad por pérdida de información personal no respaldada.</li>
+        <li><strong>Confidencialidad Post-Empleo:</strong> Se recuerda al colaborador que la obligación de
+            confidencialidad sobre secretos industriales y datos de clientes persiste indefinidamente tras la
+            devolución del activo.</li>
+        <li><strong>No Portabilidad de Datos:</strong> El colaborador declara bajo juramento no haber extraído,
+            copiado o transferido información corporativa sensible a medios externos antes de esta entrega.</li>
+    </ol>
+    {% endif %}
+</div>
+
+<!-- CUADRO DE FIRMAS -->
+<div class="signatures">
+    <div class="signature-row">
+        <!-- EMISOR TI -->
+        <div class="signature-box">
+            <div class="signature-line">
+                <strong>Responsable Emisión TI</strong><br>
+                {{ acta.creado_por.nombre_completo }}<br>
+                RUT: {{ acta.creado_por.rut|format_rut }}
+            </div>
+        </div>
+
+        <!-- COLABORADOR -->
+        <div class="signature-box" style="margin-left: 2%;">
+            <div class="signature-line">
+                <strong>{% if acta.tipo_acta == 'ENTREGA' %}Recibí Conforme{% else %}Entrego Conforme{% endif %}</strong><br>
+                {{ acta.colaborador.nombre_completo }}<br>
+                RUT: {{ acta.colaborador.rut|format_rut }}
+            </div>
+        </div>
+
+        <!-- MINISTRO DE FE (Solo Devolución) -->
+        {% if acta.tipo_acta == 'DEVOLUCION' %}
+        <div class="signature-box" style="float: right; margin-right: 0;">
+            <div class="signature-line">
+                <strong>Ministro de Fe (Terreno)</strong><br>
+                {{ acta.ministro_de_fe.nombre_completo|default:"Verificado Central" }}<br>
+                RUT: {{ acta.ministro_de_fe.rut|default:"---"|format_rut }}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    <div class="clear"></div>
+</div>
+
+<div class="footer-legal">
+    Este documento es un registro oficial del Sistema JMIE. Su falsificación o alteración está penada por ley.<br>
+    Identificador Único (Folio): {{ acta.folio }}
+</div>

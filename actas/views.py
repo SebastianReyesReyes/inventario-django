@@ -1,5 +1,6 @@
 from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse
+from django.conf import settings
 from django.contrib.auth.decorators import login_required, permission_required
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
@@ -7,7 +8,7 @@ from django.template.loader import render_to_string
 
 from .models import Acta
 from .forms import ActaCrearForm
-from .services import ActaService
+from .services import ActaService, ActaPDFService
 from core.htmx import htmx_trigger_response
 
 
@@ -200,13 +201,14 @@ def acta_detail(request, pk):
 @login_required
 @permission_required('actas.view_acta', raise_exception=True)
 def acta_pdf(request, pk):
-    """Genera el PDF legal corporativo usando ActaService."""
+    """Genera el PDF legal corporativo usando ActaPDFService (feature flag)."""
     try:
         acta, _ = ActaService.obtener_acta_con_relaciones(pk)
-        pdf_content = ActaService.generar_pdf(acta)
-        
+        pdf_content = ActaPDFService.generar_pdf(acta)
+
         response = HttpResponse(pdf_content, content_type='application/pdf')
         response['Content-Disposition'] = f'inline; filename="Acta_{acta.folio}.pdf"'
+        response['X-PDF-Engine'] = getattr(settings, 'PDF_ENGINE', 'xhtml2pdf')
         return response
     except Exception as e:
         return HttpResponse(f'Error al generar PDF: {str(e)}', status=500)

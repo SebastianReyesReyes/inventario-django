@@ -56,28 +56,13 @@
     <c-glass-panel loader_label="Buscando...">
         <div class="overflow-x-auto">
             <div id="tabla-wrapper">
-                <table class="w-full text-left border-collapse">
-                <thead>
-                    <tr class="bg-white/[0.02] border-b border-white/5 text-jmie-gray uppercase text-[10px] font-black tracking-widest">
-                        <c-th-sort sort="id">ID / Serie</c-th-sort>
-                        <c-th-sort sort="tipo">Tipo</c-th-sort>
-                        <c-th-sort sort="marca">Marca & Modelo</c-th-sort>
-                        <c-th-sort sort="responsable">Responsable & CC</c-th-sort>
-                        <c-th-sort sort="estado">Estado</c-th-sort>
-                        <c-th-sort sort="acta">Acta</c-th-sort>
-                        <th class="px-6 py-4 text-right">Acciones</th>
-                    </tr>
-                </thead>
-                <tbody id="search-results" class="divide-y divide-white/5">
-                    {% include "dispositivos/partials/dispositivo_list_results.html" %}
-                </tbody>
-                </table>
+                {% include "dispositivos/partials/dispositivo_list_table.html" %}
             </div>
         </div>
 
         <div class="px-6 py-4 bg-white/[0.01] border-t border-white/5 flex items-center justify-between">
             <span class="text-[10px] font-bold text-jmie-gray uppercase tracking-tighter">
-                Mostrando {{ dispositivos.count }} activos registrados
+                Mostrando {{ page_obj.paginator.count }} activos registrados
             </span>
             <div class="flex gap-2"></div>
         </div>

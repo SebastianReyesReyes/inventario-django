@@ -1,9 +1,19 @@
+import sys
 import factory
 from django.contrib.auth import get_user_model
 from core.models import TipoDispositivo, EstadoDispositivo, Fabricante, Modelo, Departamento, CentroCosto
 from colaboradores.models import Colaborador
 from dispositivos.models import Dispositivo, HistorialAsignacion, EntregaAccesorio
 from actas.models import Acta
+
+# Guard: previene que las factories sean importadas fuera de pytest
+# (evita contaminar la BD de desarrollo con datos dummy)
+if "pytest" not in sys.modules:
+    raise RuntimeError(
+        "core.tests.factories solo debe usarse dentro de tests (pytest). "
+        "Usa 'python manage.py seed_db' para datos de desarrollo."
+    )
+
 
 class TipoDispositivoFactory(factory.django.DjangoModelFactory):
     class Meta:

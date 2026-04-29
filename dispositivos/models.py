@@ -147,7 +147,7 @@ class BitacoraMantenimiento(models.Model):
         verbose_name_plural = "Bitácoras de Mantenimiento"
 
 class HistorialAsignacion(models.Model):
-    dispositivo      = models.ForeignKey('Dispositivo', on_delete=models.PROTECT, related_name='historial')
+    dispositivo      = models.ForeignKey('Dispositivo', on_delete=models.CASCADE, related_name='historial')
     colaborador      = models.ForeignKey('colaboradores.Colaborador', on_delete=models.PROTECT, related_name='asignaciones')
     fecha_inicio     = models.DateField(auto_now_add=True)
     fecha_fin        = models.DateField(null=True, blank=True)

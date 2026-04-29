@@ -155,8 +155,9 @@ class TestCoreCatalogViews:
         ModeloFactory(fabricante=fabricante)
 
         response = admin_client.delete(reverse("core:fabricante_delete", kwargs={"pk": fabricante.pk}))
-        assert response.status_code == 400
-        assert "No se puede eliminar" in response.content.decode("utf-8")
+        assert response.status_code == 204
+        trigger = json.loads(response["HX-Trigger"])
+        assert "No se puede eliminar" in trigger["showNotification"]["message"]
 
     def test_fabricante_delete_success_trigger(self, admin_client):
         fabricante = FabricanteFactory(nombre="Acer")
@@ -185,8 +186,9 @@ class TestCoreCatalogViews:
         DispositivoFactory(modelo=modelo)
 
         response = admin_client.delete(reverse("core:modelo_delete", kwargs={"pk": modelo.pk}))
-        assert response.status_code == 400
-        assert "Protegido" in response.content.decode("utf-8")
+        assert response.status_code == 204
+        trigger = json.loads(response["HX-Trigger"])
+        assert "Protegido" in trigger["showNotification"]["message"]
 
     def test_modelo_delete_success_trigger(self, admin_client):
         modelo = ModeloFactory()
@@ -216,7 +218,7 @@ class TestCoreCatalogViews:
         response = admin_client.delete(reverse("core:tipodispositivo_delete", kwargs={"pk": tipo.pk}))
         assert response.status_code == 204
         trigger = json.loads(response["HX-Trigger"])
-        assert "Protegido" in trigger["showNotification"]
+        assert "Protegido" in trigger["showNotification"]["message"]
 
     def test_cc_toggle_activa_trigger(self, admin_client):
         cc = CentroCostoFactory(activa=True)
@@ -245,8 +247,25 @@ class TestCoreCatalogViews:
         response = admin_client.delete(reverse("core:estadodispositivo_delete", kwargs={"pk": estado.pk}))
         assert response.status_code == 204
         trigger = json.loads(response["HX-Trigger"])
-        assert "Protegido" in trigger["showNotification"]
+        assert "Protegido" in trigger["showNotification"]["message"]
 
+    def test_fabricante_list_paginated(self, admin_client):
+        for i in range(15):
+            FabricanteFactory(nombre=f"Fab {i}")
+        response = admin_client.get(reverse("core:fabricante_list"))
+        assert response.status_code == 200
+        assert "page_obj" in response.context
+        assert len(response.context["page_obj"]) <= 10
+
+    def test_modelo_list_paginated(self, admin_client):
+        fabricante = FabricanteFactory()
+        tipo = TipoDispositivoFactory()
+        for i in range(15):
+            ModeloFactory(nombre=f"Modelo {i}", fabricante=fabricante, tipo_dispositivo=tipo)
+        response = admin_client.get(reverse("core:modelo_list"))
+        assert response.status_code == 200
+        assert "page_obj" in response.context
+        assert len(response.context["page_obj"]) <= 10
 
 @pytest.mark.django_db
 class TestCoreAuxiliaryViews:

@@ -59,21 +59,25 @@ class TestConcurrentAssignments:
 class TestDeviceProtection:
     """Validar que dispositivos con historial no se pueden borrar."""
 
-    def test_device_with_history_cannot_be_deleted(self):
-        """Borrar dispositivo con asignaciones lanza ProtectedError."""
-        from django.db.models import ProtectedError
-
+    def test_device_with_history_can_be_deleted_cascade(self):
+        """Borrar dispositivo con asignaciones elimina el historial en cascada (Piloto UAT)."""
         dispositivo = DispositivoFactory(estado=EstadoAsignadoFactory())
         colaborador = ColaboradorFactory()
 
-        HistorialAsignacionFactory(
+        historial = HistorialAsignacionFactory(
             dispositivo=dispositivo,
             colaborador=colaborador,
             fecha_fin=None,
         )
 
-        with pytest.raises(ProtectedError):
-            dispositivo.delete()
+        historial_id = historial.pk
+        dispositivo_id = dispositivo.pk
+
+        dispositivo.delete()
+
+        assert not Dispositivo.objects.filter(pk=dispositivo_id).exists()
+        from dispositivos.models import HistorialAsignacion
+        assert not HistorialAsignacion.objects.filter(pk=historial_id).exists()
 
     def test_device_without_history_can_be_deleted(self):
         """Dispositivo sin historial se puede borrar."""

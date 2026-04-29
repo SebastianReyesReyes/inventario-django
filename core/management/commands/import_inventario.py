@@ -187,6 +187,7 @@ class Command(BaseCommand):
         self.tipos = {t.nombre.strip().lower(): t for t in TipoDispositivo.objects.all()}
         self.estados = {e.nombre.strip().lower(): e for e in EstadoDispositivo.objects.all()}
         self.ccs = {cc.codigo_contable.strip(): cc for cc in CentroCosto.objects.all()}
+        self.cc_default = self.ccs.get("114")  # Oficina Central como default
         self.fabs = {f.nombre.strip().lower(): f for f in Fabricante.objects.all()}
         self.modelos = {}  # se llena bajo demanda
         self.colaboradores = {}  # nombre_normalizado -> Colaborador
@@ -196,6 +197,9 @@ class Command(BaseCommand):
         # Contador para S/N temporales
         self._temp_sn_counter = 0
         self._prefetch_temp_sn()
+        # IMEIs ya usados para evitar duplicados
+        self._imeis_used = set()
+        self._imei_conflicts = 0
 
     def _prefetch_temp_sn(self):
         """Busca el ultimo S/N temporal para seguir la secuencia."""
@@ -298,7 +302,9 @@ class Command(BaseCommand):
 
         # --- resolver Centro de Costo ---
         cc_code = _extract_cc_code(ubicacion_raw)
-        cc = self.ccs.get(cc_code) if cc_code else None
+        cc = self.ccs.get(cc_code) if cc_code else self.cc_default
+        if not cc:
+            cc = self.cc_default
 
         # --- resolver Colaborador ---
         colaborador = None
@@ -370,9 +376,16 @@ class Command(BaseCommand):
                 sistema_operativo="Por definir",
             )
         elif tipo_lower == "smartphone":
+            # Manejar IMEIs duplicados
+            imei1_final = imei1 or "POR DEFINIR"
+            if imei1_final in self._imeis_used:
+                imei1_final = f"TEMP-IMEI-{self._imei_conflicts:04d}"
+                self._imei_conflicts += 1
+                self.stdout.write(f"    [!] IMEI duplicado detectado, usando temporal: {imei1_final}")
+            self._imeis_used.add(imei1_final)
             d = Smartphone.objects.create(
                 **base_fields,
-                imei_1=imei1 or "POR DEFINIR",
+                imei_1=imei1_final,
                 imei_2=imei2 or None,
             )
         elif tipo_lower == "monitor":
@@ -500,14 +513,27 @@ class Command(BaseCommand):
             self.fabs[fab_name.lower()] = fab
             self.stdout.write(self.style.NOTICE(f"    Nuevo fabricante: {fab_name}"))
 
-        # Modelo
-        new_model = Modelo.objects.create(
-            nombre=modelo_name,
-            fabricante=fab,
-            tipo_dispositivo=tipo,
-        )
+        # Modelo - con manejo de duplicados por race condition
+        try:
+            new_model = Modelo.objects.create(
+                nombre=modelo_name,
+                fabricante=fab,
+                tipo_dispositivo=tipo,
+            )
+            self.stdout.write(self.style.NOTICE(
+                f"    Nuevo modelo: {modelo_name} ({fab_name} / {tipo.nombre})"
+            ))
+        except Exception:
+            # Race condition: otro hilo/fila creo el modelo mismo
+            new_model = Modelo.objects.filter(
+                nombre__iexact=modelo_name,
+                fabricante=fab,
+                tipo_dispositivo=tipo,
+            ).first()
+            if not new_model:
+                raise
+            self.stdout.write(self.style.NOTICE(
+                f"    Modelo existente (race): {modelo_name} ({fab_name})"
+            ))
         self.modelos[cache_key] = (new_model, fab)
-        self.stdout.write(self.style.NOTICE(
-            f"    Nuevo modelo: {modelo_name} ({fab_name} / {tipo.nombre})"
-        ))
         return new_model, fab

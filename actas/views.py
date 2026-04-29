@@ -143,7 +143,6 @@ def acta_preview_pdf(request):
         )
         response = HttpResponse(pdf_bytes, content_type='application/pdf')
         response['Content-Disposition'] = 'inline; filename="preview.pdf"'
-        response['X-PDF-Engine'] = getattr(settings, 'PDF_ENGINE', 'xhtml2pdf')
         return response
     except ValidationError as e:
         return HttpResponse(str(e.message if hasattr(e, 'message') else e), status=400)
@@ -202,14 +201,13 @@ def acta_detail(request, pk):
 @login_required
 @permission_required('actas.view_acta', raise_exception=True)
 def acta_pdf(request, pk):
-    """Genera el PDF legal corporativo usando ActaPDFService (feature flag)."""
+    """Genera el PDF legal corporativo usando ActaPDFService (Playwright/Chromium)."""
     try:
         acta, _ = ActaService.obtener_acta_con_relaciones(pk)
-        pdf_content, actual_engine = ActaPDFService.generar_pdf_con_info(acta)
+        pdf_content = ActaPDFService.generar_pdf(acta)
 
         response = HttpResponse(pdf_content, content_type='application/pdf')
         response['Content-Disposition'] = f'inline; filename="Acta_{acta.folio}.pdf"'
-        response['X-PDF-Engine'] = actual_engine
         return response
     except Exception as e:
         return HttpResponse(f'Error al generar PDF: {str(e)}', status=500)

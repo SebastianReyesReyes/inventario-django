@@ -1,10 +1,9 @@
 import pytest
 from django.core.exceptions import ValidationError
-from actas.services import ActaService
 from actas.models import Acta
-from dispositivos.models import HistorialAsignacion, EntregaAccesorio
+from actas.services import ActaService
 from core.tests.factories import (
-    ColaboradorFactory, HistorialAsignacionFactory, 
+    ColaboradorFactory, HistorialAsignacionFactory,
     EntregaAccesorioFactory, ActaFactory
 )
 
@@ -198,83 +197,82 @@ class TestActaPDFService:
         HistorialAsignacionFactory(acta=acta, colaborador=colaborador)
         return acta
 
-    def test_defaults_to_xhtml2pdf(self, acta_para_pdf, settings):
-        """Verifica que el engine por defecto es xhtml2pdf."""
-        settings.PDF_ENGINE = 'xhtml2pdf'
+    def test_generar_pdf_returns_bytes(self, acta_para_pdf, monkeypatch):
+        """Verifica que generar_pdf() devuelve siempre PDF binario (Playwright-only)."""
         from actas.services import ActaPDFService
-        pdf = ActaPDFService.generar_pdf(acta_para_pdf)
-        assert isinstance(pdf, bytes)
-        assert len(pdf) > 0
+        monkeypatch.setattr(ActaPDFService, '_playwright', lambda *a, **kw: b'pdf-output')
 
-    def test_xhtml2pdf_delegates_to_acta_service(self, acta_para_pdf, monkeypatch, settings):
-        """Verifica que el engine xhtml2pdf delega en ActaService.generar_pdf()."""
-        from actas.services import ActaPDFService, ActaService
-        
+        pdf = ActaPDFService.generar_pdf(acta_para_pdf)
+
+        assert isinstance(pdf, bytes)
+        assert pdf == b'pdf-output'
+
+    def test_generar_pdf_delegates_to_playwright(self, acta_para_pdf, monkeypatch):
+        """Verifica que generar_pdf() siempre delega en _playwright()."""
+        from actas.services import ActaPDFService
+
         called = []
-        def spy(*args, **kwargs):
-            called.append(True)
-            return b'fake-pdf'
-        monkeypatch.setattr(ActaService, 'generar_pdf', spy)
-        settings.PDF_ENGINE = 'xhtml2pdf'
+        monkeypatch.setattr(
+            ActaPDFService, '_playwright',
+            lambda *a, **kw: called.append(True) or b'pdf'
+        )
 
         ActaPDFService.generar_pdf(acta_para_pdf)
 
         assert len(called) == 1
 
-    def test_both_mode_returns_dict(self, acta_para_pdf, monkeypatch, settings):
-        """Verifica que 'both' devuelve un dict con ambos PDFs."""
+    def test_generar_pdf_con_info_returns_tuple(self, acta_para_pdf, monkeypatch):
+        """Verifica que generar_pdf_con_info() devuelve (bytes, motor)."""
         from actas.services import ActaPDFService
-        monkeypatch.setattr(ActaPDFService, '_playwright', lambda acta: b'playwright-pdf')
-        monkeypatch.setattr(ActaPDFService, '_xhtml2pdf', lambda acta: b'xhtml2pdf-pdf')
-        settings.PDF_ENGINE = 'both'
+        monkeypatch.setattr(ActaPDFService, '_playwright', lambda *a, **kw: b'pdf-output')
 
-        result = ActaPDFService.generar_pdf(acta_para_pdf)
+        pdf, engine = ActaPDFService.generar_pdf_con_info(acta_para_pdf)
 
-        assert isinstance(result, dict)
-        assert result == {'xhtml2pdf': b'xhtml2pdf-pdf', 'playwright': b'playwright-pdf'}
+        assert isinstance(pdf, bytes)
+        assert pdf == b'pdf-output'
+        assert engine == 'playwright'
 
-    def test_playwright_generates_pdf(self, acta_para_pdf, monkeypatch, settings):
-        """Verifica que el engine playwright genera un PDF binario."""
+    def test_playwright_generates_pdf(self, acta_para_pdf, monkeypatch):
+        """Verifica que _playwright genera un PDF binario."""
         from actas.services import ActaPDFService
-        monkeypatch.setattr(ActaPDFService, '_playwright', lambda acta: b'playwright-output')
-        settings.PDF_ENGINE = 'playwright'
+        monkeypatch.setattr(ActaPDFService, '_playwright', lambda *a, **kw: b'playwright-output')
 
         pdf = ActaPDFService.generar_pdf(acta_para_pdf)
 
         assert pdf == b'playwright-output'
 
-    def test_playwright_fallback_on_error(self, acta_para_pdf, monkeypatch, settings):
-        """Verifica que si Playwright falla, se revierte a xhtml2pdf."""
+    def test_playwright_error_propagates(self, acta_para_pdf, monkeypatch):
+        """Verifica que si _playwright falla, la excepción se propaga."""
         from actas.services import ActaPDFService
-        monkeypatch.setattr(ActaPDFService, '_xhtml2pdf', lambda acta: b'fallback-pdf')
         monkeypatch.setattr(
             ActaPDFService, '_playwright',
-            lambda acta: (_ for _ in ()).throw(RuntimeError('Browser crash'))
+            lambda *a, **kw: (_ for _ in ()).throw(RuntimeError('Browser crash'))
         )
-        settings.PDF_ENGINE = 'playwright'
 
-        pdf = ActaPDFService.generar_pdf(acta_para_pdf)
+        with pytest.raises(RuntimeError, match='Browser crash'):
+            ActaPDFService.generar_pdf(acta_para_pdf)
 
-        assert pdf == b'fallback-pdf'
-
-    def test_engine_param_overrides_setting(self, acta_para_pdf, monkeypatch, settings):
-        """Verifica que el parámetro engine sobrescribe settings.PDF_ENGINE."""
-        settings.PDF_ENGINE = 'playwright'
-        from actas.services import ActaPDFService, ActaService
+    def test_engine_param_ignored(self, acta_para_pdf, monkeypatch):
+        """Verifica que el parámetro engine es ignorado (siempre usa Playwright)."""
+        from actas.services import ActaPDFService
 
         called = []
-        monkeypatch.setattr(ActaService, 'generar_pdf', lambda acta: called.append(True) or b'ok')
+        monkeypatch.setattr(
+            ActaPDFService, '_playwright',
+            lambda *a, **kw: called.append(True) or b'ok'
+        )
 
+        # Cualquier valor de engine debe delegar en _playwright
         ActaPDFService.generar_pdf(acta_para_pdf, engine='xhtml2pdf')
 
         assert len(called) == 1
 
-    def test_no_acta_instance_leaks(self, acta_para_pdf, settings):
+    def test_no_acta_instance_leaks(self, acta_para_pdf, monkeypatch):
         """Verifica que generar_pdf() no crea ni modifica actas en BD."""
-        initial_count = Acta.objects.count()
-        settings.PDF_ENGINE = 'xhtml2pdf'
         from actas.services import ActaPDFService
+        monkeypatch.setattr(ActaPDFService, '_playwright', lambda *a, **kw: b'ok')
 
+        initial_count = Acta.objects.count()
         ActaPDFService.generar_pdf(acta_para_pdf)
 
         assert Acta.objects.count() == initial_count

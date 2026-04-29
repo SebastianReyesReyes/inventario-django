@@ -250,11 +250,8 @@ LOGGING = {
 # ─────────────────────────────────────────────────────
 # PDF Engine Configuration
 # ─────────────────────────────────────────────────────
-# Engine para generación de PDFs de actas.
-# "xhtml2pdf"  = motor actual (seguro, estable, legacy)
-# "playwright" = Chromium headless (CSS moderno, pixel-perfect)
-# "both"       = genera ambos para comparación A/B
-PDF_ENGINE = os.getenv('PDF_ENGINE', 'xhtml2pdf')
+# Engine para generacion de PDFs de actas — siempre Playwright/Chromium.
+PDF_ENGINE = os.getenv('PDF_ENGINE', 'playwright')
 
 # Playwright: timeout máximo para generación de PDF (ms)
 PLAYWRIGHT_BROWSER_TIMEOUT = int(os.getenv('PLAYWRIGHT_BROWSER_TIMEOUT', '15000'))

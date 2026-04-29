@@ -11,8 +11,6 @@ from django.core.exceptions import ValidationError
 from django.contrib.staticfiles import finders
 from django.template.loader import render_to_string
 from django.utils import timezone
-from xhtml2pdf import pisa
-
 from .models import Acta
 from dispositivos.models import HistorialAsignacion
 
@@ -148,49 +146,26 @@ class ActaService:
         )
 
     @staticmethod
-    def _render_pdf(html):
-        """Helper interno: convierte HTML a bytes de PDF usando xhtml2pdf."""
-        from io import BytesIO
-        buffer = BytesIO()
-        pisa_status = pisa.CreatePDF(html, dest=buffer)
-        if pisa_status.err:
-            raise RuntimeError("Error al generar PDF con xhtml2pdf")
-        return buffer.getvalue()
-
-    @staticmethod
     def generar_pdf(acta):
         """
         Genera el contenido binario del PDF corporativo para un acta persistida.
+
+        Delega en ActaPDFService._playwright() para mantener compatibilidad
+        con código legacy que llama a este método directamente.
 
         Args:
             acta: Instancia de Acta (debe tener relaciones cargadas).
 
         Returns:
             bytes: El contenido del PDF generado.
-
-        Raises:
-            RuntimeError: Si xhtml2pdf falla en la generación.
         """
-        asignaciones = ActaService.obtener_asignaciones_para_pdf(acta)
-        logo_path = finders.find('img/LogoColor.png')
-        accesorios = acta.accesorios.all()
-
-        context = {
-            'acta': acta,
-            'asignaciones': asignaciones,
-            'accesorios': accesorios,
-            'logo_path': logo_path,
-            'fecha_actual': timezone.now(),
-        }
-
-        html = render_to_string('actas/partials/acta_pdf.html', context)
-        return ActaService._render_pdf(html)
+        return ActaPDFService._playwright(acta)
 
     @staticmethod
     def generar_preview_pdf(colaborador, tipo_acta, asignacion_ids, creado_por,
                              observaciones=None, accesorio_ids=None, ministro_de_fe=None):
         """
-        Genera un PDF de preview (sin persistir) usando el mismo motor que el PDF real.
+        Genera un PDF de preview (sin persistir) delegando en ActaPDFService.
 
         Args:
             colaborador, tipo_acta, asignacion_ids, creado_por: mismos que generar_preview_html.
@@ -199,48 +174,10 @@ class ActaService:
         Returns:
             bytes: Contenido binario del PDF.
         """
-        from dispositivos.models import HistorialAsignacion, EntregaAccesorio
-
-        asignaciones = HistorialAsignacion.objects.filter(
-            pk__in=asignacion_ids,
-            colaborador=colaborador,
-            acta__isnull=True,
-        ).select_related(
-            'dispositivo__modelo__tipo_dispositivo',
-            'dispositivo__modelo__fabricante',
-            'dispositivo__modelo',
+        return ActaPDFService.generar_preview_pdf(
+            colaborador, tipo_acta, asignacion_ids, creado_por,
+            observaciones, accesorio_ids, ministro_de_fe,
         )
-
-        accesorios = []
-        if accesorio_ids:
-            accesorios = list(EntregaAccesorio.objects.filter(
-                pk__in=accesorio_ids,
-                colaborador=colaborador,
-                acta__isnull=True
-            ))
-
-        acta_preview = Acta(
-            colaborador=colaborador,
-            tipo_acta=tipo_acta,
-            creado_por=creado_por,
-            observaciones=observaciones or '',
-            ministro_de_fe=ministro_de_fe,
-            fecha=timezone.now(),
-        )
-        acta_preview.folio = f"ACT-{timezone.now().year}-PENDIENTE"
-
-        logo_path = finders.find('img/LogoColor.png')
-
-        context = {
-            'acta': acta_preview,
-            'asignaciones': asignaciones,
-            'accesorios': accesorios,
-            'logo_path': logo_path,
-            'fecha_actual': timezone.now(),
-        }
-
-        html = render_to_string('actas/partials/acta_pdf.html', context)
-        return ActaService._render_pdf(html)
 
     @staticmethod
     def generar_preview_html(colaborador, tipo_acta, asignacion_ids, creado_por,
@@ -350,14 +287,12 @@ class ActaService:
 
 class ActaPDFService:
     """
-    Servicio multi-engine para generación de PDFs de actas.
+    Servicio de generación de PDFs de actas usando Playwright/Chromium headless.
 
-    Decide el motor según settings.PDF_ENGINE:
-    - "xhtml2pdf"  → motor actual (fallback, seguro)
-    - "playwright" → Chromium headless (CSS moderno)
-    - "both"       → genera ambos para comparación A/B
-
-    Si Playwright falla, revierte automáticamente a xhtml2pdf.
+    El motor por defecto es Playwright (CSS moderno, pixel-perfect).
+    El parámetro PDF_ENGINE en settings permite compatibilidad con código
+    que aún referencia valores legacy ('xhtml2pdf', 'both'), en cuyo caso
+    se usa Playwright en todos los casos.
     """
 
     _logger = logging.getLogger('actas')
@@ -369,28 +304,12 @@ class ActaPDFService:
 
         Args:
             acta: Instancia de Acta con relaciones cargadas.
-            engine: "xhtml2pdf", "playwright", "both", o None (usa settings).
+            engine: Ignorado (mantenido por compatibilidad). Siempre usa Playwright.
 
         Returns:
-            bytes o dict: PDF binario, o {"xhtml2pdf": bytes, "playwright": bytes}
+            bytes: PDF binario.
         """
-        from django.conf import settings
-
-        engine = engine or getattr(settings, 'PDF_ENGINE', 'xhtml2pdf')
-
-        if engine == 'both':
-            return {
-                'xhtml2pdf': ActaPDFService._xhtml2pdf(acta),
-                'playwright': ActaPDFService._playwright(acta),
-            }
-        elif engine == 'playwright':
-            try:
-                return ActaPDFService._playwright(acta)
-            except Exception:
-                ActaPDFService._logger.exception("Playwright falló, usando xhtml2pdf como fallback")
-                return ActaPDFService._xhtml2pdf(acta)
-        else:
-            return ActaPDFService._xhtml2pdf(acta)
+        return ActaPDFService._playwright(acta)
 
     @staticmethod
     def generar_pdf_con_info(acta, engine=None):
@@ -398,26 +317,14 @@ class ActaPDFService:
         Igual que generar_pdf() pero retorna también el motor real usado.
 
         Returns:
-            tuple: (bytes, str) — PDF binario y motor real ('playwright' o 'xhtml2pdf')
+            tuple: (bytes, str) — PDF binario y motor real ('playwright')
         """
-        from django.conf import settings
-        engine = engine or getattr(settings, 'PDF_ENGINE', 'xhtml2pdf')
-
-        if engine == 'both':
-            return ActaPDFService.generar_pdf(acta, engine='both'), 'both'
-        elif engine == 'playwright':
-            try:
-                return ActaPDFService._playwright(acta), 'playwright'
-            except Exception:
-                ActaPDFService._logger.exception("Playwright falló, usando xhtml2pdf como fallback")
-                return ActaPDFService._xhtml2pdf(acta), 'xhtml2pdf'
-        else:
-            return ActaPDFService._xhtml2pdf(acta), 'xhtml2pdf'
+        return ActaPDFService._playwright(acta), 'playwright'
 
     @staticmethod
     def _xhtml2pdf(acta):
-        """Genera PDF usando el motor legacy xhtml2pdf (sin cambios)."""
-        return ActaService.generar_pdf(acta)
+        """[DEPRECATED] Shim de compatibilidad — delega en Playwright."""
+        return ActaPDFService._playwright(acta)
 
     @staticmethod
     def _encode_logo_to_base64(logo_path):
@@ -519,7 +426,7 @@ class ActaPDFService:
     def generar_preview_pdf(colaborador, tipo_acta, asignacion_ids, creado_por,
                              observaciones=None, accesorio_ids=None, ministro_de_fe=None):
         """
-        Genera un PDF de preview (sin persistir) usando el motor configurado.
+        Genera un PDF de preview (sin persistir) usando Playwright/Chromium.
 
         Args:
             colaborador, tipo_acta, asignacion_ids, creado_por: mismos que generar_preview_html.
@@ -528,7 +435,6 @@ class ActaPDFService:
         Returns:
             bytes: Contenido binario del PDF.
         """
-        from django.conf import settings
         from dispositivos.models import HistorialAsignacion, EntregaAccesorio
 
         asignaciones = HistorialAsignacion.objects.filter(
@@ -559,15 +465,4 @@ class ActaPDFService:
         )
         acta_preview.folio = f"ACT-{timezone.now().year}-PENDIENTE"
 
-        engine = getattr(settings, 'PDF_ENGINE', 'xhtml2pdf')
-
-        if engine == 'playwright':
-            try:
-                return ActaPDFService._playwright(acta_preview, asignaciones=asignaciones, accesorios=accesorios)
-            except Exception:
-                ActaPDFService._logger.exception("Playwright falló en preview, usando xhtml2pdf como fallback")
-                return ActaService.generar_preview_pdf(colaborador, tipo_acta, asignacion_ids, creado_por,
-                                                       observaciones, accesorio_ids, ministro_de_fe)
-        else:
-            return ActaService.generar_preview_pdf(colaborador, tipo_acta, asignacion_ids, creado_por,
-                                                   observaciones, accesorio_ids, ministro_de_fe)
+        return ActaPDFService._playwright(acta_preview, asignaciones=asignaciones, accesorios=accesorios)

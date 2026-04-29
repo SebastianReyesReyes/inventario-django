@@ -123,7 +123,7 @@ def acta_preview(request):
 @login_required
 @permission_required('actas.add_acta', raise_exception=True)
 def acta_preview_pdf(request):
-    """Genera un PDF de preview (sin persistir) para comparar con la vista HTML."""
+    """Genera un PDF de preview (sin persistir) usando el engine configurado."""
     form = ActaCrearForm(request.GET)
     asignacion_ids = request.GET.getlist('asignaciones')
     accesorio_ids = request.GET.getlist('accesorios')

@@ -133,7 +133,7 @@ class Command(BaseCommand):
             ("2502", "Data Center Colina"),
             ("2503", "Centro de Distribución Lo Aguirre (Walmart)"),
             ("2504", "Hospital Río Bueno"),
-            ("2506", "Data Center HB"),
+            ("2506", "Data Center Huechuraba"),
             ("2507", "Scala Data Santa Teresa"),
             ("2601", "Modular"),
             ("2602", "Strip Center"),

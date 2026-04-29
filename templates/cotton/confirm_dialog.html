@@ -4,14 +4,14 @@
         {{ slot }}
     </button>
 
-    <!-- Confirmation Modal (teleported to body to escape stacking contexts) -->
-    <template x-teleport="body">
-        <div
-            x-show="open"
-            x-cloak
-            class="fixed inset-0 z-[60] flex items-center justify-center"
-            @keydown.escape.window="open = false"
-        >
+    <!-- Confirmation Modal (fixed positioning escapes parent stacking contexts) -->
+    <div
+        x-show="open"
+        x-cloak
+        class="fixed inset-0 z-[60] flex items-center justify-center"
+        style="display: none;"
+        @keydown.escape.window="open = false"
+    >
             <!-- Backdrop -->
             <div
                 x-show="open"
@@ -64,7 +64,6 @@
                 </div>
             </div>
         </div>
-    </template>
 
     <!-- Hidden HTMX action button -->
     <button

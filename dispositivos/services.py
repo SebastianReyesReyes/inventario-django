@@ -37,8 +37,8 @@ class DispositivoFactory:
     def create_form_instance(cls, post_data=None, files_data=None, tipo_id=None, instance=None):
         """Retorna una instancia del formulario correcto inicializado, soportando creación o edición."""
         if instance:
-            # Para edición, el tipo ya viene en la instancia
-            tipo = getattr(instance, 'tipo', None)
+            # Para edicion, resolvemos el tipo desde modelo.tipo_dispositivo
+            tipo = instance.modelo.tipo_dispositivo if instance.modelo else None
             FormClass = cls.get_form_class_for_tipo(tipo)
             
             sub_instance = instance

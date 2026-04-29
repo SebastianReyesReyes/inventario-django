@@ -114,3 +114,29 @@ class TestColaboradorViews:
         assert response.context['query'] == 'Pa'
         assert response.context['current_sort'] == 'nombre'
         assert response.context['current_order'] == 'asc'
+
+    def test_colaborador_list_returns_page_obj(self, client):
+        client.force_login(self.admin)
+        for i in range(25):
+            ColaboradorFactory(username=f"colab{i:03d}")
+        response = client.get(self.url_list)
+        assert response.status_code == 200
+        assert 'page_obj' in response.context
+        assert response.context['page_obj'].paginator.per_page == 20
+
+    def test_colaborador_list_invalid_page_fallback(self, client):
+        client.force_login(self.admin)
+        ColaboradorFactory()
+        response = client.get(self.url_list, {'page': 'xyz'})
+        assert response.status_code == 200
+        assert response.context['page_obj'].number == 1
+
+    def test_colaborador_list_htmx_pagination(self, client):
+        client.force_login(self.admin)
+        for i in range(25):
+            ColaboradorFactory(username=f"colabhtmx{i:03d}")
+        response = client.get(self.url_list, {'page': '2'}, HTTP_HX_REQUEST='true')
+        assert response.status_code == 200
+        assert 'colaboradores/partials/colaborador_list_table.html' in [t.name for t in response.templates]
+        html = response.content.decode('utf-8')
+        assert '<c-paginator' in html or 'Página 2 de' in html

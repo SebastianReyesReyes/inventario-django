@@ -176,7 +176,7 @@
         <tr>
             <td style="font-weight:bold; background-color:#f9f9f9;">Cargo:</td>
             <td>{{ acta.colaborador.cargo|default:"---" }}</td>
-            <td style="font-weight:bold; background-color:#f9f9f9;">Obra / CC:</td>
+            <td style="font-weight:bold; background-color:#f9f9f9;">Obra:</td>
             <td>{{ acta.colaborador.centro_costo|default:"Administración Central" }}</td>
         </tr>
     </table>
@@ -189,7 +189,7 @@
             <tr>
                 <th width="15%">ID JMIE</th>
                 <th width="15%">Tipo</th>
-                <th width="35%">Modelo / Fabricante</th>
+                <th width="35%">Fabricante/ Modelo</th>
                 <th width="20%">N° Serie</th>
                 <th width="15%">Estado Recep.</th>
             </tr>
@@ -199,7 +199,7 @@
             <tr>
                 <td>{{ asig.dispositivo.identificador_interno }}</td>
                 <td>{{ asig.dispositivo.modelo.tipo_dispositivo.nombre }}</td>
-                <td>{{ asig.dispositivo.modelo }}</td>
+                <td>{{ asig.dispositivo.modelo.fabricante }} / {{ asig.dispositivo.modelo.nombre }}</td>
                 <td>{{ asig.dispositivo.numero_serie }}</td>
                 <td>{{ asig.condicion_fisica|default:"Sin daños" }}</td>
             </tr>
@@ -283,8 +283,8 @@
             <!-- COLABORADOR -->
             <div class="signature-box" style="margin-left: 2%;">
                 <div class="signature-line">
-                    <strong>{% if acta.tipo_acta == 'ENTREGA' %}Recibí Conforme (Colaborador){% else %}Entrego Conforme
-                        (Colaborador){% endif %}</strong><br>
+                    <strong>{% if acta.tipo_acta == 'ENTREGA' %}Recibí Conforme{% else %}Entrego Conforme
+                        {% endif %}</strong><br>
                     {{ acta.colaborador.nombre_completo }}<br>
                     RUT: {{ acta.colaborador.rut|format_rut }}
                 </div>

@@ -3,9 +3,12 @@ from django.db.models import Q
 from django.http import HttpResponse
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.hashers import make_password
+from django.utils import timezone
 from .models import Colaborador
 from .forms import ColaboradorForm
+from .resources import ColaboradorResource
 import secrets
+from core.pagination import paginate_queryset
 
 @login_required
 def colaborador_list(request):
@@ -38,8 +41,10 @@ def colaborador_list(request):
         sort_field = f'-{sort_field}'
     colaboradores = colaboradores.order_by(sort_field)
 
+    page_obj = paginate_queryset(request, colaboradores, per_page=20)
     context = {
-        'colaboradores': colaboradores,
+        'page_obj': page_obj,
+        'colaboradores': page_obj,
         'query': query,
         'current_sort': sort,
         'current_order': order,
@@ -106,9 +111,41 @@ def colaborador_detail(request, pk):
 def colaborador_delete(request, pk):
     """Baja lógica de colaborador."""
     colaborador = get_object_or_404(Colaborador, pk=pk)
-    colaborador.delete() # El método delete() ya está sobrescrito en el modelo para ser lógico
+    try:
+        colaborador.delete() # El método delete() ya está sobrescrito en el modelo para ser lógico
+    except Exception as e:
+        # Por si alguna restricción a nivel base de datos o similar falla
+        if request.headers.get('HX-Request'):
+            from core.htmx import htmx_trigger_response
+            return htmx_trigger_response(
+                trigger={
+                    'show-notification': {
+                        'message': f"Error al desactivar el colaborador: {str(e)}",
+                        'type': 'error'
+                    }
+                },
+                status_code=204
+            )
+        messages.error(request, f"Error al desactivar: {str(e)}")
+        return redirect('colaboradores:colaborador_list')
     
     if request.headers.get('HX-Request'):
         return HttpResponse("") # Elimina la fila en el cliente
         
     return redirect('colaboradores:colaborador_list')
+
+
+@login_required
+def colaborador_exportar_excel(request):
+    """Exporta el padron completo de colaboradores a formato Excel."""
+    dataset = ColaboradorResource().export(Colaborador.objects.select_related(
+        'departamento', 'centro_costo'
+    ).all().order_by('first_name'))
+    response = HttpResponse(
+        dataset.export('xlsx'),
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = (
+        f'attachment; filename="Colaboradores_JMIE_{timezone.now().date()}.xlsx"'
+    )
+    return response

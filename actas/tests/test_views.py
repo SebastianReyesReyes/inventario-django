@@ -240,3 +240,18 @@ class TestActaViews:
         folios = [a.folio for a in response.context['page_obj']]
         assert 'ACT-JUAN-001' in folios
         assert 'ACT-PEDRO-001' not in folios
+
+    def test_acta_list_has_paginator_visual(self, client):
+        user = ColaboradorFactory(is_staff=True, is_superuser=True)
+        user.set_password('password')
+        user.save()
+        client.login(username=user.username, password='password')
+        for i in range(15):
+            ActaFactory()
+        url = reverse('actas:acta_list')
+        response = client.get(url)
+        assert response.status_code == 200
+        assert 'page_obj' in response.context
+        assert response.context['page_obj'].paginator.per_page == 10
+        html = response.content.decode('utf-8')
+        assert '<c-paginator' in html or 'Página 1 de' in html

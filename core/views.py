@@ -9,6 +9,7 @@ from .models import Fabricante, TipoDispositivo, Modelo, CentroCosto, EstadoDisp
 from .filters import DashboardFilterSet
 from dispositivos.models import Dispositivo, BitacoraMantenimiento, HistorialAsignacion
 from .htmx import htmx_trigger_response
+from core.pagination import paginate_queryset
 from .catalog_views import (
     CentroCostoCreateView,
     CentroCostoUpdateView,
@@ -84,7 +85,8 @@ def dashboard_drill_down(request):
 @login_required
 def fabricante_list(request):
     fabricantes = Fabricante.objects.prefetch_related('modelos').all().order_by('nombre')
-    return render(request, 'core/fabricante_list.html', {'fabricantes': fabricantes})
+    page_obj = paginate_queryset(request, fabricantes, per_page=10)
+    return render(request, 'core/fabricante_list.html', {'page_obj': page_obj, 'fabricantes': page_obj})
 
 fabricante_create = FabricanteCreateView.as_view()
 fabricante_edit = FabricanteUpdateView.as_view()
@@ -133,13 +135,13 @@ def ajax_modelo_delete_inline(request, pk):
 def modelo_list(request):
     fabricante_id = request.GET.get('fabricante_id')
     modelos = Modelo.objects.select_related('fabricante').all().order_by('fabricante__nombre', 'nombre')
-    
     if fabricante_id:
         modelos = modelos.filter(fabricante_id=fabricante_id)
-        
+    page_obj = paginate_queryset(request, modelos, per_page=10)
     fabricantes = Fabricante.objects.all().order_by('nombre')
     return render(request, 'core/modelo_list.html', {
-        'modelos': modelos, 
+        'page_obj': page_obj,
+        'modelos': page_obj,
         'fabricantes': fabricantes,
         'selected_fabricante': int(fabricante_id) if fabricante_id else None
     })
@@ -153,7 +155,8 @@ modelo_delete = ModeloDeleteView.as_view()
 @login_required
 def tipo_list(request):
     tipos = TipoDispositivo.objects.all().order_by('nombre')
-    return render(request, 'core/tipo_list.html', {'tipos': tipos})
+    page_obj = paginate_queryset(request, tipos, per_page=10)
+    return render(request, 'core/tipo_list.html', {'page_obj': page_obj, 'tipos': page_obj})
 
 tipo_create = TipoCreateView.as_view()
 tipo_edit = TipoUpdateView.as_view()
@@ -164,7 +167,8 @@ tipo_delete = TipoDeleteView.as_view()
 @login_required
 def cc_list(request):
     ccs = CentroCosto.objects.all().order_by('-activa', 'nombre')
-    return render(request, 'core/cc_list.html', {'ccs': ccs})
+    page_obj = paginate_queryset(request, ccs, per_page=10)
+    return render(request, 'core/cc_list.html', {'page_obj': page_obj, 'ccs': page_obj})
 
 cc_create = CentroCostoCreateView.as_view()
 cc_edit = CentroCostoUpdateView.as_view()
@@ -184,7 +188,8 @@ def cc_toggle_activa(request, pk):
 @login_required
 def estado_list(request):
     estados = EstadoDispositivo.objects.all().order_by('nombre')
-    return render(request, 'core/estado_list.html', {'estados': estados})
+    page_obj = paginate_queryset(request, estados, per_page=10)
+    return render(request, 'core/estado_list.html', {'page_obj': page_obj, 'estados': page_obj})
 
 estado_create = EstadoCreateView.as_view()
 estado_edit = EstadoUpdateView.as_view()
@@ -195,7 +200,8 @@ estado_delete = EstadoDeleteView.as_view()
 @login_required
 def departamento_list(request):
     departamentos = Departamento.objects.all().order_by('nombre')
-    return render(request, 'core/departamento_list.html', {'departamentos': departamentos})
+    page_obj = paginate_queryset(request, departamentos, per_page=10)
+    return render(request, 'core/departamento_list.html', {'page_obj': page_obj, 'departamentos': page_obj})
 
 departamento_create = DepartamentoCreateView.as_view()
 departamento_edit = DepartamentoUpdateView.as_view()

@@ -1,0 +1,103 @@
+{% load url_tags %}
+{% if page.paginator.num_pages > 1 %}
+{% with current=page.number total=page.paginator.num_pages %}
+{% with window_start=current|add:-2 window_end=current|add:2 %}
+<div class="flex items-center justify-between px-6 py-4 bg-white/[0.01] border-t border-white/5">
+    <div class="flex items-center gap-2">
+        {% if page.has_previous %}
+         <a href="?{% query_transform page=page.previous_page_number %}"
+            hx-get="{{ request.path }}?{% query_transform page=page.previous_page_number %}"
+            hx-target="{{ target|default:'#tabla-wrapper' }}"
+            hx-select="{{ select }}"
+            hx-swap="innerHTML"
+            hx-push-url="{{ push_url|default:'true' }}"
+            class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-jmie-gray text-[10px] font-black uppercase tracking-widest transition-colors">
+             Anterior
+         </a>
+        {% else %}
+        <span class="px-3 py-1.5 rounded-lg bg-white/5 text-jmie-gray/30 text-[10px] font-black uppercase tracking-widest cursor-not-allowed">
+            Anterior
+        </span>
+        {% endif %}
+
+        <div class="flex items-center gap-1">
+            {# Primera página siempre #}
+            {% if current == 1 %}
+            <span class="px-3 py-1.5 rounded-lg bg-jmie-orange/20 text-jmie-orange text-[10px] font-black transition-colors">1</span>
+            {% else %}
+            <a href="?{% query_transform page=1 %}"
+               hx-get="{{ request.path }}?{% query_transform page=1 %}"
+               hx-target="{{ target|default:'#tabla-wrapper' }}"
+               hx-select="{{ select }}"
+               hx-swap="innerHTML"
+               hx-push-url="{{ push_url|default:'true' }}"
+               class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-jmie-gray text-[10px] font-black transition-colors">1</a>
+            {% endif %}
+
+            {# Elipsis inicial #}
+            {% if window_start > 2 %}
+            <span class="px-2 py-1.5 text-jmie-gray/40 text-[10px] font-black">...</span>
+            {% endif %}
+
+            {# Rango medio #}
+            {% for p in page.paginator.page_range %}
+                {% if p > 1 and p < total and p >= window_start and p <= window_end %}
+                    {% if p == current %}
+                    <span class="px-3 py-1.5 rounded-lg bg-jmie-orange/20 text-jmie-orange text-[10px] font-black transition-colors">{{ p }}</span>
+                    {% else %}
+                    <a href="?{% query_transform page=p %}"
+                       hx-get="{{ request.path }}?{% query_transform page=p %}"
+                       hx-target="{{ target|default:'#tabla-wrapper' }}"
+                       hx-select="{{ select }}"
+                       hx-swap="innerHTML"
+                       hx-push-url="{{ push_url|default:'true' }}"
+                       class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-jmie-gray text-[10px] font-black transition-colors">{{ p }}</a>
+                    {% endif %}
+                {% endif %}
+            {% endfor %}
+
+            {# Elipsis final #}
+            {% if window_end < total|add:-1 %}
+            <span class="px-2 py-1.5 text-jmie-gray/40 text-[10px] font-black">...</span>
+            {% endif %}
+
+            {# Última página siempre #}
+            {% if total > 1 %}
+                {% if current == total %}
+                <span class="px-3 py-1.5 rounded-lg bg-jmie-orange/20 text-jmie-orange text-[10px] font-black transition-colors">{{ total }}</span>
+                {% else %}
+                <a href="?{% query_transform page=total %}"
+                   hx-get="{{ request.path }}?{% query_transform page=total %}"
+                   hx-target="{{ target|default:'#tabla-wrapper' }}"
+                   hx-select="{{ select }}"
+                   hx-swap="innerHTML"
+                   hx-push-url="{{ push_url|default:'true' }}"
+                   class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-jmie-gray text-[10px] font-black transition-colors">{{ total }}</a>
+                {% endif %}
+            {% endif %}
+        </div>
+
+        {% if page.has_next %}
+        <a href="?{% query_transform page=page.next_page_number %}"
+           hx-get="{{ request.path }}?{% query_transform page=page.next_page_number %}"
+           hx-target="{{ target|default:'#tabla-wrapper' }}"
+           hx-select="{{ select }}"
+           hx-swap="innerHTML"
+           hx-push-url="{{ push_url|default:'true' }}"
+           class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-jmie-gray text-[10px] font-black uppercase tracking-widest transition-colors">
+            Siguiente
+        </a>
+        {% else %}
+        <span class="px-3 py-1.5 rounded-lg bg-white/5 text-jmie-gray/30 text-[10px] font-black uppercase tracking-widest cursor-not-allowed">
+            Siguiente
+        </span>
+        {% endif %}
+    </div>
+
+    <span class="text-[10px] font-bold text-jmie-gray/40 uppercase tracking-widest">
+        Página {{ current }} de {{ total }} &middot; {{ page.paginator.count }} registros
+    </span>
+</div>
+{% endwith %}
+{% endwith %}
+{% endif %}

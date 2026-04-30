@@ -21,8 +21,26 @@
                     {% if form.nombre.errors %}<p class="mt-1 text-xs text-red-400">{{ form.nombre.errors.0 }}</p>{% endif %}
                 </div>
                 <div>
-                    <c-form-label>Categoría</c-form-label>
-                    {{ form.categoria }}
+                    <div class="flex items-center justify-between mb-2">
+                        <c-form-label>Categoría</c-form-label>
+                        {% if perms.suministros.add_categoriasuministro %}
+                        <button type="button"
+                                hx-get="{% url 'suministros:categoriasuministro_create' %}"
+                                hx-target="body"
+                                hx-swap="beforeend"
+                                class="text-[10px] font-black text-jmie-orange hover:text-jmie-orange/80 transition-colors flex items-center gap-0.5"
+                                title="Nueva Categoría">
+                            <span class="material-symbols-outlined text-[14px]">add_circle</span>
+                            Nueva
+                        </button>
+                        {% endif %}
+                    </div>
+                    <div hx-get="{% url 'suministros:ajax_categoria_options' %}?selected={{ form.categoria.value|default:'' }}"
+                         hx-trigger="categoriaListChanged from:body"
+                         hx-target="#{{ form.categoria.id_for_label }}"
+                         hx-swap="innerHTML">
+                        {{ form.categoria }}
+                    </div>
                     {% if form.categoria.errors %}<p class="mt-1 text-xs text-red-400">{{ form.categoria.errors.0 }}</p>{% endif %}
                 </div>
                 <div>
@@ -30,8 +48,26 @@
                     {{ form.codigo_interno }}
                 </div>
                 <div>
-                    <c-form-label>Marca</c-form-label>
-                    {{ form.marca }}
+                    <div class="flex items-center justify-between mb-2">
+                        <c-form-label>Fabricante</c-form-label>
+                        {% if perms.core.add_fabricante %}
+                        <button type="button"
+                                hx-get="{% url 'core:fabricante_create' %}"
+                                hx-target="body"
+                                hx-swap="beforeend"
+                                class="text-[10px] font-black text-jmie-orange hover:text-jmie-orange/80 transition-colors flex items-center gap-0.5"
+                                title="Nuevo Fabricante">
+                            <span class="material-symbols-outlined text-[14px]">add_circle</span>
+                            Nuevo
+                        </button>
+                        {% endif %}
+                    </div>
+                    <div hx-get="{% url 'core:ajax_fabricante_options' %}?selected={{ form.fabricante.value|default:'' }}"
+                         hx-trigger="fabricanteListChanged from:body"
+                         hx-target="#{{ form.fabricante.id_for_label }}"
+                         hx-swap="innerHTML">
+                        {{ form.fabricante }}
+                    </div>
                 </div>
                 <div>
                     <c-form-label>Unidad de Medida</c-form-label>

@@ -8,29 +8,33 @@ from django.core.paginator import Paginator
 from django.core.exceptions import ValidationError
 from django import forms
 
-from core.htmx import htmx_trigger_response, htmx_render_or_redirect
-from core.models import Modelo
+from core.htmx import htmx_trigger_response, htmx_render_or_redirect, htmx_success_or_redirect
+from core.models import Modelo, Fabricante
 from .models import Suministro, MovimientoStock, CategoriaSuministro
-from .forms import SuministroForm, MovimientoStockForm
+from .forms import SuministroForm, MovimientoStockForm, CategoriaSuministroForm
 from .services import registrar_movimiento_stock
 
 
 @login_required
 def suministro_list(request):
-    """Listado de suministros con búsqueda, filtro por categoría y paginación."""
+    """Listado de suministros con búsqueda, filtro por categoría/fabricante y paginación."""
     query = request.GET.get('q', '')
     categoria_id = request.GET.get('categoria', '')
+    fabricante_id = request.GET.get('fabricante', '')
 
-    suministros = Suministro.objects.activos().select_related('categoria')
+    suministros = Suministro.objects.activos().select_related('categoria', 'fabricante')
 
     if categoria_id:
         suministros = suministros.filter(categoria_id=categoria_id)
+
+    if fabricante_id:
+        suministros = suministros.filter(fabricante_id=fabricante_id)
 
     if query:
         suministros = suministros.filter(
             Q(nombre__icontains=query) |
             Q(codigo_interno__icontains=query) |
-            Q(marca__icontains=query)
+            Q(fabricante__nombre__icontains=query)
         )
 
     # Paginación: 20 items por página
@@ -42,8 +46,10 @@ def suministro_list(request):
         'page_obj': page_obj,
         'suministros': page_obj.object_list,
         'categorias': CategoriaSuministro.objects.all(),
+        'fabricantes_list': Fabricante.objects.all().order_by('nombre'),
         'query': query,
         'categoria_id': categoria_id,
+        'fabricante_id': fabricante_id,
     }
 
     if request.headers.get('HX-Request'):
@@ -55,49 +61,57 @@ def suministro_list(request):
 @login_required
 @permission_required('suministros.add_suministro', raise_exception=True)
 def suministro_create(request):
-    """Crear un nuevo suministro (página completa)."""
+    """Crear suministro — HTMX modal o página completa."""
     if request.method == 'POST':
         form = SuministroForm(request.POST)
         if form.is_valid():
             suministro = form.save()
-            messages.success(request, f"Suministro '{suministro.nombre}' creado correctamente.")
-            return htmx_render_or_redirect(
+            return htmx_success_or_redirect(
                 request,
-                'suministros/suministro_list.html',
-                {'page_obj': None, 'suministros': [], 'categorias': [], 'query': '', 'categoria_id': ''},
-                reverse('suministros:suministro_list'),
-                trigger={'showToast': {'message': f'Suministro "{suministro.nombre}" creado', 'type': 'success'}}
+                redirect_url='suministros:suministro_list',
+                trigger={'refreshSuministroList': '', 'showToast': {'message': f'Suministro "{suministro.nombre}" creado', 'type': 'success'}},
             )
     else:
         form = SuministroForm()
 
-    return render(request, 'suministros/suministro_form.html', {
+    context = {
         'form': form,
         'titulo': 'Nuevo Suministro',
         'action': 'Crear',
-    })
+    }
+
+    if request.headers.get('HX-Request'):
+        return render(request, 'suministros/partials/suministro_form_modal.html', context)
+    return render(request, 'suministros/suministro_form.html', context)
 
 
 @login_required
 @permission_required('suministros.change_suministro', raise_exception=True)
 def suministro_update(request, pk):
-    """Editar un suministro existente."""
+    """Editar suministro — HTMX modal o página completa."""
     suministro = get_object_or_404(Suministro, pk=pk)
     if request.method == 'POST':
         form = SuministroForm(request.POST, instance=suministro)
         if form.is_valid():
-            suministro = form.save()
-            messages.success(request, f"Suministro '{suministro.nombre}' actualizado correctamente.")
-            return redirect('suministros:suministro_list')
+            form.save()
+            return htmx_success_or_redirect(
+                request,
+                redirect_url='suministros:suministro_list',
+                trigger={'refreshSuministroList': '', 'showToast': {'message': f'Suministro "{suministro.nombre}" actualizado', 'type': 'success'}},
+            )
     else:
         form = SuministroForm(instance=suministro)
 
-    return render(request, 'suministros/suministro_form.html', {
+    context = {
         'form': form,
         'suministro': suministro,
         'titulo': 'Editar Suministro',
         'action': 'Guardar Cambios',
-    })
+    }
+
+    if request.headers.get('HX-Request'):
+        return render(request, 'suministros/partials/suministro_form_modal.html', context)
+    return render(request, 'suministros/suministro_form.html', context)
 
 
 @login_required
@@ -108,7 +122,7 @@ def suministro_detail(request, pk):
         pk=pk
     )
 
-    movimientos = suministro.movimientos.select_related('registrado_por', 'colaborador_destino', 'centro_costo')
+    movimientos = suministro.movimientos.select_related('registrado_por', 'colaborador_destino', 'centro_costo', 'dispositivo_destino')
     paginator = Paginator(movimientos, 20)
     page_number = request.GET.get('page', 1)
     page_obj = paginator.get_page(page_number)
@@ -176,6 +190,7 @@ def movimiento_create(request):
                     registrado_por_id=request.user.id,
                     colaborador_destino_id=cd.get('colaborador_destino').id if cd.get('colaborador_destino') else None,
                     centro_costo_id=cd.get('centro_costo').id if cd.get('centro_costo') else None,
+                    dispositivo_destino_id=cd.get('dispositivo_destino').id if cd.get('dispositivo_destino') else None,
                     costo_unitario=cd.get('costo_unitario'),
                     numero_factura=cd.get('numero_factura'),
                     notas=cd.get('notas', ''),
@@ -234,3 +249,81 @@ def ajax_get_modelos_compatibles(request):
             pass
 
     return render(request, 'suministros/partials/modelo_options.html', {'modelos': modelos})
+
+
+@login_required
+def ajax_get_dispositivos_compatibles(request):
+    """Retorna dispositivos compatibles con un suministro (para campo dispositivo_destino en movimientos)."""
+    from dispositivos.models import Dispositivo
+    
+    suministro_id = request.GET.get('suministro')
+    dispositivos = Dispositivo.objects.select_related('modelo', 'modelo__tipo_dispositivo').all().order_by('modelo__nombre')
+    
+    if suministro_id:
+        try:
+            suministro = Suministro.objects.get(pk=suministro_id)
+            modelos_ids = suministro.modelos_compatibles.values_list('id', flat=True)
+            if modelos_ids:
+                dispositivos = dispositivos.filter(modelo_id__in=modelos_ids)
+        except (ValueError, TypeError, Suministro.DoesNotExist):
+            pass
+    
+    return render(request, 'suministros/partials/dispositivo_options.html', {'dispositivos': dispositivos})
+
+
+# ── Categoría de Suministro: CRUD inline (HTMX modal) ──────────────────────
+
+@login_required
+@permission_required('suministros.add_categoriasuministro', raise_exception=True)
+def categoriasuministro_create(request):
+    """Crear categoría — HTMX modal o página completa."""
+    if request.method == 'POST':
+        form = CategoriaSuministroForm(request.POST)
+        if form.is_valid():
+            categoria = form.save()
+            return htmx_success_or_redirect(
+                request,
+                redirect_url='suministros:suministro_list',
+                trigger={'categoriaListChanged': True, 'showToast': {'message': f'Categoría "{categoria.nombre}" creada', 'type': 'success'}},
+            )
+    else:
+        form = CategoriaSuministroForm()
+
+    context = {'form': form, 'titulo': 'Nueva Categoría'}
+    if request.headers.get('HX-Request'):
+        return render(request, 'suministros/partials/categoria_form.html', context)
+    return render(request, 'suministros/categoria_form.html', context)
+
+
+@login_required
+@permission_required('suministros.change_categoriasuministro', raise_exception=True)
+def categoriasuministro_update(request, pk):
+    """Editar categoría — HTMX modal o página completa."""
+    categoria = get_object_or_404(CategoriaSuministro, pk=pk)
+    if request.method == 'POST':
+        form = CategoriaSuministroForm(request.POST, instance=categoria)
+        if form.is_valid():
+            form.save()
+            return htmx_success_or_redirect(
+                request,
+                redirect_url='suministros:suministro_list',
+                trigger={'categoriaListChanged': True, 'showToast': {'message': 'Categoría actualizada', 'type': 'success'}},
+            )
+    else:
+        form = CategoriaSuministroForm(instance=categoria)
+
+    context = {'form': form, 'categoria': categoria, 'titulo': 'Editar Categoría'}
+    if request.headers.get('HX-Request'):
+        return render(request, 'suministros/partials/categoria_form.html', context)
+    return render(request, 'suministros/categoria_form.html', context)
+
+
+@login_required
+def ajax_categoria_options(request):
+    """HTMX: retorna opciones <option> para refrescar el select de categoría."""
+    categorias = CategoriaSuministro.objects.all().order_by('nombre')
+    selected = request.GET.get('selected', '')
+    return render(request, 'suministros/partials/categoria_options.html', {
+        'categorias': categorias,
+        'selected': selected,
+    })

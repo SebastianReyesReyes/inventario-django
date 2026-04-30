@@ -1,13 +1,27 @@
 from django import forms
 from django.urls import reverse_lazy
 from .models import Suministro, CategoriaSuministro, MovimientoStock
-from core.models import Modelo
+from core.models import Modelo, Fabricante
 from core.forms import BaseStyledForm
+
+
+class CategoriaSuministroForm(BaseStyledForm):
+    class Meta:
+        model = CategoriaSuministro
+        fields = ['nombre', 'descripcion', 'tipos_dispositivo_compatibles']
+        widgets = {
+            'nombre': forms.TextInput(attrs={'placeholder': 'Ej: Tóner, Cartucho, Resma...'}),
+            'descripcion': forms.Textarea(attrs={'rows': 2, 'placeholder': 'Descripción breve de la categoría'}),
+            'tipos_dispositivo_compatibles': forms.SelectMultiple(attrs={
+                'class': 'w-full bg-surface-container-high border-[1px] border-white/5 rounded-lg px-4 py-3 text-on-background h-28',
+            }),
+        }
+
 
 class SuministroForm(BaseStyledForm):
     class Meta:
         model = Suministro
-        fields = ['nombre', 'categoria', 'codigo_interno', 'marca', 'es_alternativo', 'unidad_medida', 'stock_minimo', 'modelos_compatibles']
+        fields = ['nombre', 'categoria', 'codigo_interno', 'fabricante', 'es_alternativo', 'unidad_medida', 'stock_minimo', 'modelos_compatibles']
         widgets = {
             'categoria': forms.Select(attrs={
                 'class': 'w-full bg-surface-container-high border-[1px] border-white/5 rounded-lg px-4 py-3 text-on-background',
@@ -20,7 +34,7 @@ class SuministroForm(BaseStyledForm):
             }),
             'nombre': forms.TextInput(attrs={'class': 'w-full bg-surface-container-high border-[1px] border-white/5 rounded-lg px-4 py-3 text-on-background'}),
             'codigo_interno': forms.TextInput(attrs={'class': 'w-full bg-surface-container-high border-[1px] border-white/5 rounded-lg px-4 py-3 text-on-background'}),
-            'marca': forms.TextInput(attrs={'class': 'w-full bg-surface-container-high border-[1px] border-white/5 rounded-lg px-4 py-3 text-on-background'}),
+            'fabricante': forms.Select(attrs={'class': 'w-full bg-surface-container-high border-[1px] border-white/5 rounded-lg px-4 py-3 text-on-background'}),
             'es_alternativo': forms.CheckboxInput(attrs={'class': 'rounded border-white/10 bg-white/5 text-jmie-orange focus:ring-jmie-orange'}),
             'unidad_medida': forms.TextInput(attrs={'class': 'w-full bg-surface-container-high border-[1px] border-white/5 rounded-lg px-4 py-3 text-on-background'}),
             'stock_minimo': forms.NumberInput(attrs={'class': 'w-full bg-surface-container-high border-[1px] border-white/5 rounded-lg px-4 py-3 text-on-background'}),
@@ -49,7 +63,7 @@ class SuministroForm(BaseStyledForm):
 class MovimientoStockForm(BaseStyledForm):
     class Meta:
         model = MovimientoStock
-        fields = ['suministro', 'tipo_movimiento', 'cantidad', 'costo_unitario', 'numero_factura', 'colaborador_destino', 'centro_costo', 'notas']
+        fields = ['suministro', 'tipo_movimiento', 'cantidad', 'costo_unitario', 'numero_factura', 'colaborador_destino', 'centro_costo', 'dispositivo_destino', 'notas']
         widgets = {
             'suministro': forms.Select(attrs={'class': 'w-full bg-surface-container-high border-[1px] border-white/5 rounded-lg px-4 py-3 text-on-background'}),
             'tipo_movimiento': forms.Select(attrs={'class': 'w-full bg-surface-container-high border-[1px] border-white/5 rounded-lg px-4 py-3 text-on-background'}),
@@ -58,5 +72,6 @@ class MovimientoStockForm(BaseStyledForm):
             'numero_factura': forms.TextInput(attrs={'class': 'w-full bg-surface-container-high border-[1px] border-white/5 rounded-lg px-4 py-3 text-on-background'}),
             'colaborador_destino': forms.Select(attrs={'class': 'w-full bg-surface-container-high border-[1px] border-white/5 rounded-lg px-4 py-3 text-on-background'}),
             'centro_costo': forms.Select(attrs={'class': 'w-full bg-surface-container-high border-[1px] border-white/5 rounded-lg px-4 py-3 text-on-background'}),
+            'dispositivo_destino': forms.Select(attrs={'class': 'w-full bg-surface-container-high border-[1px] border-white/5 rounded-lg px-4 py-3 text-on-background'}),
             'notas': forms.Textarea(attrs={'class': 'w-full bg-surface-container-high border-[1px] border-white/5 rounded-lg px-4 py-3 text-on-background', 'rows': 3}),
         }

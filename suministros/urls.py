@@ -11,4 +11,9 @@ urlpatterns = [
     path('eliminar/<int:pk>/', views.suministro_delete, name='suministro_delete'),
     path('movimiento/nuevo/', views.movimiento_create, name='movimiento_create'),
     path('ajax/modelos-compatibles/', views.ajax_get_modelos_compatibles, name='ajax_get_modelos_compatibles'),
+    path('ajax/dispositivos-compatibles/', views.ajax_get_dispositivos_compatibles, name='ajax_get_dispositivos_compatibles'),
+    # Categoría de Suministro (HTMX inline)
+    path('categorias/crear/', views.categoriasuministro_create, name='categoriasuministro_create'),
+    path('categorias/<int:pk>/editar/', views.categoriasuministro_update, name='categoriasuministro_update'),
+    path('ajax/categoria-options/', views.ajax_categoria_options, name='ajax_categoria_options'),
 ]

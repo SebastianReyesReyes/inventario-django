@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}{{ titulo }} | JMIE{% endblock %}
+{% block section_name %}Categorías{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <c-page-header title="{{ titulo }}" subtitle="Complete los datos de la categoría.">
+        <a href="{% url 'suministros:suministro_list' %}" class="px-4 py-2.5 rounded-xl border border-white/10 text-on-background hover:bg-white/5 transition-all text-xs font-bold">
+            Volver al Listado
+        </a>
+    </c-page-header>
+
+    <c-glass-panel>
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+            <div class="space-y-4">
+                <div>
+                    <c-form-label>Nombre</c-form-label>
+                    {{ form.nombre }}
+                    {% if form.nombre.errors %}<p class="mt-1 text-xs text-red-400">{{ form.nombre.errors.0 }}</p>{% endif %}
+                </div>
+                <div>
+                    <c-form-label>Descripción</c-form-label>
+                    {{ form.descripcion }}
+                    {% if form.descripcion.errors %}<p class="mt-1 text-xs text-red-400">{{ form.descripcion.errors.0 }}</p>{% endif %}
+                </div>
+                <div>
+                    <c-form-label>Tipos de Dispositivo Compatibles</c-form-label>
+                    {{ form.tipos_dispositivo_compatibles }}
+                    {% if form.tipos_dispositivo_compatibles.errors %}<p class="mt-1 text-xs text-red-400">{{ form.tipos_dispositivo_compatibles.errors.0 }}</p>{% endif %}
+                    <p class="text-[10px] text-jmie-gray mt-1.5">Selecciona los tipos de dispositivo que usan esta categoría de insumos.</p>
+                </div>
+            </div>
+
+            <div class="flex flex-row-reverse gap-3 pt-4 border-t border-white/5">
+                <button type="submit" class="inline-flex items-center justify-center py-2.5 px-6 border border-transparent shadow-[0_0_10px_rgba(237,139,0,0.2)] text-sm font-bold rounded-lg text-white bg-jmie-orange hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-background focus:ring-jmie-orange transition-all">
+                    {% if categoria %}Actualizar{% else %}Guardar Categoría{% endif %}
+                </button>
+                <a href="{% url 'suministros:suministro_list' %}" class="inline-flex items-center justify-center py-2.5 px-6 border border-white/10 text-sm font-bold rounded-lg text-on-surface bg-transparent hover:bg-white/5 focus:outline-none transition-all">
+                    Cancelar
+                </a>
+            </div>
+        </form>
+    </c-glass-panel>
+</div>
+{% endblock %}

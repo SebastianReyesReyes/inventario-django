@@ -1,0 +1,5 @@
+{% for d in dispositivos %}
+<option value="{{ d.pk }}">{{ d.identificador }} — {{ d.modelo.nombre }} ({{ d.modelo.tipo_dispositivo.nombre }})</option>
+{% empty %}
+<option value="">No hay dispositivos compatibles</option>
+{% endfor %}

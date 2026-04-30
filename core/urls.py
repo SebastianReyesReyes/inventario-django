@@ -6,6 +6,7 @@ app_name = 'core'
 urlpatterns = [
     # Fabricantes & Modelos
     path('fabricantes/', views.fabricante_list, name='fabricante_list'),
+    path('fabricantes/opciones/', views.ajax_fabricante_options, name='ajax_fabricante_options'),
     path('fabricantes/crear/', views.fabricante_create, name='fabricante_create'),
     path('fabricantes/<int:pk>/editar/', views.fabricante_edit, name='fabricante_update'),
     path('fabricantes/<int:pk>/eliminar/', views.fabricante_delete, name='fabricante_delete'),

@@ -88,6 +88,17 @@ def fabricante_list(request):
     page_obj = paginate_queryset(request, fabricantes, per_page=10)
     return render(request, 'core/fabricante_list.html', {'page_obj': page_obj, 'fabricantes': page_obj})
 
+
+@login_required
+def ajax_fabricante_options(request):
+    """HTMX: retorna opciones <option> para refrescar el select de fabricante."""
+    fabricantes = Fabricante.objects.all().order_by('nombre')
+    selected = request.GET.get('selected', '')
+    return render(request, 'core/partials/fabricante_options.html', {
+        'fabricantes': fabricantes,
+        'selected': selected,
+    })
+
 fabricante_create = FabricanteCreateView.as_view()
 fabricante_edit = FabricanteUpdateView.as_view()
 fabricante_delete = FabricanteDeleteView.as_view()

@@ -2,7 +2,7 @@ from django.db import models
 from django.utils import timezone
 from django.core.exceptions import ValidationError
 from django.db.models import Sum, F
-from core.models import Modelo, CentroCosto
+from core.models import Modelo, CentroCosto, Fabricante
 from colaboradores.models import Colaborador
 
 class CategoriaSuministro(models.Model):
@@ -32,7 +32,7 @@ class Suministro(models.Model):
     categoria = models.ForeignKey(CategoriaSuministro, on_delete=models.PROTECT, related_name='suministros')
     codigo_interno = models.CharField(max_length=50, unique=True, blank=True, null=True, help_text="SKU o código de barras")
     
-    marca = models.CharField(max_length=100, blank=True, help_text="Marca del insumo (Ej: Dataline para alternativos, o Brother si es original)")
+    fabricante = models.ForeignKey(Fabricante, on_delete=models.SET_NULL, null=True, blank=True, related_name='suministros', help_text="Fabricante del insumo (Ej: Brother, HP, Dataline)")
     es_alternativo = models.BooleanField(default=False, help_text="Marcar si es un insumo alternativo/genérico")
     
     unidad_medida = models.CharField(max_length=50, default="Unidades", help_text="Ej: Unidades, Cajas, Litros")
@@ -50,12 +50,12 @@ class Suministro(models.Model):
         ordering = ['categoria__nombre', 'nombre']
 
     def __str__(self):
-        marca_str = ""
-        if self.marca and self.marca.lower() not in self.nombre.lower():
-            marca_str = f" ({self.marca})"
+        fabricante_str = ""
+        if self.fabricante and self.fabricante.nombre.lower() not in self.nombre.lower():
+            fabricante_str = f" ({self.fabricante.nombre})"
             
         tipo_str = " [Alternativo]" if self.es_alternativo else ""
-        return f"{self.nombre}{marca_str}{tipo_str}"
+        return f"{self.nombre}{fabricante_str}{tipo_str}"
         
     def recalcular_stock(self):
         """
@@ -101,6 +101,7 @@ class MovimientoStock(models.Model):
     # Datos de Salida (Solo para SALIDAS)
     colaborador_destino = models.ForeignKey(Colaborador, on_delete=models.SET_NULL, null=True, blank=True, related_name='suministros_recibidos')
     centro_costo = models.ForeignKey(CentroCosto, on_delete=models.SET_NULL, null=True, blank=True, related_name='suministros_cargados')
+    dispositivo_destino = models.ForeignKey('dispositivos.Dispositivo', on_delete=models.SET_NULL, null=True, blank=True, related_name='movimientos_stock', help_text="Dispositivo al que se destinó el insumo (ej: impresora)")
     
     registrado_por = models.ForeignKey(Colaborador, on_delete=models.SET_NULL, null=True, blank=True, related_name='movimientos_stock_registrados')
     notas = models.TextField(blank=True, help_text="Razón de la merma, detalle de la entrega, etc.")

@@ -1,4 +1,13 @@
-<div x-data="{ showModal: true }" x-show="showModal" @modal-close.window="showModal = false" class="fixed inset-0 z-50 flex items-center justify-center p-4" x-cloak>
+<div x-data="{ 
+    showModal: true,
+    tipo: '{{ form.tipo_movimiento.value|default:"" }}',
+    get isEntrada() { return this.tipo === 'ENTRADA' },
+    get isSalida() { return this.tipo === 'SALIDA' },
+    get isAjuste() { return this.tipo.startsWith('AJUSTE') }
+}" 
+x-show="showModal" 
+@modal-close.window="showModal = false" 
+class="fixed inset-0 z-[60] flex items-center justify-center p-4" x-cloak>
     <div @click="showModal = false" class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
 
     <div class="relative bg-surface-container rounded-2xl border border-white/10 shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200">
@@ -28,14 +37,22 @@
                 {% csrf_token %}
                 {{ form.suministro }}
 
+                <!-- Tipo de Movimiento -->
                 <div class="space-y-1.5">
                     <label class="text-[10px] font-black uppercase text-jmie-gray tracking-tighter ml-1">Tipo de Movimiento</label>
-                    {{ form.tipo_movimiento }}
+                    <select name="{{ form.tipo_movimiento.name }}" id="id_tipo_movimiento"
+                            x-model="tipo"
+                            class="w-full bg-surface-container-high border-[1px] border-white/5 rounded-lg px-4 py-3 text-on-background appearance-none">
+                        {% for value, label in form.fields.tipo_movimiento.choices %}
+                        <option value="{{ value }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
                     {% if form.tipo_movimiento.errors %}
                         <p class="mt-1 text-xs text-red-400">{{ form.tipo_movimiento.errors.0 }}</p>
                     {% endif %}
                 </div>
 
+                <!-- Cantidad (siempre visible) -->
                 <div class="space-y-1.5">
                     <label class="text-[10px] font-black uppercase text-jmie-gray tracking-tighter ml-1">Cantidad</label>
                     {{ form.cantidad }}
@@ -44,6 +61,39 @@
                     {% endif %}
                 </div>
 
+                <!-- Campos de ENTRADA: costo y factura -->
+                <div x-show="isEntrada" x-transition:enter="transition ease-out duration-200" x-transition:leave="transition ease-in duration-150" class="space-y-5">
+                    <div class="space-y-1.5">
+                        <label class="text-[10px] font-black uppercase text-jmie-gray tracking-tighter ml-1">Costo Unitario</label>
+                        {{ form.costo_unitario }}
+                        {% if form.costo_unitario.errors %}
+                            <p class="mt-1 text-xs text-red-400">{{ form.costo_unitario.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    <div class="space-y-1.5">
+                        <label class="text-[10px] font-black uppercase text-jmie-gray tracking-tighter ml-1">Número de Factura</label>
+                        {{ form.numero_factura }}
+                    </div>
+                </div>
+
+                <!-- Campos de SALIDA: destinatario, centro costo, dispositivo -->
+                <div x-show="isSalida" x-transition:enter="transition ease-out duration-200" x-transition:leave="transition ease-in duration-150" class="space-y-5">
+                    <div class="space-y-1.5">
+                        <label class="text-[10px] font-black uppercase text-jmie-gray tracking-tighter ml-1">Destinatario</label>
+                        {{ form.colaborador_destino }}
+                    </div>
+                    <div class="space-y-1.5">
+                        <label class="text-[10px] font-black uppercase text-jmie-gray tracking-tighter ml-1">Centro de Costo</label>
+                        {{ form.centro_costo }}
+                    </div>
+                    <div class="space-y-1.5">
+                        <label class="text-[10px] font-black uppercase text-jmie-gray tracking-tighter ml-1">Dispositivo Destino</label>
+                        {{ form.dispositivo_destino }}
+                        <p class="text-[10px] text-jmie-gray mt-1">Dispositivo al que se destina el insumo (ej: impresora)</p>
+                    </div>
+                </div>
+
+                <!-- Notas (siempre visible) -->
                 <div class="space-y-1.5">
                     <label class="text-[10px] font-black uppercase text-jmie-gray tracking-tighter ml-1">Notas / Observaciones</label>
                     {{ form.notas }}

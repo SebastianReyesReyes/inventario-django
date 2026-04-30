@@ -1,6 +1,6 @@
 import factory
 from suministros.models import CategoriaSuministro, Suministro, MovimientoStock
-from core.tests.factories import ColaboradorFactory, ModeloFactory
+from core.tests.factories import ColaboradorFactory, ModeloFactory, FabricanteFactory
 
 
 class CategoriaSuministroFactory(factory.django.DjangoModelFactory):
@@ -19,7 +19,7 @@ class SuministroFactory(factory.django.DjangoModelFactory):
     nombre = factory.Sequence(lambda n: f"Suministro {n}")
     categoria = factory.SubFactory(CategoriaSuministroFactory)
     codigo_interno = factory.Sequence(lambda n: f"SKU-{n:04d}")
-    marca = "Generico"
+    fabricante = factory.SubFactory(FabricanteFactory)
     es_alternativo = False
     unidad_medida = "Unidades"
     stock_minimo = 2

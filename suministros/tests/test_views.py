@@ -189,3 +189,131 @@ class TestSuministroViews:
         assert response.status_code == 204
         s.refresh_from_db()
         assert s.esta_activo is False
+
+    # ── Categoría CRUD (HTMX modal) ──────────────────────────────────
+
+    def test_categoria_create_get_renders_full_page(self, client, admin_user):
+        """Sin HX-Request: debe retornar página completa con base.html."""
+        client.login(username='admin_test', password='pass')
+        response = client.get(reverse('suministros:categoriasuministro_create'))
+        assert response.status_code == 200
+        content = response.content.decode()
+        assert '<!DOCTYPE html>' in content
+        assert 'Nueva Categoría' in content
+
+    def test_categoria_create_get_htmx_renders_partial(self, client, admin_user):
+        """Con HX-Request: debe retornar partial del modal."""
+        client.login(username='admin_test', password='pass')
+        response = client.get(
+            reverse('suministros:categoriasuministro_create'),
+            HTTP_HX_REQUEST='true'
+        )
+        assert response.status_code == 200
+        content = response.content.decode()
+        assert '<!DOCTYPE html>' not in content
+        assert 'x-data="{ open: true }"' in content
+
+    def test_categoria_create_post_success(self, client, admin_user):
+        client.login(username='admin_test', password='pass')
+        response = client.post(reverse('suministros:categoriasuministro_create'), {
+            'nombre': 'Tóner Laser',
+            'descripcion': 'Tóner para impresoras láser',
+        })
+        assert response.status_code in (204, 302)
+        from suministros.models import CategoriaSuministro
+        assert CategoriaSuministro.objects.filter(nombre='Tóner Laser').exists()
+
+    def test_categoria_create_requires_permission(self, client, tecnico_user):
+        client.login(username='tecnico_test', password='pass')
+        response = client.get(reverse('suministros:categoriasuministro_create'))
+        assert response.status_code == 403
+
+    def test_categoria_update_get_renders_form(self, client, admin_user):
+        cat = CategoriaSuministroFactory(nombre='Original')
+        client.login(username='admin_test', password='pass')
+        response = client.get(reverse('suministros:categoriasuministro_update', args=[cat.pk]))
+        assert response.status_code == 200
+        assert 'Original' in response.content.decode()
+
+    def test_categoria_update_post_success(self, client, admin_user):
+        cat = CategoriaSuministroFactory(nombre='Old Name')
+        client.login(username='admin_test', password='pass')
+        response = client.post(reverse('suministros:categoriasuministro_update', args=[cat.pk]), {
+            'nombre': 'Updated Name',
+            'descripcion': '',
+        })
+        assert response.status_code in (204, 302)
+        cat.refresh_from_db()
+        assert cat.nombre == 'Updated Name'
+
+    def test_ajax_categoria_options_returns_options(self, client, admin_user):
+        CategoriaSuministroFactory(nombre='Cartuchos')
+        CategoriaSuministroFactory(nombre='Resmas')
+        client.login(username='admin_test', password='pass')
+        response = client.get(reverse('suministros:ajax_categoria_options'))
+        assert response.status_code == 200
+        content = response.content.decode()
+        assert 'Cartuchos' in content
+        assert 'Resmas' in content
+
+    def test_ajax_categoria_options_with_selected(self, client, admin_user):
+        cat = CategoriaSuministroFactory(nombre='Filtros')
+        client.login(username='admin_test', password='pass')
+        response = client.get(reverse('suministros:ajax_categoria_options'), {'selected': cat.pk})
+        assert response.status_code == 200
+        assert 'selected' in response.content.decode()
+
+    # ── Suministro HTMX modal ────────────────────────────────────────
+
+    def test_create_htmx_returns_modal(self, client, admin_user):
+        client.login(username='admin_test', password='pass')
+        response = client.get(reverse('suministros:suministro_create'), HTTP_HX_REQUEST='true')
+        assert response.status_code == 200
+        content = response.content.decode()
+        assert 'Nuevo Suministro' in content
+
+    def test_update_htmx_returns_modal(self, client, admin_user):
+        s = SuministroFactory()
+        client.login(username='admin_test', password='pass')
+        response = client.get(reverse('suministros:suministro_update', args=[s.pk]), HTTP_HX_REQUEST='true')
+        assert response.status_code == 200
+        content = response.content.decode()
+        assert 'Editar Suministro' in content
+
+    # ── Dispositivos compatibles (AJAX) ──────────────────────────────
+
+    def test_ajax_dispositivos_compatibles(self, client, admin_user):
+        from core.tests.factories import TipoDispositivoFactory, FabricanteFactory, ModeloFactory
+        from dispositivos.tests.factories import DispositivoFactory
+
+        tipo = TipoDispositivoFactory()
+        fab = FabricanteFactory()
+        modelo = ModeloFactory(tipo_dispositivo=tipo, fabricante=fab)
+        cat = CategoriaSuministroFactory()
+        cat.tipos_dispositivo_compatibles.add(tipo)
+
+        s = SuministroFactory(categoria=cat)
+        s.modelos_compatibles.add(modelo)
+
+        client.login(username='admin_test', password='pass')
+        response = client.get(reverse('suministros:ajax_get_dispositivos_compatibles'), {'suministro': s.pk})
+        assert response.status_code == 200
+
+    def test_ajax_fabricante_options(self, client, admin_user):
+        from core.tests.factories import FabricanteFactory
+        f1 = FabricanteFactory(nombre='HP')
+        f2 = FabricanteFactory(nombre='Canon')
+        client.login(username='admin_test', password='pass')
+        response = client.get(reverse('core:ajax_fabricante_options'))
+        assert response.status_code == 200
+        content = response.content.decode()
+        assert 'HP' in content
+        assert 'Canon' in content
+
+    def test_ajax_fabricante_options_with_selected(self, client, admin_user):
+        from core.tests.factories import FabricanteFactory
+        f = FabricanteFactory(nombre='Epson')
+        client.login(username='admin_test', password='pass')
+        response = client.get(reverse('core:ajax_fabricante_options'), {'selected': f.pk})
+        assert response.status_code == 200
+        assert 'selected' in response.content.decode()

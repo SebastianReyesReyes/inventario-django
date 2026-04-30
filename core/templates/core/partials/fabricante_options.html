@@ -1,0 +1,5 @@
+{% for f in fabricantes %}
+<option value="{{ f.pk }}" {% if selected == f.pk|stringformat:"s" %}selected{% endif %}>{{ f.nombre }}</option>
+{% empty %}
+<option value="">No hay fabricantes registrados</option>
+{% endfor %}

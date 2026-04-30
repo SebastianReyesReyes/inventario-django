@@ -9,6 +9,7 @@ def registrar_movimiento_stock(
     registrado_por_id: int,
     colaborador_destino_id: int = None,
     centro_costo_id: int = None,
+    dispositivo_destino_id: int = None,
     costo_unitario: int = None,
     numero_factura: str = None,
     notas: str = ""
@@ -36,6 +37,7 @@ def registrar_movimiento_stock(
     elif tipo_movimiento == MovimientoStock.TipoMovimiento.SALIDA:
         movimiento.colaborador_destino_id = colaborador_destino_id
         movimiento.centro_costo_id = centro_costo_id
+        movimiento.dispositivo_destino_id = dispositivo_destino_id
         
     # El método clean() del modelo valida que el stock_actual sea >= cantidad si es salida
     movimiento.clean() 

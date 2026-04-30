@@ -60,7 +60,7 @@ class TestActaViews:
         assert response.status_code == 200
         assert acta.folio in response.content.decode('utf-8')
 
-    def test_acta_crear_post_success_returns_htmx_trigger(self, client):
+    def test_acta_crear_post_success_returns_sideover_preview(self, client):
         user = ColaboradorFactory(is_staff=True, is_superuser=True)
         user.set_password('password')
         user.save()
@@ -81,8 +81,15 @@ class TestActaViews:
             HTTP_HX_REQUEST='true'
         )
 
-        assert response.status_code == 204
-        assert response['HX-Trigger'] == 'actaCreated'
+        assert response.status_code == 200
+        assert response['HX-Retarget'] == '#side-over-container'
+        assert 'actaCreated' in response['HX-Trigger']
+        assert 'modal-close' in response['HX-Trigger']
+        # Debe contener el side-over con el detalle del acta
+        from actas.models import Acta
+        acta = Acta.objects.first()
+        assert acta.folio in response.content.decode('utf-8')
+        assert 'Descargar PDF' in response.content.decode('utf-8')
 
     def test_acta_crear_post_validation_error_returns_oob_block(self, client):
         user = ColaboradorFactory(is_staff=True, is_superuser=True)

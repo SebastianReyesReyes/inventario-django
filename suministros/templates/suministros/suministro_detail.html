@@ -23,9 +23,19 @@
                 <div class="pt-4 border-t border-white/5 space-y-3 text-xs text-jmie-gray font-bold">
                     <div class="flex justify-between"><span>Stock Mínimo</span><span class="text-on-background">{{ suministro.stock_minimo }}</span></div>
                     <div class="flex justify-between"><span>Unidad</span><span class="text-on-background">{{ suministro.unidad_medida }}</span></div>
-                    <div class="flex justify-between"><span>Marca</span><span class="text-on-background">{{ suministro.marca|default:"—" }}</span></div>
+                    <div class="flex justify-between"><span>Fabricante</span><span class="text-on-background">{{ suministro.fabricante.nombre|default:"—" }}</span></div>
                     <div class="flex justify-between"><span>Alternativo</span><span class="text-on-background">{% if suministro.es_alternativo %}Sí{% else %}No{% endif %}</span></div>
                 </div>
+                {% if suministro.modelos_compatibles.exists %}
+                <div class="pt-4 border-t border-white/5">
+                    <span class="text-[10px] font-black text-jmie-gray uppercase tracking-widest">Modelos Compatibles</span>
+                    <div class="mt-2 flex flex-wrap gap-1.5">
+                        {% for modelo in suministro.modelos_compatible.all %}
+                        <span class="px-2 py-0.5 rounded-md bg-white/5 text-[10px] font-bold text-on-background border border-white/5">{{ modelo.nombre }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
                 {% if perms.suministros.change_suministro %}
                 <div class="pt-4 border-t border-white/5">
                     <a href="{% url 'suministros:suministro_update' suministro.pk %}" class="w-full flex items-center justify-center py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-bold transition-all border border-white/10">

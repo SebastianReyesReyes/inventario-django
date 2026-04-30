@@ -8,9 +8,9 @@ class CategoriaSuministroAdmin(admin.ModelAdmin):
 
 @admin.register(Suministro)
 class SuministroAdmin(admin.ModelAdmin):
-    list_display = ('nombre', 'categoria', 'marca', 'es_alternativo', 'stock_actual', 'stock_minimo')
-    list_filter = ('categoria', 'es_alternativo', 'marca')
-    search_fields = ('nombre', 'codigo_interno', 'marca')
+    list_display = ('nombre', 'categoria', 'fabricante', 'es_alternativo', 'stock_actual', 'stock_minimo')
+    list_filter = ('categoria', 'es_alternativo', 'fabricante')
+    search_fields = ('nombre', 'codigo_interno', 'fabricante__nombre')
     filter_horizontal = ('modelos_compatibles',)
     readonly_fields = ('stock_actual',)
     

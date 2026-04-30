@@ -4,6 +4,7 @@
             <th class="px-4 py-3">Fecha</th>
             <th class="px-4 py-3">Tipo</th>
             <th class="px-4 py-3">Cantidad</th>
+            <th class="px-4 py-3">Destino</th>
             <th class="px-4 py-3">Registrado por</th>
             <th class="px-4 py-3">Notas</th>
         </tr>
@@ -22,12 +23,23 @@
                 </span>
             </td>
             <td class="px-4 py-3 text-xs font-bold text-on-background">{{ m.cantidad }}</td>
+            <td class="px-4 py-3 text-xs text-jmie-gray">
+                {% if m.tipo_movimiento == 'SALIDA' %}
+                    {% if m.dispositivo_destino %}<span class="text-on-background font-bold">{{ m.dispositivo_destino }}</span>{% endif %}
+                    {% if m.centro_costo %}<br><span class="text-[10px]">{{ m.centro_costo }}</span>{% endif %}
+                    {% if not m.dispositivo_destino and not m.centro_costo %}—{% endif %}
+                {% elif m.tipo_movimiento == 'ENTRADA' %}
+                    {% if m.numero_factura %}<span class="text-[10px]">Fact: {{ m.numero_factura }}</span>{% else %}—{% endif %}
+                {% else %}
+                    —
+                {% endif %}
+            </td>
             <td class="px-4 py-3 text-xs text-jmie-gray">{{ m.registrado_por.get_full_name|default:m.registrado_por.username|default:"—" }}</td>
             <td class="px-4 py-3 text-xs text-jmie-gray max-w-xs truncate">{{ m.notas|default:"—" }}</td>
         </tr>
         {% empty %}
         <tr>
-            <td colspan="5" class="px-4 py-8 text-center text-xs text-jmie-gray font-bold">Sin movimientos registrados</td>
+            <td colspan="6" class="px-4 py-8 text-center text-xs text-jmie-gray font-bold">Sin movimientos registrados</td>
         </tr>
         {% endfor %}
     </tbody>

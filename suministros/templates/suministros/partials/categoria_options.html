@@ -1,0 +1,3 @@
+{% for cat in categorias %}
+<option value="{{ cat.pk }}"{% if cat.pk|stringformat:"s" == selected %} selected{% endif %}>{{ cat.nombre }}</option>
+{% endfor %}

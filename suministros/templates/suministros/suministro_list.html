@@ -23,10 +23,12 @@
 
     <c-page-header title="Gestión de Suministros" subtitle="Inventario de insumos, repuestos y consumibles.">
         {% if perms.suministros.add_suministro %}
-        <a href="{% url 'suministros:suministro_create' %}" class="px-4 py-2.5 bg-jmie-orange text-white text-xs font-black rounded-xl hover:brightness-110 shadow-[0_4px_20px_rgba(237,139,0,0.2)] transition-all flex items-center">
+        <button hx-get="{% url 'suministros:suministro_create' %}"
+                hx-target="#modal-container"
+                class="px-4 py-2.5 bg-jmie-orange text-white text-xs font-black rounded-xl hover:brightness-110 shadow-[0_4px_20px_rgba(237,139,0,0.2)] transition-all flex items-center">
             <span class="material-symbols-outlined text-sm mr-2 leading-none">add</span>
             Nuevo Suministro
-        </a>
+        </button>
         {% endif %}
     </c-page-header>
 
@@ -37,14 +39,39 @@
               hx-trigger="change delay:200ms, keyup changed delay:500ms from:input[name='q']"
               hx-push-url="true"
               class="space-y-6">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <c-search-input label="Búsqueda" wrapper_class="md:col-span-2" value="{{ query }}" placeholder="Buscar por nombre, SKU o marca..." />
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <c-search-input label="Búsqueda" wrapper_class="md:col-span-2" value="{{ query }}" placeholder="Buscar por nombre, SKU o fabricante..." />
                 <div class="space-y-2">
-                    <c-form-label>Categoría</c-form-label>
-                    <select name="categoria" class="w-full bg-surface-container-high border-[1px] border-white/5 rounded-lg px-4 py-3 text-on-background appearance-none">
+                    <div class="flex items-center justify-between">
+                        <c-form-label>Categoría</c-form-label>
+                        {% if perms.suministros.add_categoriasuministro %}
+                        <button type="button"
+                                hx-get="{% url 'suministros:categoriasuministro_create' %}"
+                                hx-target="#modal-container"
+                                class="text-[10px] font-black text-jmie-orange hover:text-jmie-orange/80 transition-colors flex items-center gap-0.5"
+                                title="Nueva Categoría">
+                            <span class="material-symbols-outlined text-[14px]">add_circle</span>
+                            Nueva
+                        </button>
+                        {% endif %}
+                    </div>
+                    <select name="categoria" id="id_categoria_filter"
+                            class="w-full bg-surface-container-high border-[1px] border-white/5 rounded-lg px-4 py-3 text-on-background appearance-none"
+                            hx-get="{% url 'suministros:ajax_get_modelos_compatibles' %}"
+                            hx-target="#id_modelos_compatibles"
+                            hx-trigger="change">
                         <option value="">Todas las categorías</option>
                         {% for cat in categorias %}
                         <option value="{{ cat.pk }}" {% if categoria_id == cat.pk|stringformat:"s" %}selected{% endif %}>{{ cat.nombre }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="space-y-2">
+                    <c-form-label>Fabricante</c-form-label>
+                    <select name="fabricante" class="w-full bg-surface-container-high border-[1px] border-white/5 rounded-lg px-4 py-3 text-on-background appearance-none">
+                        <option value="">Todos los fabricantes</option>
+                        {% for fab in fabricantes_list %}
+                        <option value="{{ fab.pk }}" {% if fabricante_id == fab.pk|stringformat:"s" %}selected{% endif %}>{{ fab.nombre }}</option>
                         {% endfor %}
                     </select>
                 </div>

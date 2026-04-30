@@ -3,8 +3,8 @@
         <tr class="bg-white/[0.02] border-b border-white/5 text-jmie-gray uppercase text-[10px] font-black tracking-widest">
             <th class="px-6 py-4">Nombre / SKU</th>
             <th class="px-6 py-4">Categoría</th>
+            <th class="px-6 py-4">Fabricante</th>
             <th class="px-6 py-4">Stock</th>
-            <th class="px-6 py-4">Umbral</th>
             <th class="px-6 py-4 text-right">Acciones</th>
         </tr>
     </thead>
@@ -20,11 +20,11 @@
     </span>
     <div class="flex gap-2">
         {% if page_obj.has_previous %}
-        <a href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query }}{% endif %}{% if categoria_id %}&categoria={{ categoria_id }}{% endif %}"
+        <a href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query }}{% endif %}{% if categoria_id %}&categoria={{ categoria_id }}{% endif %}{% if fabricante_id %}&fabricante={{ fabricante_id }}{% endif %}"
            class="px-3 py-1.5 rounded-lg bg-white/5 text-[10px] font-black uppercase tracking-widest text-jmie-gray hover:bg-white/10 transition-all">Anterior</a>
         {% endif %}
         {% if page_obj.has_next %}
-        <a href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query }}{% endif %}{% if categoria_id %}&categoria={{ categoria_id }}{% endif %}"
+        <a href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query }}{% endif %}{% if categoria_id %}&categoria={{ categoria_id }}{% endif %}{% if fabricante_id %}&fabricante={{ fabricante_id }}{% endif %}"
            class="px-3 py-1.5 rounded-lg bg-white/5 text-[10px] font-black uppercase tracking-widest text-jmie-gray hover:bg-white/10 transition-all">Siguiente</a>
         {% endif %}
     </div>

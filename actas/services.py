@@ -86,12 +86,14 @@ class ActaService:
         return acta
 
     @staticmethod
-    def firmar_acta(acta_pk):
+    @transaction.atomic
+    def firmar_acta(acta_pk, firmado_por):
         """
-        Marca un acta como firmada (blindaje legal).
+        Marca un acta como firmada (blindaje legal) y registra auditoría.
 
         Args:
             acta_pk: PK del acta a firmar.
+            firmado_por: Instancia de Colaborador que firma.
 
         Returns:
             bool: True si se firmó correctamente.
@@ -99,9 +101,22 @@ class ActaService:
         Raises:
             ValidationError: Si el acta ya estaba firmada o no existe.
         """
-        updated = Acta.objects.filter(pk=acta_pk, firmada=False).update(firmada=True)
-        if not updated:
-            raise ValidationError("El acta ya está firmada o no existe.")
+        try:
+            acta = Acta.objects.select_for_update().get(pk=acta_pk)
+        except Acta.DoesNotExist:
+            raise ValidationError("El acta no existe.")
+
+        if acta.firmada:
+            raise ValidationError("El acta ya está firmada.")
+
+        if acta.anulada:
+            raise ValidationError("No se puede firmar un acta que ha sido anulada.")
+
+        acta.firmada = True
+        acta.firmada_por = firmado_por
+        acta.fecha_firma = timezone.now()
+        acta.save()
+        
         return True
 
     @staticmethod
@@ -283,6 +298,62 @@ class ActaService:
             colaborador_id=colaborador_pk,
             acta__isnull=True
         )
+
+    @staticmethod
+    @transaction.atomic
+    def anular(acta_pk, usuario, motivo=None):
+        """
+        Anula o elimina un acta según su estado.
+
+        - Borradores (firmada=False): eliminación física (DELETE).
+          Carecen de valor legal, no necesitan preservarse.
+        - Firmadas (firmada=True): anulación lógica (soft delete).
+          Se mantiene el registro con estado 'anulada' para auditoría legal.
+
+        Args:
+            acta_pk: PK del acta.
+            usuario: Instancia de Colaborador que ejecuta la acción.
+            motivo: Motivo de anulación (obligatorio para firmadas).
+
+        Returns:
+            tuple: (acta, accion) donde accion es 'eliminada' o 'anulada'.
+
+        Raises:
+            ValidationError: Si el acta no existe, ya está anulada, o falta motivo.
+        """
+        try:
+            acta = Acta.objects.select_for_update().get(pk=acta_pk)
+        except Acta.DoesNotExist:
+            raise ValidationError("El acta no existe.")
+
+        if acta.anulada:
+            raise ValidationError("Esta acta ya fue anulada.")
+
+        if acta.firmada:
+            # Anulación lógica — preservar para auditoría legal
+            if not motivo or len(motivo.strip()) < 10:
+                raise ValidationError(
+                    "El motivo de anulación es obligatorio y debe tener al menos 10 caracteres."
+                )
+            acta.anulada = True
+            acta.anulada_por = usuario
+            acta.fecha_anulacion = timezone.now()
+            acta.motivo_anulacion = motivo.strip()
+            acta.save()
+            logger.info(
+                "Acta %s ANULADA por %s. Motivo: %s",
+                acta.folio, usuario, motivo.strip()
+            )
+            return acta, 'anulada'
+        else:
+            # Eliminación física — es un borrador sin valor legal
+            folio = acta.folio
+            acta.delete()
+            logger.info(
+                "Acta %s ELIMINADA (borrador) por %s.",
+                folio, usuario
+            )
+            return None, 'eliminada'
 
 
 class ActaPDFService:

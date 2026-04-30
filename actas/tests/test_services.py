@@ -76,15 +76,18 @@ class TestActaService:
     def test_firmar_acta(self):
         """Verificar que se puede firmar un acta y queda bloqueada"""
         acta = ActaFactory(firmada=False)
-        result = ActaService.firmar_acta(acta.pk)
+        colaborador = ColaboradorFactory()
+        result = ActaService.firmar_acta(acta.pk, firmado_por=colaborador)
         
         assert result is True
         acta.refresh_from_db()
         assert acta.firmada is True
+        assert acta.firmada_por == colaborador
+        assert acta.fecha_firma is not None
         
         # Intentar firmar de nuevo falla
         with pytest.raises(ValidationError, match="El acta ya está firmada"):
-            ActaService.firmar_acta(acta.pk)
+            ActaService.firmar_acta(acta.pk, firmado_por=colaborador)
 
     def test_obtener_pendientes(self):
         """Verificar que solo obtiene asignaciones sin acta y vigentes"""
@@ -291,42 +294,62 @@ class TestActaPDFService:
 class TestPlaywrightBrowserPool:
     """Tests unitarios para el pool de Chromium."""
 
+    def _run_in_thread(self, func):
+        import concurrent.futures
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+            future = executor.submit(func)
+            return future.result(timeout=20)
+
     def setup_method(self):
         """Limpia el pool antes de cada test."""
         from actas.playwright_browser import shutdown_pool
-        shutdown_pool()
+        self._run_in_thread(shutdown_pool)
 
     def teardown_method(self):
         """Limpia el pool después de cada test."""
         from actas.playwright_browser import shutdown_pool
-        shutdown_pool()
+        self._run_in_thread(shutdown_pool)
 
     def test_get_browser_returns_playwright_browser(self):
         """Verifica que get_browser() devuelve una instancia de Chromium usable."""
         from actas.playwright_browser import get_browser
-        browser = get_browser()
-        assert browser is not None
-        page = browser.new_page()
-        page.close()
-        assert browser.is_connected()
+        
+        def _test():
+            browser = get_browser()
+            assert browser is not None
+            page = browser.new_page()
+            page.close()
+            assert browser.is_connected()
+            return True
+            
+        assert self._run_in_thread(_test)
 
     def test_browser_reuse_same_instance(self):
         """Verifica que la misma instancia se reusa en llamadas sucesivas."""
         from actas.playwright_browser import get_browser, _browser_pool
-        b1 = get_browser()
-        b2 = get_browser()
-        assert b1 is b2
-        assert len(_browser_pool) == 1
+        
+        def _test():
+            b1 = get_browser()
+            b2 = get_browser()
+            assert b1 is b2
+            assert len(_browser_pool) == 1
+            return True
+            
+        assert self._run_in_thread(_test)
 
     def test_shutdown_pool_clears_all(self):
         """Verifica que shutdown_pool() cierra todas las instancias y vacía el pool."""
         from actas.playwright_browser import get_browser, shutdown_pool, _browser_pool
 
-        b1 = get_browser()
-        assert len(_browser_pool) == 1
-        assert b1.is_connected()
+        def _test():
+            b1 = get_browser()
+            assert len(_browser_pool) == 1
+            assert b1.is_connected()
 
-        shutdown_pool()
+            shutdown_pool()
 
-        assert len(_browser_pool) == 0
-        assert not b1.is_connected()
+            assert len(_browser_pool) == 0
+            assert not b1.is_connected()
+            return True
+            
+        assert self._run_in_thread(_test)

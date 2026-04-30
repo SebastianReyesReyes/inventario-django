@@ -9,7 +9,9 @@
 {% block content %}
 <div class="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700"
      hx-on:actaCreated="window.dispatchEvent(new CustomEvent('modal-close'))"
-     hx-on:actaFirmada="htmx.trigger('#search-results', 'refresh'); window.dispatchEvent(new CustomEvent('sideover-close'))">
+     hx-on:actaFirmada="htmx.trigger('#search-results', 'refresh'); window.dispatchEvent(new CustomEvent('sideover-close'))"
+     hx-on:actaAnulada="htmx.trigger('#tabla-wrapper', 'refresh'); window.dispatchEvent(new CustomEvent('modal-close'))"
+     hx-on:actaEliminada="htmx.trigger('#tabla-wrapper', 'refresh'); window.dispatchEvent(new CustomEvent('modal-close'))">
     
     <c-page-header title="Actas de Entrega" subtitle="Respaldo legal de activos TI bajo normativas Ley 21.663 y 21.719." title_class="uppercase">
         <c-search-input class="w-64 md:w-80" placeholder="Buscar por folio o colaborador..."

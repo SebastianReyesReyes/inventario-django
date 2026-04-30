@@ -134,15 +134,18 @@ class TestActaValidation:
     def test_firmar_acta_twice_raises_error(self):
         """Firmar un acta ya firmada lanza ValidationError."""
         acta = ActaFactory(firmada=False)
-        ActaService.firmar_acta(acta.pk)
+        colaborador = ColaboradorFactory()
+        ActaService.firmar_acta(acta.pk, firmado_por=colaborador)
 
-        with pytest.raises(ValidationError, match="ya está firmada"):
-            ActaService.firmar_acta(acta.pk)
+        with pytest.raises(ValidationError, match="El acta ya está firmada"):
+            ActaService.firmar_acta(acta.pk, firmado_por=colaborador)
 
     def test_firmar_nonexistent_acta_raises_error(self):
         """Firmar un acta que no existe lanza ValidationError."""
-        with pytest.raises(ValidationError, match="ya está firmada o no existe"):
-            ActaService.firmar_acta(99999)
+        colaborador = ColaboradorFactory()
+        with pytest.raises(ValidationError, match="El acta no existe"):
+            ActaService.firmar_acta(99999, firmado_por=colaborador)
+
 
 
 @pytest.mark.django_db

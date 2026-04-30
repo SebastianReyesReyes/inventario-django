@@ -239,7 +239,8 @@ class TestActaImmutability:
     def test_signed_acta_cannot_be_modified(self):
         """Intentar modificar un acta firmada lanza ValidationError."""
         acta = ActaFactory(firmada=False)
-        ActaService.firmar_acta(acta.pk)
+        firmado_por = ColaboradorFactory()
+        ActaService.firmar_acta(acta.pk, firmado_por=firmado_por)
 
         acta.refresh_from_db()
         assert acta.firmada is True

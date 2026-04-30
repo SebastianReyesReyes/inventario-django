@@ -115,7 +115,8 @@ class MovimientoStock(models.Model):
         return f"{self.tipo_movimiento} de {self.cantidad} {self.suministro.unidad_medida} - {self.suministro.nombre}"
 
     def clean(self):
-        if self.tipo_movimiento == self.TipoMovimiento.SALIDA and self.cantidad > self.suministro.stock_actual:
+        tipos_salida = [self.TipoMovimiento.SALIDA, self.TipoMovimiento.AJUSTE_NEGATIVO]
+        if self.tipo_movimiento in tipos_salida and self.cantidad > self.suministro.stock_actual:
             # Validamos que no se saque más de lo que hay, si es un nuevo movimiento
             if self.pk is None: 
                 raise ValidationError({"cantidad": f"No hay suficiente stock. Stock actual: {self.suministro.stock_actual}."})

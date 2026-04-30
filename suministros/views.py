@@ -69,7 +69,7 @@ def suministro_create(request):
             return htmx_success_or_redirect(
                 request,
                 redirect_url='suministros:suministro_list',
-                trigger={'refreshSuministroList': '', 'showToast': {'message': f'Suministro "{suministro.nombre}" creado', 'type': 'success'}},
+                trigger={'refreshSuministroList': '', 'show-notification': {'message': f'Suministro "{suministro.nombre}" creado', 'type': 'success'}},
             )
     else:
         form = SuministroForm()
@@ -97,7 +97,7 @@ def suministro_update(request, pk):
             return htmx_success_or_redirect(
                 request,
                 redirect_url='suministros:suministro_list',
-                trigger={'refreshSuministroList': '', 'showToast': {'message': f'Suministro "{suministro.nombre}" actualizado', 'type': 'success'}},
+                trigger={'refreshSuministroList': '', 'show-notification': {'message': f'Suministro "{suministro.nombre}" actualizado', 'type': 'success'}},
             )
     else:
         form = SuministroForm(instance=suministro)
@@ -157,7 +157,7 @@ def suministro_delete(request, pk):
         suministro.esta_activo = False
         suministro.save(update_fields=['esta_activo'])
         return htmx_trigger_response(
-            trigger={'refreshSuministroList': '', 'showToast': {'message': 'Suministro desactivado', 'type': 'info'}},
+            trigger={'refreshSuministroList': '', 'show-notification': {'message': 'Suministro desactivado', 'type': 'info'}},
             status=204
         )
 
@@ -198,7 +198,7 @@ def movimiento_create(request):
                 return htmx_trigger_response(
                     trigger={
                         'refreshSuministroList': '',
-                        'showToast': {'message': 'Movimiento registrado', 'type': 'success'}
+                        'show-notification': {'message': 'Movimiento registrado', 'type': 'success'}
                     },
                     status=204
                 )
@@ -284,7 +284,7 @@ def categoriasuministro_create(request):
             return htmx_success_or_redirect(
                 request,
                 redirect_url='suministros:suministro_list',
-                trigger={'categoriaListChanged': True, 'showToast': {'message': f'Categoría "{categoria.nombre}" creada', 'type': 'success'}},
+                trigger={'categoriaListChanged': True, 'show-notification': {'message': f'Categoría "{categoria.nombre}" creada', 'type': 'success'}},
             )
     else:
         form = CategoriaSuministroForm()
@@ -307,7 +307,7 @@ def categoriasuministro_update(request, pk):
             return htmx_success_or_redirect(
                 request,
                 redirect_url='suministros:suministro_list',
-                trigger={'categoriaListChanged': True, 'showToast': {'message': 'Categoría actualizada', 'type': 'success'}},
+                trigger={'categoriaListChanged': True, 'show-notification': {'message': 'Categoría actualizada', 'type': 'success'}},
             )
     else:
         form = CategoriaSuministroForm(instance=categoria)

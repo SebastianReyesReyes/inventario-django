@@ -32,7 +32,7 @@ class="fixed inset-0 z-[60] flex items-center justify-center p-4" x-cloak>
             <form hx-post="{% url 'suministros:movimiento_create' %}"
                   hx-target="#modal-container"
                   hx-indicator=".htmx-indicator"
-                  hx-on::after-request="if(event.detail.successful) { window.dispatchEvent(new CustomEvent('modal-close')); window.dispatchEvent(new CustomEvent('show-notification', { detail: { message: 'Movimiento registrado correctamente', type: 'success' } })); }"
+                  hx-on::after-request="if(event.detail.xhr.status === 204) { window.dispatchEvent(new CustomEvent('modal-close')); window.dispatchEvent(new CustomEvent('show-notification', { detail: { message: 'Movimiento registrado correctamente', type: 'success' } })); }"
                   class="space-y-5">
                 {% csrf_token %}
                 {{ form.suministro }}

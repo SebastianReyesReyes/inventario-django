@@ -13,8 +13,6 @@
     </style>
 </head>
 <body>
-    {# |safe es necesario porque preview_html es markup renderizado server-side (render_to_string).
-       No contiene HTML raw proveniente del usuario. #}
     {{ preview_html|safe }}
 </body>
 </html>

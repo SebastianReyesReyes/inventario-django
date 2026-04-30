@@ -28,6 +28,31 @@ class Acta(models.Model):
     firmada = models.BooleanField(default=False, help_text="Si está firmada, no se puede modificar")
     archivo_adjunto = models.FileField(upload_to='actas/firmadas/', null=True, blank=True, help_text="Acta escaneada y firmada")
 
+    # Auditoría de firma
+    firmada_por = models.ForeignKey(
+        Colaborador, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True, 
+        related_name="actas_firmadas"
+    )
+    fecha_firma = models.DateTimeField(null=True, blank=True)
+
+    # Gestión de anulación (Épica de Seguridad)
+    anulada = models.BooleanField(
+        default=False, 
+        help_text="Si está anulada, el acta queda inhabilitada"
+    )
+    anulada_por = models.ForeignKey(
+        Colaborador, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True, 
+        related_name="actas_anuladas"
+    )
+    fecha_anulacion = models.DateTimeField(null=True, blank=True)
+    motivo_anulacion = models.TextField(null=True, blank=True)
+
     # Campos de cumplimiento legal y técnico para devoluciones
     metodo_sanitizacion = models.CharField(
         max_length=20, 
@@ -45,11 +70,18 @@ class Acta(models.Model):
     )
 
     def save(self, *args, **kwargs):
-        if self.firmada and self.pk:
-            # Blindaje: Si ya existe y está firmada, impedimos cualquier cambio
+        if self.pk:
             existente = Acta.objects.get(pk=self.pk)
-            if existente.firmada:
+            
+            # Blindaje: Si ya estaba firmada, impedir cualquier cambio 
+            # (excepto anulación que se maneja permitiendo que self.anulada sea True)
+            if existente.firmada and not self.anulada:
                 raise ValidationError("No se puede modificar un acta que ya ha sido marcada como FIRMADA.")
+            
+            # Si se está marcando como anulada, registrar fecha si no existe
+            if self.anulada and not existente.anulada:
+                if not self.fecha_anulacion:
+                    self.fecha_anulacion = timezone.now()
         
         if not self.folio:
             year = timezone.now().year

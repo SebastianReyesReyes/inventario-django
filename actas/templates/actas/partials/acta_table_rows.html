@@ -28,7 +28,12 @@
         </span>
     </td>
     <td class="px-6 py-4">
-        {% if acta.firmada %}
+        {% if acta.anulada %}
+        <div class="flex items-center gap-2">
+            <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+            <span class="text-[10px] font-black text-red-400 uppercase tracking-widest">ANULADA</span>
+        </div>
+        {% elif acta.firmada %}
         <div class="flex items-center gap-2">
             <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
             <span class="text-[10px] font-black text-emerald-400 uppercase tracking-widest">FIRMADA</span>
@@ -56,6 +61,26 @@
                     title="Firmar Acta">
                 <span class="material-symbols-outlined text-lg">draw</span>
             </button>
+            {% endif %}
+
+            {% if not acta.anulada and perms.actas.delete_acta %}
+            {% if acta.firmada %}
+            <button class="p-2 text-jmie-gray hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-all"
+                    hx-get="{% url 'actas:acta_anular' acta.pk %}"
+                    hx-target="#modal-container"
+                    hx-swap="innerHTML"
+                    title="Anular Acta Firmada">
+                <span class="material-symbols-outlined text-lg">gavel</span>
+            </button>
+            {% else %}
+            <button class="p-2 text-jmie-gray hover:text-amber-400 hover:bg-amber-400/10 rounded-lg transition-all"
+                    hx-get="{% url 'actas:acta_anular' acta.pk %}"
+                    hx-target="#modal-container"
+                    hx-swap="innerHTML"
+                    title="Eliminar Borrador">
+                <span class="material-symbols-outlined text-lg">delete</span>
+            </button>
+            {% endif %}
             {% endif %}
         </div>
     </td>

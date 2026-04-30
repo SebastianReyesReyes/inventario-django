@@ -27,6 +27,11 @@ def acta_list(request):
     """Listado paginado de actas con filtrado básico y ordenamiento HTMX."""
     actas_list = Acta.objects.all().select_related('colaborador', 'creado_por')
     
+    # Excluir actas anuladas por defecto (a menos que se pida explícitamente)
+    incluir_anuladas = request.GET.get('incluir_anuladas')
+    if not incluir_anuladas:
+        actas_list = actas_list.filter(anulada=False)
+    
     q = request.GET.get('q')
     if q:
         from django.db.models import Q
@@ -228,7 +233,7 @@ def acta_firmar(request, pk):
     """Marca un acta como firmada usando ActaService."""
     if request.method == 'POST':
         try:
-            ActaService.firmar_acta(pk)
+            ActaService.firmar_acta(pk, firmado_por=request.user)
         except ValidationError:
             pass  # Si ya está firmada, no es un error
         
@@ -260,6 +265,91 @@ def asignaciones_pendientes(request, colaborador_pk):
         'asignaciones': asignaciones,
         'accesorios': accesorios
     })
+
+@login_required
+@permission_required('actas.delete_acta', raise_exception=True)
+def acta_anular(request, pk):
+    """Anula o elimina un acta con doble confirmación vía HTMX.
+
+    GET: Renderiza el modal de confirmación con text-guard.
+    POST: Ejecuta la anulación (firmada) o eliminación (borrador).
+    """
+    acta = get_object_or_404(Acta, pk=pk)
+
+    if acta.anulada:
+        if request.headers.get('HX-Request'):
+            return HttpResponse(
+                _render_acta_error("Esta acta ya fue anulada."),
+                status=400
+            )
+        return HttpResponse("Acta ya anulada.", status=400)
+
+    if request.method == 'GET':
+        # Determinar parámetros del modal según estado del acta
+        if acta.firmada:
+            context = {
+                'acta': acta,
+                'severity': 'firmada',
+                'dialog_title': 'Anular Acta Firmada',
+                'subtitle': acta.folio,
+                'message': 'Esta acta está FIRMADA y constituye un documento legal. '
+                           'La anulación es irreversible y el registro se conservará con estado ANULADA.',
+                'guard_text': f'ANULAR-{acta.folio}',
+                'guard_label': f'Escriba ANULAR-{acta.folio} para confirmar',
+                'confirm_text': 'Anular Acta',
+                'confirm_icon': 'gavel',
+                'requires_reason': True,
+                'action_url': f"/actas/{acta.pk}/anular/",
+            }
+        else:
+            context = {
+                'acta': acta,
+                'severity': 'borrador',
+                'dialog_title': 'Eliminar Borrador',
+                'subtitle': acta.folio,
+                'message': 'Este borrador será eliminado permanentemente. '
+                           'Esta acción no se puede deshacer.',
+                'guard_text': 'ELIMINAR',
+                'guard_label': 'Escriba ELIMINAR para confirmar',
+                'confirm_text': 'Eliminar',
+                'confirm_icon': 'delete_forever',
+                'requires_reason': False,
+                'action_url': f"/actas/{acta.pk}/anular/",
+            }
+        return render(request, 'actas/partials/acta_anular_modal.html', context)
+
+    # POST — ejecutar anulación/eliminación
+    motivo = request.POST.get('motivo', '').strip()
+
+    try:
+        if acta.firmada:
+            if not motivo or len(motivo) < 10:
+                error_html = _render_acta_error(
+                    "El motivo de anulación es obligatorio (mínimo 10 caracteres)."
+                )
+                return HttpResponse(error_html, status=400)
+
+        acta_obj, accion = ActaService.anular(
+            acta_pk=acta.pk,
+            usuario=request.user,
+            motivo=motivo if acta.firmada else None,
+        )
+
+        if accion == 'eliminada':
+            # Borrador eliminado — la tabla se refresca y el registro desaparece
+            return htmx_trigger_response('actaEliminada')
+        else:
+            # Acta anulada (soft delete) — la tabla se refresca mostrando estado ANULADA
+            return htmx_trigger_response('actaAnulada')
+
+    except ValidationError as e:
+        error_html = _render_acta_error(str(e))
+        return HttpResponse(error_html, status=400)
+    except Exception:
+        logger.exception("Error anulando acta %s", pk)
+        error_html = _render_acta_error('Error interno al anular el acta.')
+        return HttpResponse(error_html, status=500)
+
 
 @login_required
 def ministros_por_colaborador(request, colaborador_pk):

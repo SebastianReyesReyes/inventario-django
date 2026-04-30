@@ -106,7 +106,8 @@ class ActasPage:
     def __init__(self, page: Page):
         self.page = page
         self.table = page.locator('table')
-        self.generate_button = page.locator('a:has-text("Generar Acta"), button:has-text("Generar Acta")')
+        # Selector más específico para evitar duplicados con el empty state
+        self.generate_button = page.locator('header button:has-text("Generar Acta"), header a:has-text("Generar Acta")').first
         self.modal = page.locator('#modal-container, [role="dialog"]')
         self.sideover = page.locator('text=Vista Previa del Acta').locator('xpath=ancestor::div[contains(@class, "fixed")]')
 

@@ -19,39 +19,52 @@ class DashboardMetricsService:
     _static_cache = {}
 
     @classmethod
-    def _get_cached_id(cls, key, model, **kwargs):
-        """Cache interno de PKs para evitar consultas repetitivas a estados/tipos estáticos."""
+    def _get_cached_obj(cls, key, model, **kwargs):
+        """Cache interno para evitar consultas repetitivas a estados/tipos estáticos."""
         if key not in cls._static_cache:
-            pk = model.objects.filter(**kwargs).values_list("id", flat=True).first()
-            if pk is not None:
-                cls._static_cache[key] = pk
-        return cls._static_cache.get(key, "")
+            cls._static_cache[key] = model.objects.filter(**kwargs).first()
+        return cls._static_cache[key]
+
+    @classmethod
+    def _get_cached_ids(cls, key, model, **kwargs):
+        """Cache de IDs para evitar JOINS repetitivos en filtrados por nombre."""
+        if key not in cls._static_cache:
+            cls._static_cache[key] = list(model.objects.filter(**kwargs).values_list("id", flat=True))
+        return cls._static_cache[key]
 
     @classmethod
     def build_context(cls, filtered_qs, filterset, top10_metric):
         total_dispositivos = filtered_qs.count()
 
-        disponible_estado_id = cls._get_cached_id(
+        disponible_estado = cls._get_cached_obj(
             "disponible_estado", EstadoDispositivo, nombre__in=["Disponible", "Reservado"]
         )
-        mantenimiento_estado_id = cls._get_cached_id(
+        mantenimiento_estado = cls._get_cached_obj(
             "mantenimiento_estado", EstadoDispositivo, nombre__icontains="Reparación"
         )
 
-        tipo_notebook_id = cls._get_cached_id(
+        tipo_notebook = cls._get_cached_obj(
             "tipo_notebook", TipoDispositivo, nombre__icontains="Notebook"
         )
-        tipo_smartphone_id = cls._get_cached_id(
+        tipo_smartphone = cls._get_cached_obj(
             "tipo_smartphone", TipoDispositivo, nombre__icontains="Smartphone"
         )
-        tipo_impresora_id = cls._get_cached_id(
+        tipo_impresora = cls._get_cached_obj(
             "tipo_impresora", TipoDispositivo, nombre__icontains="Impresora"
         )
 
-        total_disponibles = filtered_qs.filter(estado__nombre__in=["Disponible", "Reservado"]).count()
-        total_asignados = filtered_qs.filter(estado__nombre__in=["Asignado", "En uso"]).count()
-        total_mantenimiento = filtered_qs.filter(estado__nombre__icontains="Reparación").count()
-        total_baja = filtered_qs.filter(estado__nombre__in=["Fuera de Inventario", "De Baja", "Inactivo"]).count()
+        # Cache IDs for common filters to avoid repetitive JOINS on every .count()
+        disponible_ids = cls._get_cached_ids("disponible_ids", EstadoDispositivo, nombre__in=["Disponible", "Reservado"])
+        asignado_ids = cls._get_cached_ids("asignado_ids", EstadoDispositivo, nombre__in=["Asignado", "En uso"])
+        mantenimiento_ids = cls._get_cached_ids("mantenimiento_ids", EstadoDispositivo, nombre__icontains="Reparación")
+        baja_ids = cls._get_cached_ids(
+            "baja_ids", EstadoDispositivo, nombre__in=["Fuera de Inventario", "De Baja", "Inactivo"]
+        )
+
+        total_disponibles = filtered_qs.filter(estado_id__in=disponible_ids).count()
+        total_asignados = filtered_qs.filter(estado_id__in=asignado_ids).count()
+        total_mantenimiento = filtered_qs.filter(estado_id__in=mantenimiento_ids).count()
+        total_baja = filtered_qs.filter(estado_id__in=baja_ids).count()
 
         total_valor = filtered_qs.aggregate(total=Sum("valor_contable"))["total"] or 0
         costo_mantenimiento = (
@@ -62,18 +75,30 @@ class DashboardMetricsService:
         total_activos = total_dispositivos - total_baja
         porcentaje_asignados = round((total_asignados / total_activos * 100) if total_activos > 0 else 0)
 
-        total_notebooks_disponibles = filtered_qs.filter(
-            modelo__tipo_dispositivo__nombre__icontains="Notebook",
-            estado__nombre__in=["Disponible", "Reservado"],
-        ).count()
-        total_smartphones_disponibles = filtered_qs.filter(
-            modelo__tipo_dispositivo__nombre__icontains="Smartphone",
-            estado__nombre__in=["Disponible", "Reservado"],
-        ).count()
-        total_impresoras_disponibles = Dispositivo.objects.filter(
-            modelo__tipo_dispositivo__nombre__icontains="Impresora",
-            estado__nombre__in=["Disponible", "Reservado"],
-        ).count()
+        total_notebooks_disponibles = (
+            filtered_qs.filter(
+                modelo__tipo_dispositivo=tipo_notebook,
+                estado_id__in=disponible_ids,
+            ).count()
+            if tipo_notebook
+            else 0
+        )
+        total_smartphones_disponibles = (
+            filtered_qs.filter(
+                modelo__tipo_dispositivo=tipo_smartphone,
+                estado_id__in=disponible_ids,
+            ).count()
+            if tipo_smartphone
+            else 0
+        )
+        total_impresoras_disponibles = (
+            filtered_qs.filter(
+                modelo__tipo_dispositivo=tipo_impresora,
+                estado_id__in=disponible_ids,
+            ).count()
+            if tipo_impresora
+            else 0
+        )
 
         total_colaboradores = Colaborador.objects.filter(esta_activo=True).count()
         mantenimientos_recientes = BitacoraMantenimiento.objects.filter(
@@ -114,10 +139,10 @@ class DashboardMetricsService:
             "filter": filterset,
             "top10_metric": top10_metric,
             "total_disponibles": total_disponibles,
-            "total_disponibles_id": disponible_estado_id,
+            "total_disponibles_id": disponible_estado.id if disponible_estado else "",
             "total_asignados": total_asignados,
             "total_mantenimiento": total_mantenimiento,
-            "total_mantenimiento_id": mantenimiento_estado_id,
+            "total_mantenimiento_id": mantenimiento_estado.id if mantenimiento_estado else "",
             "total_baja": total_baja,
             "total_dispositivos": total_dispositivos,
             "total_colaboradores": total_colaboradores,
@@ -128,9 +153,9 @@ class DashboardMetricsService:
             "total_notebooks_disponibles": total_notebooks_disponibles,
             "total_smartphones_disponibles": total_smartphones_disponibles,
             "total_impresoras_disponibles": total_impresoras_disponibles,
-            "tipo_notebook_id": tipo_notebook_id,
-            "tipo_smartphone_id": tipo_smartphone_id,
-            "tipo_impresora_id": tipo_impresora_id,
+            "tipo_notebook_id": tipo_notebook.id if tipo_notebook else "",
+            "tipo_smartphone_id": tipo_smartphone.id if tipo_smartphone else "",
+            "tipo_impresora_id": tipo_impresora.id if tipo_impresora else "",
             "chart_tipo_labels": json.dumps([item["modelo__tipo_dispositivo__nombre"] or "Sin Categoría" for item in chart_tipo_data]),
             "chart_tipo_values": json.dumps([item["total"] for item in chart_tipo_data]),
             "chart_estado_labels": json.dumps([item["estado__nombre"] or "Estado Desconocido" for item in chart_estado_data]),

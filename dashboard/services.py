@@ -16,17 +16,35 @@ class DashboardMetricsService:
     """Calcula métricas y datasets para la vista principal del dashboard."""
 
     MESES_ES = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
+    _static_cache = {}
+
+    @classmethod
+    def _get_cached_obj(cls, key, model, **kwargs):
+        """Cache interno para evitar consultas repetitivas a estados/tipos estáticos."""
+        if key not in cls._static_cache:
+            cls._static_cache[key] = model.objects.filter(**kwargs).first()
+        return cls._static_cache[key]
 
     @classmethod
     def build_context(cls, filtered_qs, filterset, top10_metric):
         total_dispositivos = filtered_qs.count()
 
-        disponible_estado = EstadoDispositivo.objects.filter(nombre__in=["Disponible", "Reservado"]).first()
-        mantenimiento_estado = EstadoDispositivo.objects.filter(nombre__icontains="Reparación").first()
+        disponible_estado = cls._get_cached_obj(
+            "disponible_estado", EstadoDispositivo, nombre__in=["Disponible", "Reservado"]
+        )
+        mantenimiento_estado = cls._get_cached_obj(
+            "mantenimiento_estado", EstadoDispositivo, nombre__icontains="Reparación"
+        )
 
-        tipo_notebook = TipoDispositivo.objects.filter(nombre__icontains="Notebook").first()
-        tipo_smartphone = TipoDispositivo.objects.filter(nombre__icontains="Smartphone").first()
-        tipo_impresora = TipoDispositivo.objects.filter(nombre__icontains="Impresora").first()
+        tipo_notebook = cls._get_cached_obj(
+            "tipo_notebook", TipoDispositivo, nombre__icontains="Notebook"
+        )
+        tipo_smartphone = cls._get_cached_obj(
+            "tipo_smartphone", TipoDispositivo, nombre__icontains="Smartphone"
+        )
+        tipo_impresora = cls._get_cached_obj(
+            "tipo_impresora", TipoDispositivo, nombre__icontains="Impresora"
+        )
 
         total_disponibles = filtered_qs.filter(estado__nombre__in=["Disponible", "Reservado"]).count()
         total_asignados = filtered_qs.filter(estado__nombre__in=["Asignado", "En uso"]).count()

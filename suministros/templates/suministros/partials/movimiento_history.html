@@ -25,9 +25,10 @@
             <td class="px-4 py-3 text-xs font-bold text-on-background">{{ m.cantidad }}</td>
             <td class="px-4 py-3 text-xs text-jmie-gray">
                 {% if m.tipo_movimiento == 'SALIDA' %}
-                    {% if m.dispositivo_destino %}<span class="text-on-background font-bold">{{ m.dispositivo_destino }}</span>{% endif %}
-                    {% if m.centro_costo %}<br><span class="text-[10px]">{{ m.centro_costo }}</span>{% endif %}
-                    {% if not m.dispositivo_destino and not m.centro_costo %}—{% endif %}
+                    {% if m.colaborador_destino %}<span class="text-on-background font-bold">{{ m.colaborador_destino.get_full_name|default:m.colaborador_destino }}</span>{% endif %}
+                    {% if m.dispositivo_destino %}<br><span class="text-[10px]">{{ m.dispositivo_destino }}</span>{% endif %}
+                    {% if m.centro_costo %}<br><span class="text-[10px] text-jmie-gray/70">{{ m.centro_costo }}</span>{% endif %}
+                    {% if not m.colaborador_destino and not m.dispositivo_destino and not m.centro_costo %}—{% endif %}
                 {% elif m.tipo_movimiento == 'ENTRADA' %}
                     {% if m.numero_factura %}<span class="text-[10px]">Fact: {{ m.numero_factura }}</span>{% else %}—{% endif %}
                 {% else %}

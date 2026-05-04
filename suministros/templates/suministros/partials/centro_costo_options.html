@@ -1,0 +1,4 @@
+<option value="">---------</option>
+{% for cc in centros_costo %}
+<option value="{{ cc.pk }}" {% if selected == cc.pk %}selected{% endif %}>{{ cc }}</option>
+{% endfor %}

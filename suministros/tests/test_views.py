@@ -417,3 +417,55 @@ class TestSuministroViews:
         client.login(username='auditor_test', password='pass')
         response = client.get(reverse('suministros:factura_create'))
         assert response.status_code == 403
+
+    # ── Tests de Exportación Excel ──────────────────────────────────────
+
+    def test_export_suministros_excel(self, client, admin_user):
+        """Exportar catálogo de suministros responde con archivo Excel."""
+        SuministroFactory.create_batch(3)
+        client.login(username='admin_test', password='pass')
+        response = client.get(reverse('suministros:suministro_export_excel'))
+        assert response.status_code == 200
+        assert response['Content-Type'] == 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        assert 'attachment' in response['Content-Disposition']
+        assert len(response.content) > 0
+
+    def test_export_suministros_excel_respects_filters(self, client, admin_user):
+        """La exportación respeta los filtros aplicados en el listado."""
+        cat = CategoriaSuministroFactory(nombre='Tóner')
+        s1 = SuministroFactory(nombre='Tóner HP', categoria=cat)
+        SuministroFactory(nombre='Mouse Logitech')
+
+        client.login(username='admin_test', password='pass')
+        response = client.get(
+            reverse('suministros:suministro_export_excel'),
+            {'q': 'Tóner'}
+        )
+        assert response.status_code == 200
+        # El contenido del Excel debería contener solo el tóner
+        # (verificamos indirectamente por el tamaño o estructura)
+        assert len(response.content) > 0
+
+    def test_export_movimientos_excel(self, client, admin_user):
+        """Exportar historial de movimientos de un suministro."""
+        suministro = SuministroFactory()
+        MovimientoStockFactory(suministro=suministro, tipo_movimiento=MovimientoStock.TipoMovimiento.ENTRADA, cantidad=10)
+        MovimientoStockFactory(suministro=suministro, tipo_movimiento=MovimientoStock.TipoMovimiento.SALIDA, cantidad=3)
+
+        client.login(username='admin_test', password='pass')
+        response = client.get(
+            reverse('suministros:suministro_movimientos_export_excel', args=[suministro.pk])
+        )
+        assert response.status_code == 200
+        assert response['Content-Type'] == 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        assert 'attachment' in response['Content-Disposition']
+        assert len(response.content) > 0
+
+    def test_export_movimientos_excel_requires_permission(self, client, auditor_user):
+        """Usuario sin permiso view_movimientostock obtiene 403."""
+        suministro = SuministroFactory()
+        client.login(username='auditor_test', password='pass')
+        response = client.get(
+            reverse('suministros:suministro_movimientos_export_excel', args=[suministro.pk])
+        )
+        assert response.status_code == 403

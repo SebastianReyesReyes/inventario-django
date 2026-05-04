@@ -8,12 +8,16 @@ from django.core.paginator import Paginator
 from django.core.exceptions import ValidationError
 from django import forms
 from django.forms import formset_factory
+from django.http import HttpResponse
+from django.utils import timezone
 
 from core.htmx import htmx_trigger_response, htmx_render_or_redirect, htmx_success_or_redirect
-from core.models import Modelo, Fabricante
+from core.models import Modelo, Fabricante, CentroCosto
+from colaboradores.models import Colaborador
 from .models import Suministro, MovimientoStock, CategoriaSuministro
 from .forms import SuministroForm, MovimientoStockForm, CategoriaSuministroForm, FacturaCabeceraForm, MovimientoFacturaForm
 from .services import registrar_movimiento_stock
+from .resources import SuministroResource, MovimientoStockResource
 
 
 @login_required
@@ -298,6 +302,24 @@ def ajax_get_dispositivos_compatibles(request):
     return render(request, 'suministros/partials/dispositivo_options.html', {'dispositivos': dispositivos})
 
 
+@login_required
+def ajax_colaborador_centro_costo(request):
+    """HTMX: retorna opciones de centro de costo con el del colaborador pre-seleccionado."""
+    colaborador_id = request.GET.get('colaborador_destino') or request.GET.get('colaborador')
+    selected = None
+    if colaborador_id:
+        try:
+            colaborador = Colaborador.objects.get(pk=colaborador_id)
+            selected = colaborador.centro_costo_id
+        except (ValueError, TypeError, Colaborador.DoesNotExist):
+            pass
+
+    return render(request, 'suministros/partials/centro_costo_options.html', {
+        'centros_costo': CentroCosto.objects.filter(activa=True).order_by('nombre'),
+        'selected': selected,
+    })
+
+
 # ── Categoría de Suministro: CRUD inline (HTMX modal) ──────────────────────
 
 @login_required
@@ -401,3 +423,55 @@ def factura_create(request):
     }
     
     return render(request, 'suministros/factura_form.html', context)
+
+
+# ── Exportaciones Excel ────────────────────────────────────────────────────
+
+@login_required
+@permission_required('suministros.view_suministro', raise_exception=True)
+def suministro_export_excel(request):
+    """Exporta el catálogo de suministros a Excel respetando los filtros aplicados."""
+    query = request.GET.get('q', '')
+    categoria_id = request.GET.get('categoria', '')
+    fabricante_id = request.GET.get('fabricante', '')
+
+    suministros = Suministro.objects.activos().select_related('categoria', 'fabricante')
+
+    if categoria_id:
+        suministros = suministros.filter(categoria_id=categoria_id)
+
+    if fabricante_id:
+        suministros = suministros.filter(fabricante_id=fabricante_id)
+
+    if query:
+        suministros = suministros.filter(
+            Q(nombre__icontains=query) |
+            Q(codigo_interno__icontains=query) |
+            Q(fabricante__nombre__icontains=query)
+        )
+
+    dataset = SuministroResource().export(suministros)
+    response = HttpResponse(
+        dataset.export('xlsx'),
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = f'attachment; filename="Suministros_JMIE_{timezone.now().date()}.xlsx"'
+    return response
+
+
+@login_required
+@permission_required('suministros.view_movimientostock', raise_exception=True)
+def suministro_movimientos_export_excel(request, pk):
+    """Exporta el historial de movimientos de un suministro específico a Excel."""
+    suministro = get_object_or_404(Suministro, pk=pk)
+    movimientos = suministro.movimientos.select_related(
+        'registrado_por', 'colaborador_destino', 'centro_costo', 'dispositivo_destino'
+    ).order_by('-fecha')
+
+    dataset = MovimientoStockResource().export(movimientos)
+    response = HttpResponse(
+        dataset.export('xlsx'),
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = f'attachment; filename="Movimientos_{suministro.nombre.replace(" ", "_")}_{timezone.now().date()}.xlsx"'
+    return response

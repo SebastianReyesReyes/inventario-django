@@ -83,6 +83,15 @@ class MovimientoStockForm(BaseStyledForm):
             'notas': forms.Textarea(attrs={'class': 'w-full bg-surface-container-high border-[1px] border-white/5 rounded-lg px-4 py-3 text-on-background', 'rows': 3}),
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Auto-llenar centro de costo vía HTMX al cambiar destinatario
+        self.fields['colaborador_destino'].widget.attrs.update({
+            'hx-get': reverse_lazy('suministros:ajax_colaborador_centro_costo'),
+            'hx-target': '#id_centro_costo',
+            'hx-trigger': 'change',
+        })
+
 
 class FacturaCabeceraForm(forms.Form):
     numero_factura = forms.CharField(

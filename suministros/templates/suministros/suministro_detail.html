@@ -48,6 +48,15 @@
 
         <!-- Movement History -->
         <c-glass-panel class="lg:col-span-2" title="Historial de Movimientos">
+            {% if perms.suministros.view_movimientostock %}
+            <div class="px-6 py-3 border-b border-white/5 flex justify-end">
+                <a href="{% url 'suministros:suministro_movimientos_export_excel' suministro.pk %}"
+                   class="px-3 py-1.5 rounded-lg border border-white/10 text-on-background hover:bg-white/5 transition-all text-[10px] font-bold flex items-center">
+                    <span class="material-symbols-outlined text-sm mr-1.5 leading-none">download</span>
+                    Exportar Excel
+                </a>
+            </div>
+            {% endif %}
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse">
                     <thead>
@@ -55,6 +64,7 @@
                             <th class="px-4 py-3">Fecha</th>
                             <th class="px-4 py-3">Tipo</th>
                             <th class="px-4 py-3">Cantidad</th>
+                            <th class="px-4 py-3">Destino</th>
                             <th class="px-4 py-3">Registrado por</th>
                             <th class="px-4 py-3">Notas</th>
                         </tr>
@@ -73,12 +83,24 @@
                                 </span>
                             </td>
                             <td class="px-4 py-3 text-xs font-bold text-on-background">{{ m.cantidad }}</td>
+                            <td class="px-4 py-3 text-xs text-jmie-gray">
+                                {% if m.tipo_movimiento == 'SALIDA' %}
+                                    {% if m.colaborador_destino %}<span class="text-on-background font-bold">{{ m.colaborador_destino.get_full_name|default:m.colaborador_destino }}</span>{% endif %}
+                                    {% if m.dispositivo_destino %}<br><span class="text-[10px]">{{ m.dispositivo_destino }}</span>{% endif %}
+                                    {% if m.centro_costo %}<br><span class="text-[10px] text-jmie-gray/70">{{ m.centro_costo }}</span>{% endif %}
+                                    {% if not m.colaborador_destino and not m.dispositivo_destino and not m.centro_costo %}—{% endif %}
+                                {% elif m.tipo_movimiento == 'ENTRADA' %}
+                                    {% if m.numero_factura %}<span class="text-[10px]">Fact: {{ m.numero_factura }}</span>{% else %}—{% endif %}
+                                {% else %}
+                                    —
+                                {% endif %}
+                            </td>
                             <td class="px-4 py-3 text-xs text-jmie-gray">{{ m.registrado_por.get_full_name|default:m.registrado_por.username|default:"—" }}</td>
                             <td class="px-4 py-3 text-xs text-jmie-gray max-w-xs truncate">{{ m.notas|default:"—" }}</td>
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="5" class="px-4 py-8 text-center text-xs text-jmie-gray font-bold">Sin movimientos registrados</td>
+                            <td colspan="6" class="px-4 py-8 text-center text-xs text-jmie-gray font-bold">Sin movimientos registrados</td>
                         </tr>
                         {% endfor %}
                     </tbody>

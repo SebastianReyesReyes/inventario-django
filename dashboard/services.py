@@ -19,30 +19,32 @@ class DashboardMetricsService:
     _static_cache = {}
 
     @classmethod
-    def _get_cached_obj(cls, key, model, **kwargs):
-        """Cache interno para evitar consultas repetitivas a estados/tipos estáticos."""
+    def _get_cached_id(cls, key, model, **kwargs):
+        """Cache interno de PKs para evitar consultas repetitivas a estados/tipos estáticos."""
         if key not in cls._static_cache:
-            cls._static_cache[key] = model.objects.filter(**kwargs).first()
-        return cls._static_cache[key]
+            pk = model.objects.filter(**kwargs).values_list("id", flat=True).first()
+            if pk is not None:
+                cls._static_cache[key] = pk
+        return cls._static_cache.get(key, "")
 
     @classmethod
     def build_context(cls, filtered_qs, filterset, top10_metric):
         total_dispositivos = filtered_qs.count()
 
-        disponible_estado = cls._get_cached_obj(
+        disponible_estado_id = cls._get_cached_id(
             "disponible_estado", EstadoDispositivo, nombre__in=["Disponible", "Reservado"]
         )
-        mantenimiento_estado = cls._get_cached_obj(
+        mantenimiento_estado_id = cls._get_cached_id(
             "mantenimiento_estado", EstadoDispositivo, nombre__icontains="Reparación"
         )
 
-        tipo_notebook = cls._get_cached_obj(
+        tipo_notebook_id = cls._get_cached_id(
             "tipo_notebook", TipoDispositivo, nombre__icontains="Notebook"
         )
-        tipo_smartphone = cls._get_cached_obj(
+        tipo_smartphone_id = cls._get_cached_id(
             "tipo_smartphone", TipoDispositivo, nombre__icontains="Smartphone"
         )
-        tipo_impresora = cls._get_cached_obj(
+        tipo_impresora_id = cls._get_cached_id(
             "tipo_impresora", TipoDispositivo, nombre__icontains="Impresora"
         )
 
@@ -112,10 +114,10 @@ class DashboardMetricsService:
             "filter": filterset,
             "top10_metric": top10_metric,
             "total_disponibles": total_disponibles,
-            "total_disponibles_id": disponible_estado.id if disponible_estado else "",
+            "total_disponibles_id": disponible_estado_id,
             "total_asignados": total_asignados,
             "total_mantenimiento": total_mantenimiento,
-            "total_mantenimiento_id": mantenimiento_estado.id if mantenimiento_estado else "",
+            "total_mantenimiento_id": mantenimiento_estado_id,
             "total_baja": total_baja,
             "total_dispositivos": total_dispositivos,
             "total_colaboradores": total_colaboradores,
@@ -126,9 +128,9 @@ class DashboardMetricsService:
             "total_notebooks_disponibles": total_notebooks_disponibles,
             "total_smartphones_disponibles": total_smartphones_disponibles,
             "total_impresoras_disponibles": total_impresoras_disponibles,
-            "tipo_notebook_id": tipo_notebook.id if tipo_notebook else "",
-            "tipo_smartphone_id": tipo_smartphone.id if tipo_smartphone else "",
-            "tipo_impresora_id": tipo_impresora.id if tipo_impresora else "",
+            "tipo_notebook_id": tipo_notebook_id,
+            "tipo_smartphone_id": tipo_smartphone_id,
+            "tipo_impresora_id": tipo_impresora_id,
             "chart_tipo_labels": json.dumps([item["modelo__tipo_dispositivo__nombre"] or "Sin Categoría" for item in chart_tipo_data]),
             "chart_tipo_values": json.dumps([item["total"] for item in chart_tipo_data]),
             "chart_estado_labels": json.dumps([item["estado__nombre"] or "Estado Desconocido" for item in chart_estado_data]),

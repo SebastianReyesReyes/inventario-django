@@ -1,0 +1,258 @@
+{% extends "base.html" %}
+
+{% block title %}Ingreso por Factura | JMIE{% endblock %}
+{% block section_name %}Suministros{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700"
+     x-data="facturaForm()"
+     @suministro-created.window="handleSuministroCreated($event)">
+    
+    <c-page-header title="Ingreso de Factura" subtitle="Carga masiva de suministros por factura.">
+        <a href="{% url 'suministros:suministro_list' %}" class="px-4 py-2.5 rounded-xl border border-white/10 text-on-background hover:bg-white/5 transition-all text-xs font-bold">
+            Volver al Listado
+        </a>
+    </c-page-header>
+
+    <form method="post" id="factura-form" class="space-y-6">
+        {% csrf_token %}
+        
+        <!-- Cabecera -->
+        <c-glass-panel>
+            <div class="px-6 py-4 bg-white/[0.02] border-b border-white/5 flex items-center justify-between">
+                <h3 class="text-xs font-black uppercase tracking-widest text-jmie-gray flex items-center gap-2">
+                    <span class="material-symbols-outlined text-sm">receipt</span>
+                    Datos de Cabecera
+                </h3>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 p-6">
+                <div>
+                    <c-form-label>{{ cabecera_form.numero_factura.label }}</c-form-label>
+                    {{ cabecera_form.numero_factura }}
+                    {% if cabecera_form.numero_factura.errors %}
+                        <p class="mt-1 text-xs text-red-400 font-medium">{{ cabecera_form.numero_factura.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                <div>
+                    <c-form-label>{{ cabecera_form.fecha.label }}</c-form-label>
+                    {{ cabecera_form.fecha }}
+                    {% if cabecera_form.fecha.errors %}
+                        <p class="mt-1 text-xs text-red-400 font-medium">{{ cabecera_form.fecha.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </c-glass-panel>
+
+        <!-- Detalle -->
+        <c-glass-panel>
+            <div class="px-6 py-4 bg-white/[0.02] border-b border-white/5 flex items-center justify-between">
+                <h3 class="text-xs font-black uppercase tracking-widest text-jmie-gray flex items-center gap-2">
+                    <span class="material-symbols-outlined text-sm">list_alt</span>
+                    Detalle de Suministros
+                </h3>
+            </div>
+            
+            {{ formset.management_form }}
+            
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="border-b border-white/5 text-[10px] font-black text-jmie-gray uppercase tracking-widest bg-white/[0.01]">
+                            <th class="px-6 py-4 w-[40%]">Suministro</th>
+                            <th class="px-4 py-4 w-24 text-center">Cantidad</th>
+                            <th class="px-4 py-4 w-40 text-center">Costo Unitario</th>
+                            <th class="px-4 py-4">Notas</th>
+                            <th class="px-4 py-4 w-12 text-center"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="formset-container">
+                        {% for form in formset %}
+                        <tr class="border-b border-white/5 hover:bg-white/[0.02] transition-colors form-row">
+                            <td class="px-4 py-3">
+                                <div class="flex items-center gap-2">
+                                    <div class="flex-grow">
+                                        {{ form.suministro }}
+                                    </div>
+                                    <button type="button" 
+                                            hx-get="{% url 'suministros:suministro_create' %}" 
+                                            hx-target="#modal-container"
+                                            @click="currentRow = $el.closest('tr')"
+                                            class="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 transition-all flex-shrink-0"
+                                            title="Crear nuevo suministro">
+                                        <span class="material-symbols-outlined text-[16px]">add</span>
+                                    </button>
+                                </div>
+                                {% if form.suministro.errors %}
+                                    <p class="mt-1 text-[10px] text-red-400 font-bold italic">{{ form.suministro.errors.0 }}</p>
+                                {% endif %}
+                            </td>
+                            <td class="px-2 py-3">
+                                {{ form.cantidad }}
+                                {% if form.cantidad.errors %}
+                                    <p class="mt-1 text-[10px] text-red-400 font-bold italic text-center">{{ form.cantidad.errors.0 }}</p>
+                                {% endif %}
+                            </td>
+                            <td class="px-2 py-3">
+                                {{ form.costo_unitario }}
+                                {% if form.costo_unitario.errors %}
+                                    <p class="mt-1 text-[10px] text-red-400 font-bold italic text-center">{{ form.costo_unitario.errors.0 }}</p>
+                                {% endif %}
+                            </td>
+                            <td class="px-2 py-3">
+                                {{ form.notas }}
+                                {% if form.notas.errors %}
+                                    <p class="mt-1 text-[10px] text-red-400 font-bold italic">{{ form.notas.errors.0 }}</p>
+                                {% endif %}
+                                {% for hidden in form.hidden_fields %}
+                                    {{ hidden }}
+                                {% endfor %}
+                            </td>
+                            <td class="px-4 py-3 text-center">
+                                <button type="button" 
+                                        class="text-jmie-gray hover:text-red-400 transition-colors"
+                                        @click="$el.closest('tr').remove(); updateFormIndices();"
+                                        title="Eliminar fila">
+                                    <span class="material-symbols-outlined text-[18px]">delete</span>
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="p-6 flex justify-start bg-white/[0.01] border-t border-white/5">
+                <button type="button" @click="addForm()"
+                        class="px-4 py-2 rounded-xl bg-jmie-blue/10 text-jmie-blue hover:bg-jmie-blue/20 font-black text-[10px] uppercase tracking-widest transition-all flex items-center gap-2">
+                    <span class="material-symbols-outlined text-sm">add_circle</span>
+                    Agregar Ítem
+                </button>
+            </div>
+        </c-glass-panel>
+
+        <div class="flex justify-end gap-3 pt-6">
+            <a href="{% url 'suministros:suministro_list' %}" class="px-6 py-3 rounded-xl border border-white/10 text-on-background hover:bg-white/5 transition-all text-xs font-bold uppercase tracking-widest">
+                Cancelar
+            </a>
+            <button type="submit" class="px-8 py-3 rounded-xl bg-jmie-orange text-white font-black uppercase tracking-widest text-[11px] hover:brightness-110 shadow-[0_4px_20px_rgba(237,139,0,0.3)] transition-all flex items-center gap-2">
+                <span class="material-symbols-outlined text-sm">save</span>
+                Registrar Factura
+            </button>
+        </div>
+    </form>
+
+    <!-- Template para nuevas filas -->
+    <template id="empty-form">
+        <tr class="border-b border-white/5 hover:bg-white/[0.02] transition-colors form-row">
+            <td class="px-4 py-3">
+                <div class="flex items-center gap-2">
+                    <div class="flex-grow">
+                        {{ formset.empty_form.suministro }}
+                    </div>
+                    <button type="button" 
+                            hx-get="{% url 'suministros:suministro_create' %}" 
+                            hx-target="#modal-container"
+                            @click="currentRow = $el.closest('tr')"
+                            class="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 transition-all flex-shrink-0"
+                            title="Crear nuevo suministro">
+                        <span class="material-symbols-outlined text-[16px]">add</span>
+                    </button>
+                </div>
+            </td>
+            <td class="px-2 py-3">
+                {{ formset.empty_form.cantidad }}
+            </td>
+            <td class="px-2 py-3 text-center">
+                {{ formset.empty_form.costo_unitario }}
+            </td>
+            <td class="px-2 py-3">
+                {{ formset.empty_form.notas }}
+                {% for hidden in formset.empty_form.hidden_fields %}
+                    {{ hidden }}
+                {% endfor %}
+            </td>
+            <td class="px-4 py-3 text-center">
+                <button type="button" 
+                        class="text-jmie-gray hover:text-red-400 transition-colors"
+                        @click="$el.closest('tr').remove(); updateFormIndices();"
+                        title="Eliminar fila">
+                    <span class="material-symbols-outlined text-[18px]">delete</span>
+                </button>
+            </td>
+        </tr>
+    </template>
+</div>
+
+<script>
+    function facturaForm() {
+        return {
+            formsCount: {{ formset.total_form_count }},
+            currentRow: null,
+            addForm() {
+                const container = document.getElementById('formset-container');
+                const template = document.getElementById('empty-form');
+                const totalForms = document.getElementById('id_form-TOTAL_FORMS');
+                
+                let newFormHtml = template.innerHTML.replace(/__prefix__/g, this.formsCount);
+                
+                const tr = document.createElement('tr');
+                tr.className = "border-b border-white/5 hover:bg-white/[0.02] transition-colors form-row";
+                tr.innerHTML = newFormHtml;
+                
+                container.appendChild(tr);
+                
+                // Procesar HTMX en la nueva fila
+                htmx.process(tr);
+                
+                this.formsCount++;
+                totalForms.value = this.formsCount;
+            },
+            updateFormIndices() {
+                const rows = document.querySelectorAll('.form-row');
+                const totalForms = document.getElementById('id_form-TOTAL_FORMS');
+                
+                rows.forEach((row, index) => {
+                    const elements = row.querySelectorAll('input, select, textarea');
+                    elements.forEach(el => {
+                        if (el.name) el.name = el.name.replace(/form-\d+-/, `form-${index}-`);
+                        if (el.id) el.id = el.id.replace(/id_form-\d+-/, `id_form-${index}-`);
+                    });
+                });
+                
+                this.formsCount = rows.length;
+                totalForms.value = this.formsCount;
+            },
+            handleSuministroCreated(event) {
+                const data = event.detail;
+                if (!data || !data.id) return;
+
+                const newId = data.id;
+                const newNombre = data.nombre;
+                
+                // Actualizar todos los select de suministros en el formset
+                const selects = document.querySelectorAll('select[name$="-suministro"]');
+                selects.forEach(select => {
+                    // Evitar duplicados
+                    if (!Array.from(select.options).some(opt => opt.value == newId)) {
+                        const opt = document.createElement('option');
+                        opt.value = newId;
+                        opt.text = newNombre;
+                        select.add(opt);
+                    }
+                });
+                
+                // Seleccionar automáticamente en la fila que disparó el modal
+                if (this.currentRow) {
+                    const select = this.currentRow.querySelector('select[name$="-suministro"]');
+                    if (select) {
+                        select.value = newId;
+                        // Opcional: disparar evento change si hay lógica dependiente
+                        select.dispatchEvent(new Event('change'));
+                    }
+                    this.currentRow = null;
+                }
+            }
+        }
+    }
+</script>
+{% endblock %}

@@ -7,11 +7,12 @@ from django.db.models import Q
 from django.core.paginator import Paginator
 from django.core.exceptions import ValidationError
 from django import forms
+from django.forms import formset_factory
 
 from core.htmx import htmx_trigger_response, htmx_render_or_redirect, htmx_success_or_redirect
 from core.models import Modelo, Fabricante
 from .models import Suministro, MovimientoStock, CategoriaSuministro
-from .forms import SuministroForm, MovimientoStockForm, CategoriaSuministroForm
+from .forms import SuministroForm, MovimientoStockForm, CategoriaSuministroForm, FacturaCabeceraForm, MovimientoFacturaForm
 from .services import registrar_movimiento_stock
 
 
@@ -69,7 +70,11 @@ def suministro_create(request):
             return htmx_success_or_redirect(
                 request,
                 redirect_url='suministros:suministro_list',
-                trigger={'refreshSuministroList': '', 'show-notification': {'message': f'Suministro "{suministro.nombre}" creado', 'type': 'success'}},
+                trigger={
+                    'refreshSuministroList': '', 
+                    'show-notification': {'message': f'Suministro "{suministro.nombre}" creado', 'type': 'success'},
+                    'suministroCreated': {'id': suministro.id, 'nombre': suministro.nombre}
+                },
             )
     else:
         form = SuministroForm()
@@ -83,6 +88,17 @@ def suministro_create(request):
     if request.headers.get('HX-Request'):
         return render(request, 'suministros/partials/suministro_form_modal.html', context)
     return render(request, 'suministros/suministro_form.html', context)
+
+
+@login_required
+def ajax_suministro_options(request):
+    """HTMX: retorna opciones <option> para refrescar los select de suministros."""
+    suministros = Suministro.objects.activos().order_by('nombre')
+    selected_id = request.GET.get('selected', '')
+    return render(request, 'suministros/partials/suministro_options.html', {
+        'suministros': suministros,
+        'selected_id': selected_id,
+    })
 
 
 @login_required
@@ -195,6 +211,16 @@ def movimiento_create(request):
                     numero_factura=cd.get('numero_factura'),
                     notas=cd.get('notas', ''),
                 )
+
+                if cd.get('seguir_ingresando'):
+                    params = f"?tipo_movimiento={cd['tipo_movimiento']}"
+                    if cd.get('numero_factura'):
+                        params += f"&numero_factura={cd['numero_factura']}"
+                    if suministro:
+                        params += f"&suministro={suministro.pk}"
+                    
+                    return redirect(reverse('suministros:movimiento_create') + params)
+
                 return htmx_trigger_response(
                     trigger={
                         'refreshSuministroList': '',
@@ -219,9 +245,10 @@ def movimiento_create(request):
         })
 
     # GET: renderizar modal
-    initial = {}
+    initial = request.GET.dict()
     if suministro:
         initial['suministro'] = suministro.pk
+    
     form = MovimientoStockForm(initial=initial)
     if suministro:
         form.fields['suministro'].widget = forms.HiddenInput()
@@ -327,3 +354,50 @@ def ajax_categoria_options(request):
         'categorias': categorias,
         'selected': selected,
     })
+
+
+@login_required
+@permission_required('suministros.add_movimientostock', raise_exception=True)
+def factura_create(request):
+    """Carga masiva de facturas usando formsets."""
+    MovimientoFormSet = formset_factory(MovimientoFacturaForm, extra=3, min_num=1, validate_min=True)
+    
+    if request.method == 'POST':
+        cabecera_form = FacturaCabeceraForm(request.POST)
+        formset = MovimientoFormSet(request.POST)
+        
+        if cabecera_form.is_valid() and formset.is_valid():
+            numero_factura = cabecera_form.cleaned_data['numero_factura']
+            
+            try:
+                with transaction.atomic():
+                    for form in formset:
+                        if form.cleaned_data and not form.cleaned_data.get('DELETE', False):
+                            cd = form.cleaned_data
+                            registrar_movimiento_stock(
+                                suministro_id=cd['suministro'].id,
+                                tipo_movimiento=MovimientoStock.TipoMovimiento.ENTRADA,
+                                cantidad=cd['cantidad'],
+                                registrado_por_id=request.user.id,
+                                costo_unitario=cd.get('costo_unitario'),
+                                numero_factura=numero_factura,
+                                notas=cd.get('notas', ''),
+                            )
+                
+                messages.success(request, f"Factura {numero_factura} registrada con éxito.")
+                return redirect('suministros:suministro_list')
+            except ValidationError as e:
+                messages.error(request, f"Error de validación: {str(e)}")
+            except Exception as e:
+                messages.error(request, f"Error al registrar la factura: {str(e)}")
+    else:
+        cabecera_form = FacturaCabeceraForm()
+        formset = MovimientoFormSet()
+        
+    context = {
+        'cabecera_form': cabecera_form,
+        'formset': formset,
+        'titulo': 'Ingreso de Factura',
+    }
+    
+    return render(request, 'suministros/factura_form.html', context)

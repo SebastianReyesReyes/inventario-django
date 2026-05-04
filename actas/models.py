@@ -113,5 +113,4 @@ class Acta(models.Model):
         verbose_name_plural = "Actas"
 
 
-# Modelos HistorialAsignacion y EntregaAccesorio movidos a dispositivos/models.py 
-# según la nueva arquitectura de mini-apps para trazabilidad.
+

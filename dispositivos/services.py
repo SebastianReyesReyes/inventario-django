@@ -3,6 +3,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from .forms import DispositivoForm, NotebookForm, SmartphoneForm, MonitorForm
+from .models import HistorialAsignacion
 from core.models import TipoDispositivo, EstadoDispositivo
 
 
@@ -176,3 +177,111 @@ class TrazabilidadService:
         entrega.colaborador = colaborador
         entrega.save()
         return entrega
+
+
+class DispositivoService:
+    """Servicio para encapsular la lógica de registro/actualización de dispositivos
+    con generación opcional de acta de entrega.
+
+    Usa DOS bloques atómicos separados para que un fallo en la generación
+    del acta NO revierta el registro/actualización del dispositivo.
+    """
+
+    @staticmethod
+    def registrar_dispositivo_con_acta(form, creado_por, propietario_anterior=None, observaciones=""):
+        """
+        Registra o actualiza un dispositivo y, si corresponde, genera un acta de entrega.
+
+        El método maneja dos flujos:
+        - Creación (propietario_anterior=None): guarda el dispositivo y busca
+          el movimiento de asignación creado por el formulario.
+        - Actualización (propietario_anterior proporcionado): guarda el dispositivo,
+          detecta cambio de propietario y crea el HistorialAsignacion si aplica.
+
+        Usa DOS bloques atómicos separados para que un fallo en la generación
+        del acta NO revierta el registro/actualización del dispositivo.
+
+        Args:
+            form: Formulario de dispositivo validado (DispositivoForm o subclase).
+            creado_por: Instancia de Colaborador (usuario autenticado).
+            propietario_anterior: Instancia de Colaborador o None.
+                Si se proporciona, se compara con el nuevo propietario para
+                detectar cambios. None indica creación (no actualización).
+            observaciones: Texto libre para el acta (default: "").
+
+        Returns:
+            Tuple (dispositivo, acta_or_none):
+                - dispositivo: La instancia guardada.
+                - acta_or_none: Instancia de Acta si se generó, None en caso
+                  contrario.
+        """
+        generar_acta = form.cleaned_data.get('generar_acta', False)
+
+        # ── Bloque 1: Guardar dispositivo + HistorialAsignacion (si aplica) ──
+        with transaction.atomic():
+            dispositivo = form.save()
+            movimiento = None
+
+            if propietario_anterior is not None:
+                # Flujo de actualización: detectar cambio de propietario
+                nuevo_propietario = dispositivo.propietario_actual
+                cambio_propietario = (propietario_anterior != nuevo_propietario)
+
+                if cambio_propietario and generar_acta and nuevo_propietario:
+                    # Cerrar asignación anterior
+                    ultimo_mov = dispositivo.historial.filter(
+                        fecha_fin__isnull=True
+                    ).first()
+                    if ultimo_mov:
+                        ultimo_mov.fecha_fin = timezone.now().date()
+                        ultimo_mov.save()
+
+                    # Crear nueva asignación
+                    movimiento = HistorialAsignacion.objects.create(
+                        dispositivo=dispositivo,
+                        colaborador=nuevo_propietario,
+                        condicion_fisica=dispositivo.notas_condicion or "Sin observaciones."
+                    )
+
+                    # Actualizar estado del dispositivo
+                    estado_asignado, _ = EstadoDispositivo.objects.get_or_create(
+                        nombre='Asignado'
+                    )
+                    dispositivo.estado = estado_asignado
+                    dispositivo.save()
+            else:
+                # Flujo de creación: buscar el movimiento creado por el formulario
+                if generar_acta and dispositivo.propietario_actual:
+                    movimiento = dispositivo.historial.filter(
+                        colaborador=dispositivo.propietario_actual
+                    ).order_by('-fecha_inicio').first()
+
+        # ── Bloque 2: Generar acta (transacción separada) ──
+        # Un fallo aquí NO revierte el registro/actualización del dispositivo.
+        acta = None
+        if generar_acta:
+            colaborador_for_acta = None
+
+            if propietario_anterior is not None:
+                # Actualización: solo generar acta si hubo cambio de propietario
+                nuevo_propietario = dispositivo.propietario_actual
+                cambio_propietario = (propietario_anterior != nuevo_propietario)
+                if cambio_propietario and nuevo_propietario and movimiento:
+                    colaborador_for_acta = nuevo_propietario
+            else:
+                # Creación: generar acta si hay propietario y movimiento
+                if dispositivo.propietario_actual and movimiento:
+                    colaborador_for_acta = dispositivo.propietario_actual
+
+            if colaborador_for_acta:
+                from actas.services import ActaService
+                with transaction.atomic():
+                    acta = ActaService.crear_acta(
+                        colaborador=colaborador_for_acta,
+                        tipo_acta='ENTREGA',
+                        asignacion_ids=[movimiento.pk],
+                        creado_por=creado_por,
+                        observaciones=observaciones
+                    )
+
+        return dispositivo, acta

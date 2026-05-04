@@ -317,3 +317,103 @@ class TestSuministroViews:
         response = client.get(reverse('core:ajax_fabricante_options'), {'selected': f.pk})
         assert response.status_code == 200
         assert 'selected' in response.content.decode()
+
+    # ── Factura como Reina ───────────────────────────────────────────
+
+    def test_movimiento_create_con_seguir_ingresando_redirect(self, client, tecnico_user):
+        """POST con seguir_ingresando=True redirige al form con params precargados."""
+        s = SuministroFactory(stock_actual=0)
+        client.login(username='tecnico_test', password='pass')
+        response = client.post(reverse('suministros:movimiento_create'), {
+            'suministro': s.pk,
+            'tipo_movimiento': MovimientoStock.TipoMovimiento.ENTRADA,
+            'cantidad': 10,
+            'costo_unitario': 5000,
+            'numero_factura': 'F001-123',
+            'seguir_ingresando': 'on',
+        })
+        # Debe ser redirect (302) a movimiento_create con params
+        assert response.status_code == 302
+        assert 'movimiento/nuevo/' in response.url
+        assert 'tipo_movimiento=ENTRADA' in response.url
+        assert 'numero_factura=F001-123' in response.url
+
+    def test_movimiento_create_sin_seguir_ingresando_retorna_204(self, client, tecnico_user):
+        """POST sin seguir_ingresando retorna 204 (HTMX trigger)."""
+        s = SuministroFactory(stock_actual=0)
+        client.login(username='tecnico_test', password='pass')
+        response = client.post(reverse('suministros:movimiento_create'), {
+            'suministro': s.pk,
+            'tipo_movimiento': MovimientoStock.TipoMovimiento.ENTRADA,
+            'cantidad': 5,
+            'costo_unitario': 3000,
+            'numero_factura': 'F001-456',
+        })
+        assert response.status_code == 204
+
+    def test_factura_create_get_renders_form(self, client, tecnico_user):
+        """GET a factura_create renderiza el formulario con formset vacío."""
+        client.login(username='tecnico_test', password='pass')
+        response = client.get(reverse('suministros:factura_create'))
+        assert response.status_code == 200
+        content = response.content.decode()
+        assert 'Ingreso de Factura' in content
+        assert 'numero_factura' in content
+        assert 'form-TOTAL_FORMS' in content
+
+    def test_factura_create_post_crea_multiples_movimientos(self, client, tecnico_user):
+        """POST válido crea múltiples MovimientoStock con el mismo numero_factura."""
+        s1 = SuministroFactory(stock_actual=0)
+        s2 = SuministroFactory(stock_actual=0)
+        client.login(username='tecnico_test', password='pass')
+
+        response = client.post(reverse('suministros:factura_create'), {
+            'numero_factura': 'F-MASIVA-001',
+            'fecha': '2026-05-04',
+            # Formset - 2 filas válidas + 1 vacía (el extra)
+            'form-TOTAL_FORMS': '3',
+            'form-INITIAL_FORMS': '0',
+            'form-0-suministro': s1.pk,
+            'form-0-cantidad': 10,
+            'form-0-costo_unitario': 5000,
+            'form-0-notas': 'Item 1',
+            'form-1-suministro': s2.pk,
+            'form-1-cantidad': 5,
+            'form-1-costo_unitario': 3000,
+            'form-1-notas': 'Item 2',
+            'form-2-suministro': '',
+            'form-2-cantidad': '',
+            'form-2-costo_unitario': '',
+            'form-2-notas': '',
+        })
+
+        assert response.status_code == 302
+        assert MovimientoStock.objects.filter(numero_factura='F-MASIVA-001').count() == 2
+        movs = MovimientoStock.objects.filter(numero_factura='F-MASIVA-001')
+        assert all(m.tipo_movimiento == MovimientoStock.TipoMovimiento.ENTRADA for m in movs)
+        # Verificar que el stock se actualizó
+        s1.refresh_from_db()
+        s2.refresh_from_db()
+        assert s1.stock_actual == 10
+        assert s2.stock_actual == 5
+
+    def test_factura_create_post_invalid_renders_errors(self, client, tecnico_user):
+        """POST inválido re-renderiza el form con errores."""
+        client.login(username='tecnico_test', password='pass')
+        response = client.post(reverse('suministros:factura_create'), {
+            'numero_factura': '',  # vacío → error
+            'fecha': '2026-05-04',
+            'form-TOTAL_FORMS': '1',
+            'form-INITIAL_FORMS': '0',
+            'form-0-suministro': '',
+            'form-0-cantidad': '',
+        })
+        assert response.status_code == 200
+        content = response.content.decode()
+        assert 'Error' in content or 'campo' in content.lower() or 'numero_factura' in content
+
+    def test_factura_create_requires_permission(self, client, auditor_user):
+        """Usuario sin permiso add_movimientostock obtiene 403."""
+        client.login(username='auditor_test', password='pass')
+        response = client.get(reverse('suministros:factura_create'))
+        assert response.status_code == 403

@@ -25,7 +25,7 @@ from core.views import home
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', home, name='home'),
-    path('catalogos/', include('core.urls')),
+    path('catalogos/', include('core.urls', namespace='core')),
     path('dispositivos/', include('dispositivos.urls', namespace='dispositivos')),
     path('colaboradores/', include('colaboradores.urls', namespace='colaboradores')),
     path('actas/', include('actas.urls', namespace='actas')),

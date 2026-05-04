@@ -1,0 +1,6 @@
+<option value="">---------</option>
+{% for suministro in suministros %}
+    <option value="{{ suministro.id }}" {% if selected_id|slugify == suministro.id|slugify %}selected{% endif %}>
+        {{ suministro.nombre }}
+    </option>
+{% endfor %}

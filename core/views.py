@@ -106,8 +106,6 @@ fabricante_delete = FabricanteDeleteView.as_view()
 
 @login_required
 @permission_required('core.add_modelo', raise_exception=True)
-@login_required
-@permission_required('core.add_modelo', raise_exception=True)
 def ajax_modelo_create_inline(request, pk):
     """Compatibilidad: redirige al modal estándar de creación de modelo."""
     response = HttpResponse(status=204)

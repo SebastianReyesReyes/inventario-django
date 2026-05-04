@@ -16,4 +16,7 @@ urlpatterns = [
     path('categorias/crear/', views.categoriasuministro_create, name='categoriasuministro_create'),
     path('categorias/<int:pk>/editar/', views.categoriasuministro_update, name='categoriasuministro_update'),
     path('ajax/categoria-options/', views.ajax_categoria_options, name='ajax_categoria_options'),
+    # Factura como Reina
+    path('ingreso-factura/', views.factura_create, name='factura_create'),
+    path('ajax/suministro-options/', views.ajax_suministro_options, name='ajax_suministro_options'),
 ]

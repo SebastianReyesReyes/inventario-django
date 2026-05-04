@@ -1,5 +1,6 @@
 from django import forms
 from django.urls import reverse_lazy
+from django.utils import timezone
 from .models import Suministro, CategoriaSuministro, MovimientoStock
 from core.models import Modelo, Fabricante
 from core.forms import BaseStyledForm
@@ -61,6 +62,12 @@ class SuministroForm(BaseStyledForm):
                 self.fields['modelos_compatibles'].queryset = Modelo.objects.all().order_by('nombre')
 
 class MovimientoStockForm(BaseStyledForm):
+    seguir_ingresando = forms.BooleanField(
+        required=False,
+        label="Guardar y seguir registrando esta factura",
+        widget=forms.CheckboxInput(attrs={'class': 'rounded border-white/10 bg-white/5 text-jmie-orange focus:ring-jmie-orange'})
+    )
+
     class Meta:
         model = MovimientoStock
         fields = ['suministro', 'tipo_movimiento', 'cantidad', 'costo_unitario', 'numero_factura', 'colaborador_destino', 'centro_costo', 'dispositivo_destino', 'notas']
@@ -74,4 +81,34 @@ class MovimientoStockForm(BaseStyledForm):
             'centro_costo': forms.Select(attrs={'class': 'w-full bg-surface-container-high border-[1px] border-white/5 rounded-lg px-4 py-3 text-on-background'}),
             'dispositivo_destino': forms.Select(attrs={'class': 'w-full bg-surface-container-high border-[1px] border-white/5 rounded-lg px-4 py-3 text-on-background'}),
             'notas': forms.Textarea(attrs={'class': 'w-full bg-surface-container-high border-[1px] border-white/5 rounded-lg px-4 py-3 text-on-background', 'rows': 3}),
+        }
+
+
+class FacturaCabeceraForm(forms.Form):
+    numero_factura = forms.CharField(
+        label="Número de Factura",
+        widget=forms.TextInput(attrs={'placeholder': 'Ej: F001-00001234'})
+    )
+    fecha = forms.DateField(
+        label="Fecha de Factura",
+        initial=timezone.now,
+        widget=forms.DateInput(attrs={'type': 'date'})
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field_name, field in self.fields.items():
+            base_classes = 'w-full bg-surface-container-high border-[1px] border-white/5 rounded-lg px-4 py-3 text-on-background placeholder:text-jmie-gray focus:ring-1 focus:border-jmie-blue focus:ring-jmie-blue/40 transition-all'
+            field.widget.attrs.update({'class': base_classes})
+
+
+class MovimientoFacturaForm(BaseStyledForm):
+    class Meta:
+        model = MovimientoStock
+        fields = ['suministro', 'cantidad', 'costo_unitario', 'notas']
+        widgets = {
+            'notas': forms.Textarea(attrs={'rows': 1, 'placeholder': 'Opcional...'}),
+            'suministro': forms.Select(attrs={'class': 'w-full bg-surface-container-high border-[1px] border-white/5 rounded-lg px-4 py-2 text-on-background text-sm'}),
+            'cantidad': forms.NumberInput(attrs={'class': 'w-full bg-surface-container-high border-[1px] border-white/5 rounded-lg px-4 py-2 text-on-background text-sm text-center'}),
+            'costo_unitario': forms.NumberInput(attrs={'class': 'w-full bg-surface-container-high border-[1px] border-white/5 rounded-lg px-4 py-2 text-on-background text-sm text-center'}),
         }

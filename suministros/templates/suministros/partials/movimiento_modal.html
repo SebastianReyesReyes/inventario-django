@@ -105,6 +105,14 @@ class="fixed inset-0 z-[60] flex items-center justify-center p-4" x-cloak>
                 </div>
                 {% endif %}
 
+                <!-- Seguir ingresando (solo visible para ENTRADA) -->
+                <div x-show="isEntrada" x-transition class="flex items-center gap-3 py-2 px-1 bg-white/[0.02] rounded-lg">
+                    {{ form.seguir_ingresando }}
+                    <label for="{{ form.seguir_ingresando.id_for_label }}" class="text-xs text-on-background font-medium cursor-pointer select-none">
+                        Guardar y seguir registrando esta factura
+                    </label>
+                </div>
+
                 <div class="flex justify-end gap-3 pt-4 border-t border-white/5">
                     <button type="button" @click="showModal = false"
                             class="px-5 py-2.5 rounded-xl border border-white/10 text-on-background hover:bg-white/5 transition-all text-xs font-bold">

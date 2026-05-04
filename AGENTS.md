@@ -80,6 +80,28 @@ python manage.py import_devices ruta.csv --dry-run
 - Piloto UAT con Docker Compose + Nginx + Gunicorn. Ver `ops/deploy/README_DEPLOY.md`.
 - El contenedor corre con usuario `django` (UID 999); el directorio `data/` debe tener permisos de escritura para ese UID.
 
+## Deviation Hotspots (Known Issues)
+- `core/views.py:108-110` — Duplicate `@login_required` + `@permission_required` decorators on `ajax_modelo_create_inline`
+- `inventario_jmie/urls.py:28` — Missing `namespace='core'` in `path('catalogos/', include('core.urls'))` (breaks `reverse('core:...')`)
+- `dashboard/models.py` — Empty placeholder file (app has no models, uses `dispositivos.models` directly)
+- `actas/models.py:116` — Stale comment referencing migrated models (incomplete refactoring artifact)
+
+## Build / CI
+- `.github/workflows/opencode.yml` — AI bot integration (non-standard CI, no test/build steps)
+- `docker-compose.yml` — Contains `ALLOWED_HOSTS=*` (insecure for production), lacks migration step on startup
+- No `pyproject.toml`, `setup.cfg`, `.editorconfig`, `ruff.toml`, or pre-commit config
+
+## Test Patterns
+- **Factories**: Canonical definitions in `core/tests/factories.py` with `sys.modules["pytest"]` guard
+- **Specialized factories**: Preset states (`EstadoDisponibleFactory`, `EstadoAsignadoFactory`, etc.)
+- **SubFactory chain**: `fabricante → modelo → dispositivo → historial`
+- **E2E**: Page Object Model in `tests_e2e/pages/`, `conftest.py` sets `DJANGO_ALLOW_ASYNC_UNSAFE=true`
+- **Integration tests**: Cross-app chains in `dispositivos/tests/test_integration.py`
+
+## Complexity Hotspots
+- `dispositivos/views.py` (523 lines) — 17 view functions mixing CRUD, AJAX, trazabilidad, mantenimiento; candidate for splitting
+- `actas/services.py` (~400 lines) — ActaService + ActaPDFService; monitor for growth
+
 ## Referencias útiles
 - `docs/dev_guide/01_tech_stack_y_entorno.md`
 - `docs/dev_guide/02_patrones_y_arquitectura.md`

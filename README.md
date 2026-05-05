@@ -1,6 +1,6 @@
 # Inventario JMIE
 
-Sistema de gestión de inventario TI para JMIE, construido con **Django 6.x + HTMX + Alpine.js + Tailwind CSS**. Permite el control completo de dispositivos, asignaciones a colaboradores, trazabilidad legal mediante actas firmadas, y dashboard analítico.
+Sistema de gestión de inventario TI para JMIE, construido con **Django + HTMX + Alpine.js + Tailwind CSS**. Permite el control completo de dispositivos, asignaciones a colaboradores, trazabilidad legal mediante actas firmadas, y dashboard analítico.
 
 ## Setup Rápido (Windows)
 
@@ -42,16 +42,16 @@ Ver [docs/CODEMAPS/INDEX.md](docs/CODEMAPS/INDEX.md) para el mapa detallado.
 
 | App | Propósito |
 |-----|-----------|
-| `core` | Catálogos base (fabricantes, tipos, estados, modelos, centros de costo), utilidades HTMX, templates base, componentes Cotton |
-| `colaboradores` | Modelo de usuario personalizado (`Colaborador`), gestión de personal, roles y centros de costo |
-| `dispositivos` | Inventario de equipos (Notebook, Smartphone, Monitor, Impresora, Servidor, EquipoRed), mantenimientos, asignaciones, accesorios |
-| `actas` | Generación de actas legales (ENTREGA, DEVOLUCIÓN, DESTRUCCIÓN), firma digital, exportación PDF (Playwright) |
-| `dashboard` | Métricas, filtros analíticos, gráficos Chart.js, reportes y exportación |
-| `suministros` | Gestión de suministros y compatibilidad con dispositivos |
+| [`core`](core/README.md) | Catálogos base (fabricantes, tipos, estados, modelos, centros de costo), utilidades HTMX, templates base, componentes Cotton |
+| [`colaboradores`](colaboradores/README.md) | Modelo de usuario personalizado (`Colaborador`), gestión de personal, roles y centros de costo |
+| [`dispositivos`](dispositivos/README.md) | Inventario de equipos (Notebook, Smartphone, Monitor, Impresora, Servidor, EquipoRed), mantenimientos, asignaciones, accesorios |
+| [`actas`](actas/README.md) | Generación de actas legales (ENTREGA, DEVOLUCIÓN, DESTRUCCIÓN), firma digital, exportación PDF (Playwright) |
+| [`dashboard`](dashboard/README.md) | Métricas, filtros analíticos, gráficos Chart.js, reportes y exportación |
+| [`suministros`](suministros/README.md) | Gestión de suministros y compatibilidad con dispositivos |
 
 ### Stack Tecnológico
 
-- **Backend:** Django 6.0.2, Django REST Framework, django-htmx, django-cotton, django-constance, django-filter, django-import-export
+- **Backend:** Django, Django REST Framework, django-htmx, django-cotton, django-constance, django-filter, django-import-export
 - **Frontend:** HTMX, Alpine.js, Tailwind CSS
 - **Base de datos:** SQLite (local), configurable vía `DB_PATH`
 - **PDF:** Playwright/Chromium (renderizado HTML→PDF), pyHanko (firma digital), pypdf
@@ -146,6 +146,3 @@ docker-compose -f docker-compose.yml up -d
 2. Escribir pruebas para nuevas funcionalidades
 3. Ejecutar `pytest` antes de commit
 4. Actualizar documentación si cambian APIs o flujos
-
----
-*Última actualización: 29 de abril de 2026*

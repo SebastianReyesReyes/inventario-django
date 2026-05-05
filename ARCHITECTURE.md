@@ -2,14 +2,14 @@
 
 ## Overview
 
-Inventario JMIE is a Django 6 server-side rendered (SSR) web application for managing IT asset inventory, personnel assignments, maintenance logs, legal delivery/return acts (with digital PDF signing), and analytics dashboards. It uses HTMX + Alpine.js + Tailwind CSS for interactive UI without building a SPA.
+Inventario JMIE is a Django server-side rendered (SSR) web application for managing IT asset inventory, personnel assignments, maintenance logs, legal delivery/return acts (with digital PDF signing), and analytics dashboards. It uses HTMX + Alpine.js + Tailwind CSS for interactive UI without building a SPA.
 
 ## Tech Stack
 
 | Layer | Technology | Version / Notes |
 |-------|-----------|-----------------|
-| Framework | Django | 6.0.2 |
-| Language | Python | 3.11+ |
+| Framework | Django | SSR |
+| Language | Python | |
 | Database | SQLite | Local file (`db.sqlite3` or `DB_PATH` env) |
 | Frontend | HTMX + Alpine.js + Tailwind CSS | SSR, no SPA |
 | UI Components | django-cotton | Reusable components in `templates/cotton/` |
@@ -87,6 +87,8 @@ inventario-django/
 ├── ops/                      # Deployment & operations
 │   ├── deploy/               # Nginx, Gunicorn, systemd, README_DEPLOY.md
 │   └── docker/               # entrypoint.sh, nginx.conf
+│
+├── scripts/                  # Utility scripts for data migration and maintenance
 │
 ├── manage.py
 ├── requirements.txt

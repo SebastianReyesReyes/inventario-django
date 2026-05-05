@@ -34,7 +34,7 @@ Las actas no son solo registros; son documentos legales vinculados a movimientos
 *   **Tipos de Acta**: ENTREGA, DEVOLUCIÓN, DESTRUCCIÓN (configurable).
 *   **Generación Automática**: Al realizar una asignación, reasignación, devolución o edición con cambio de propietario, se dispara `ActaService.crear_acta`. Este centraliza la lógica para asegurar que el folio sea correlativo y se vinculen los IDs de historial correctos.
 *   **Aislamiento Transaccional**: La creación o edición del dispositivo y la generación del acta se ejecutan en bloques `transaction.atomic()` separados. Si la generación del acta falla, el registro del dispositivo no se revierte.
-*   **Firma Digital**: Las actas pueden ser firmadas digitalmente vía `ActaService.firmar_acta()` usando pyHanko.
+*   **Firma Digital (Planificada)**: El stack incluye `pyHanko` para la firma digital de PDFs con certificados X.509 (infraestructura lista en `requirements.txt`, pendiente de integración final en la capa de servicios).
 *   **Ministro de Fe**: Cada acta puede tener un ministro de fe (administrador de la misma obra/centro de costo).
 *   **Frontend**: La vista detecta la presencia de un objeto `acta` y gatilla la descarga/visualización del PDF.
 *   **Accesorios**: `EntregaAccesorio` también se vincula a actas para trazabilidad completa.
@@ -46,6 +46,3 @@ Los inputs de tipo `<input type="date">` de HTML5 requieren estrictamente el for
 
 ## 5. Logging y Trazabilidad
 El sistema configura loggers por aplicación (`dispositivos`, `actas`, `colaboradores`, `core`) que escriben en `inventario.log` en la raíz del proyecto. Esto permite auditar operaciones críticas (creación de equipos, generación de actas, cambios de asignación) sin depender de `print()`.
-
----
-*Documentación actualizada el 24 de abril de 2026.*

@@ -1,6 +1,5 @@
 # 🎨 JMIE Precision Console — Guía Maestra de Estilos
 
-> **Última actualización**: 13 de abril 2026
 > **Uso**: Referencia obligatoria para todos los agentes antes de escribir HTML/Tailwind.
 > **Framework CSS**: Tailwind CSS v3 (CDN Play) — `tailwind.config` inline en `base.html`.
 
@@ -92,7 +91,31 @@
 
 ## 5. Componentes Reutilizables
 
-### 5.1 Inputs / Campos de Formulario
+### 5.1 Componentes Cotton (django-cotton)
+Preferir el uso de componentes Cotton para mantener la consistencia y reducir el boilerplate.
+
+| Componente | Uso |
+|:---|:---|
+| `<c-btn_primary>` | Botón naranja principal para CTAs importantes. |
+| `<c-btn_secondary>` | Botón ghost para acciones secundarias. |
+| `<c-page_header>` | Encabezado estándar con título y slot para acciones. |
+| `<c-search_input>` | Input de búsqueda con integración HTMX opcional. |
+| `<c-glass_panel>` | Panel con fondo translúcido y desenfoque. |
+| `<c-empty_state>` | Estado visual cuando no hay datos. |
+| `<c-confirm_dialog>` | Diálogo de confirmación Alpine.js (para eliminaciones). |
+| `<c-th_sort>` | Celda de encabezado de tabla con ordenamiento. |
+
+**Ejemplo de uso:**
+```html
+<c-page_header title="Equipos IT">
+    <c-btn_primary hx-get="{% url 'crear' %}" hx-target="#modal-container">
+        <span class="material-symbols-outlined mr-2">add</span>
+        Nuevo Equipo
+    </c-btn_primary>
+</c-page_header>
+```
+
+### 5.2 Inputs / Campos de Formulario
 ```html
 <!-- Input de texto estándar -->
 <input type="text"
@@ -167,7 +190,11 @@
 </div>
 ```
 
-### 5.5 Modal Genérico (HTMX)
+### 5.5 Modales y Diálogos
+
+#### A. Modales HTMX (Inyectados)
+Se inyectan desde el servidor en `#modal-container`. Ideales para formularios complejos.
+
 ```html
 <!-- Se inyecta en #modal-container -->
 <div class="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm"
@@ -181,40 +208,22 @@
      x-transition:leave="transition ease-in duration-200"
      x-transition:leave-start="opacity-100"
      x-transition:leave-end="opacity-0">
-
-    <div class="bg-surface-container-high border border-white/10 rounded-2xl p-6 w-full max-w-lg shadow-2xl"
-         @click.outside="open = false; setTimeout(() => $el.parentElement.remove(), 300)"
-         x-show="open"
-         x-transition:enter="transition ease-out duration-300"
-         x-transition:enter-start="opacity-0 scale-95"
-         x-transition:enter-end="opacity-100 scale-100">
-
-        <!-- Header -->
-        <div class="flex items-center justify-between mb-6">
-            <h3 class="text-lg font-black text-on-background">Título Modal</h3>
-            <button @click="open = false; setTimeout(() => $el.closest('[x-data]').remove(), 300)"
-                class="text-jmie-gray hover:text-on-background transition-colors">
-                <span class="material-symbols-outlined">close</span>
-            </button>
-        </div>
-
-        <!-- Body con form HTMX -->
-        <form hx-post="URL" hx-swap="none">
-            {% csrf_token %}
-            <!-- Campos -->
-            <div class="flex justify-end gap-3 mt-6">
-                <button type="button" @click="open = false; setTimeout(() => $el.closest('[x-data]').remove(), 300)"
-                    class="px-4 py-2.5 bg-white/5 text-sm font-bold rounded-lg hover:bg-white/10 transition-all">
-                    Cancelar
-                </button>
-                <button type="submit"
-                    class="px-5 py-2.5 bg-jmie-orange text-white text-sm font-bold rounded-lg hover:brightness-110 transition-all">
-                    Guardar
-                </button>
-            </div>
-        </form>
-    </div>
+    <!-- ... (resto del modal igual) -->
 </div>
+```
+
+#### B. Diálogos de Confirmación (Cotton)
+Para acciones rápidas (ej: eliminar) que no requieren ir al servidor solo para mostrar el diálogo.
+
+```html
+<c-confirm_dialog 
+    dialog_title="¿Eliminar equipo?" 
+    message="Esta acción no se puede deshacer."
+    hx-delete="URL"
+    hx-target="closest tr"
+>
+    <span class="material-symbols-outlined">delete</span>
+</c-confirm_dialog>
 ```
 
 ### 5.6 Badge de Estado

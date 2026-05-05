@@ -230,8 +230,8 @@
             <h1>Acta de Entrega de Suministros</h1>
         </div>
         <div class="acta-meta">
-            <p>Folio: <span class="folio-badge {% if preview %}folio-pendiente{% endif %}">{{ acta.folio }}</span></p>
-            <p>Fecha Emisión: {{ acta.fecha|date:"d/m/Y" }}</p>
+            <p>Folio:<br><span class="folio-badge {% if preview %}folio-pendiente{% endif %}">{{ acta.folio }}</span></p>
+            <p>Fecha Emisión:<br>{{ acta.fecha|date:"d/m/Y" }}</p>
         </div>
     </div>
 

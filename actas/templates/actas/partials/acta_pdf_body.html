@@ -11,13 +11,12 @@
         {% endif %}
     </div>
     <div class="acta-title">
-        <h1>Acta de {{ acta.get_tipo_acta_display|cut:"Acta de " }}</h1>
+        <h1>{{ acta.get_tipo_acta_display }}</h1>
     </div>
     <div class="acta-meta">
-        <p>Folio: {{ acta.folio }}</p>
-        <p>Fecha Emisión: {{ acta.fecha|date:"d/m/Y" }}</p>
+        <p>Folio:<br><span class="folio-badge {% if preview %}folio-pendiente{% endif %}">{{ acta.folio }}</span></p>
+        <p>Fecha Emisión:<br>{{ acta.fecha|date:"d/m/Y" }}</p>
     </div>
-    <div class="clear"></div>
 </div>
 
 <!-- DATOS DEL COLABORADOR -->

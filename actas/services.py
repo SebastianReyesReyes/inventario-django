@@ -655,7 +655,7 @@ class ActaPDFService:
                     page.set_content(html_content, wait_until='networkidle')
                     pdf_bytes = page.pdf(
                         format='Letter',
-                        margin={'top': '1.5cm', 'bottom': '1.5cm',
+                        margin={'top': '1.5cm', 'bottom': '1.0cm',
                                 'left': '1.5cm', 'right': '1.5cm'},
                         print_background=True,
                     )
@@ -760,7 +760,7 @@ class ActaPDFService:
                     page.set_content(html_content, wait_until='networkidle')
                     pdf_bytes = page.pdf(
                         format='Letter',
-                        margin={'top': '1.5cm', 'bottom': '1.5cm',
+                        margin={'top': '1.5cm', 'bottom': '1.0cm',
                                 'left': '1.5cm', 'right': '1.5cm'},
                         print_background=True,
                     )

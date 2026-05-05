@@ -10,13 +10,11 @@
             -webkit-print-color-adjust: exact;
             print-color-adjust: exact;
         }
-
         /* Paged media: ensure consistent page sizing and margins */
         @page {
             size: letter;
             margin: 1.5cm;
         }
-
         @media print {
             /* Prevent awkward page breaks inside key sections */
             .preview-document .signatures { page-break-inside: avoid; }

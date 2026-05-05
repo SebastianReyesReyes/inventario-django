@@ -9,6 +9,8 @@ from django.core.paginator import Paginator
 from django.template.loader import render_to_string
 from django.utils.html import escape
 
+from django.utils import timezone
+from django.contrib.staticfiles import finders
 from .models import Acta
 from .forms import ActaCrearForm
 from .services import ActaService, ActaPDFService
@@ -275,7 +277,17 @@ def acta_pdf(request, pk):
             pdf_content = ActaPDFService.generar_pdf(acta)
 
         response = HttpResponse(pdf_content, content_type='application/pdf')
-        response['Content-Disposition'] = f'inline; filename="Acta_{acta.folio}.pdf"'
+        
+        # Generar nombre de archivo descriptivo
+        tipo_clean = acta.get_tipo_acta_display().replace('Acta de ', '').replace(' ', '_')
+        nombre_clean = acta.colaborador.nombre_completo.replace(' ', '_')
+        # Limpiar caracteres no permitidos en nombres de archivos (básico)
+        import re
+        nombre_clean = re.sub(r'[^\w\-]', '', nombre_clean)
+        
+        filename = f"Acta_{tipo_clean}_{acta.folio}_{nombre_clean}.pdf"
+        
+        response['Content-Disposition'] = f'inline; filename="{filename}"'
         return response
     except Exception:
         logger.exception("Error generando PDF para acta %s", pk)

@@ -375,9 +375,10 @@ def ministros_por_colaborador(request, colaborador_pk):
         ).filter(admin_criterios).order_by('first_name')
 
     options_html = '<option value="">---------</option>'
+    ministros_count = ministros.count()
     for m in ministros:
         # Marcamos como seleccionado si es el único
-        selected = 'selected' if ministros.count() == 1 else ''
+        selected = 'selected' if ministros_count == 1 else ''
         nombre = escape(m.nombre_completo)
         cargo = escape(m.cargo) if m.cargo else "Sin Cargo"
         options_html += f'<option value="{m.pk}" {selected}>{nombre} ({cargo})</option>'

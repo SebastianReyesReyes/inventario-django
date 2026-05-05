@@ -12,6 +12,10 @@ urlpatterns = [
     path('<int:pk>/pdf/', views.acta_pdf, name='acta_pdf'),
     path('<int:pk>/firmar/', views.acta_firmar, name='acta_firmar'),
     path('<int:pk>/anular/', views.acta_anular, name='acta_anular'),
+    path('preview-suministro/', views.acta_suministro_preview, name='acta_suministro_preview'),
+    path('preview-suministro/pdf/', views.acta_suministro_preview_pdf, name='acta_suministro_preview_pdf'),
+    path('crear-suministro/', views.acta_suministro_create, name='acta_suministro_create'),
+    path('movimientos-pendientes/<int:colaborador_pk>/', views.movimientos_pendientes, name='acta_movimientos_pendientes'),
     path('asignaciones-pendientes/<int:colaborador_pk>/', views.asignaciones_pendientes, name='acta_asignaciones_pendientes'),
     path('ministros-por-colaborador/<int:colaborador_pk>/', views.ministros_por_colaborador, name='acta_ministros_por_colaborador'),
 ]

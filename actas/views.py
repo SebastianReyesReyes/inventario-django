@@ -94,21 +94,31 @@ def acta_preview(request):
     form = ActaCrearForm(data)
     asignacion_ids = data.getlist('asignaciones')
     accesorio_ids = data.getlist('accesorios')
+    movimiento_ids = data.getlist('movimientos')
 
     if not form.is_valid():
         error_html = _render_acta_error("Corrija los errores del formulario antes de previsualizar.")
         return HttpResponse(error_html)
 
     try:
-        preview_html = ActaService.generar_preview_html(
-            colaborador=form.cleaned_data['colaborador'],
-            tipo_acta=form.cleaned_data['tipo_acta'],
-            asignacion_ids=asignacion_ids,
-            creado_por=request.user,
-            observaciones=form.cleaned_data.get('observaciones'),
-            accesorio_ids=accesorio_ids,
-            ministro_de_fe=form.cleaned_data.get('ministro_de_fe'),
-        )
+        if form.cleaned_data['tipo_acta'] == 'ENTREGA_SUMINISTROS':
+            preview_html = ActaService.generar_preview_html_suministros(
+                colaborador=form.cleaned_data['colaborador'],
+                tipo_acta=form.cleaned_data['tipo_acta'],
+                movimiento_ids=movimiento_ids,
+                creado_por=request.user,
+                observaciones=form.cleaned_data.get('observaciones'),
+            )
+        else:
+            preview_html = ActaService.generar_preview_html(
+                colaborador=form.cleaned_data['colaborador'],
+                tipo_acta=form.cleaned_data['tipo_acta'],
+                asignacion_ids=asignacion_ids,
+                creado_por=request.user,
+                observaciones=form.cleaned_data.get('observaciones'),
+                accesorio_ids=accesorio_ids,
+                ministro_de_fe=form.cleaned_data.get('ministro_de_fe'),
+            )
 
         # GET → renderizar página completa en nueva pestaña (para comparar con PDF)
         if request.method == 'GET':
@@ -205,20 +215,64 @@ def acta_create(request):
 @permission_required('actas.view_acta', raise_exception=True)
 def acta_detail(request, pk):
     """Muestra el detalle de un acta en el side-over."""
-    acta, asignaciones = ActaService.obtener_acta_con_relaciones(pk)
+    acta, items = ActaService.obtener_acta_con_relaciones(pk)
     
-    return render(request, 'actas/partials/acta_detail_sideover.html', {
+    context = {
         'acta': acta,
-        'asignaciones': asignaciones
-    })
+        'asignaciones': items if acta.tipo_acta != 'ENTREGA_SUMINISTROS' else None,
+        'movimientos': items if acta.tipo_acta == 'ENTREGA_SUMINISTROS' else None,
+        'es_suministros': acta.tipo_acta == 'ENTREGA_SUMINISTROS',
+    }
+    
+    return render(request, 'actas/partials/acta_detail_sideover.html', context)
 
 @login_required
 @permission_required('actas.view_acta', raise_exception=True)
 def acta_pdf(request, pk):
     """Genera el PDF legal corporativo usando ActaPDFService (Playwright/Chromium)."""
     try:
-        acta, _ = ActaService.obtener_acta_con_relaciones(pk)
-        pdf_content = ActaPDFService.generar_pdf(acta)
+        acta, items = ActaService.obtener_acta_con_relaciones(pk)
+        
+        if acta.tipo_acta == 'ENTREGA_SUMINISTROS':
+            # Obtener costo unitario desde la última ENTRADA de cada suministro
+            from suministros.models import MovimientoStock
+            suministro_ids = [m.suministro_id for m in items]
+            # SQLite no soporta .distinct('field'), usamos orden + seen set
+            entradas = MovimientoStock.objects.filter(
+                suministro_id__in=suministro_ids,
+                tipo_movimiento=MovimientoStock.TipoMovimiento.ENTRADA,
+                costo_unitario__isnull=False,
+            ).order_by('-fecha')
+            seen = set()
+            costos_entrada = {}
+            for e in entradas:
+                if e.suministro_id not in seen:
+                    seen.add(e.suministro_id)
+                    costos_entrada[e.suministro_id] = e.costo_unitario
+            movimientos_data = []
+            for m in items:
+                costo = m.costo_unitario or costos_entrada.get(m.suministro_id) or 0
+                movimientos_data.append({
+                    'movimiento': m,
+                    'costo_efectivo': costo,
+                    'subtotal': costo * m.cantidad,
+                })
+            valor_total = sum(d['subtotal'] for d in movimientos_data)
+            preview_html = render_to_string('actas/partials/acta_suministro_preview_content.html', {
+                'acta': acta,
+                'movimientos': items,
+                'movimientos_data': movimientos_data,
+                'logo_path': ActaPDFService._encode_logo_to_base64(
+                    finders.find('img/LogoColor.png')
+                ),
+                'fecha_actual': timezone.now(),
+                'pdf_mode': True,
+                'valor_total': valor_total,
+                'es_suministros': True,
+            })
+            pdf_content = ActaPDFService.generar_pdf_suministros(acta, preview_html)
+        else:
+            pdf_content = ActaPDFService.generar_pdf(acta)
 
         response = HttpResponse(pdf_content, content_type='application/pdf')
         response['Content-Disposition'] = f'inline; filename="Acta_{acta.folio}.pdf"'
@@ -383,3 +437,129 @@ def ministros_por_colaborador(request, colaborador_pk):
         options_html += f'<option value="{m.pk}" {selected}>{nombre} ({cargo})</option>'
 
     return HttpResponse(options_html)
+
+
+@login_required
+@permission_required('actas.add_acta', raise_exception=True)
+def acta_suministro_create(request):
+    """Crea una nueva acta de entrega de suministros."""
+    if request.method == 'POST':
+        form = ActaCrearForm(request.POST)
+        movimiento_ids = request.POST.getlist('movimientos')
+        
+        if form.is_valid():
+            try:
+                ActaService.crear_acta(
+                    colaborador=form.cleaned_data['colaborador'],
+                    tipo_acta='ENTREGA_SUMINISTROS',
+                    movimiento_ids=movimiento_ids,
+                    creado_por=request.user,
+                    observaciones=form.cleaned_data.get('observaciones'),
+                )
+                return htmx_trigger_response('actaCreated')
+            except ValidationError as e:
+                error_html = _render_acta_error(str(e))
+                return HttpResponse(error_html)
+            except Exception:
+                logger.exception("Error creando acta de suministros")
+                error_html = _render_acta_error('Error interno al crear el acta.')
+                return HttpResponse(error_html)
+    else:
+        form = ActaCrearForm(initial={'tipo_acta': 'ENTREGA_SUMINISTROS'})
+    
+    return render(request, 'actas/partials/acta_suministro_form.html', {
+        'form': form,
+        'es_suministros': True,
+    })
+
+
+@login_required
+@permission_required('actas.add_acta', raise_exception=True)
+def acta_suministro_preview(request):
+    """Genera la vista previa HTML de un acta de suministros."""
+    if request.method == 'POST':
+        data = request.POST
+    elif request.method == 'GET':
+        data = request.GET
+    else:
+        return HttpResponse("Método no permitido", status=405)
+
+    form = ActaCrearForm(data)
+    movimiento_ids = data.getlist('movimientos')
+
+    if not form.is_valid():
+        error_html = _render_acta_error("Corrija los errores del formulario.")
+        return HttpResponse(error_html)
+
+    try:
+        preview_html = ActaService.generar_preview_html_suministros(
+            colaborador=form.cleaned_data['colaborador'],
+            tipo_acta='ENTREGA_SUMINISTROS',
+            movimiento_ids=movimiento_ids,
+            creado_por=request.user,
+            observaciones=form.cleaned_data.get('observaciones'),
+        )
+
+        if request.method == 'GET':
+            return render(request, 'actas/partials/acta_preview_fullpage.html', {
+                'preview_html': preview_html,
+                'acta': form.cleaned_data['colaborador'],
+            })
+
+        return render(request, 'actas/partials/acta_suministro_preview_sideover.html', {
+            'preview_html': preview_html,
+            'form_data': data,
+        })
+
+    except ValidationError as e:
+        error_html = _render_acta_error(str(e))
+        return HttpResponse(error_html)
+    except Exception:
+        logger.exception("Error en preview de acta de suministros")
+        error_html = _render_acta_error('Error interno al generar la vista previa.')
+        return HttpResponse(error_html)
+
+
+@login_required
+@permission_required('actas.add_acta', raise_exception=True)
+def acta_suministro_preview_pdf(request):
+    """Genera un PDF de preview para acta de suministros."""
+    form = ActaCrearForm(request.GET)
+    movimiento_ids = request.GET.getlist('movimientos')
+
+    if not form.is_valid():
+        return HttpResponse("Datos inválidos para generar PDF", status=400)
+
+    try:
+        pdf_bytes = ActaService.generar_preview_pdf_suministros(
+            colaborador=form.cleaned_data['colaborador'],
+            tipo_acta='ENTREGA_SUMINISTROS',
+            movimiento_ids=movimiento_ids,
+            creado_por=request.user,
+            observaciones=form.cleaned_data.get('observaciones'),
+        )
+        response = HttpResponse(pdf_bytes, content_type='application/pdf')
+        response['Content-Disposition'] = 'inline; filename="preview-suministros.pdf"'
+        return response
+    except ValidationError as e:
+        logger.warning("Error de validación en preview PDF suministros: %s", e)
+        return HttpResponse("Datos inválidos", status=400)
+    except Exception:
+        logger.exception("Error generando preview PDF suministros")
+        return HttpResponse("Error interno al generar el PDF.", status=500)
+
+
+@login_required
+@permission_required('actas.add_acta', raise_exception=True)
+def movimientos_pendientes(request, colaborador_pk):
+    """HTMX partial que lista los movimientos de stock sin acta de un colaborador."""
+    real_pk = colaborador_pk or request.GET.get('colaborador_pk')
+    
+    if not real_pk or real_pk == '0':
+        return HttpResponse('<p class="text-xs text-jmie-gray italic text-center py-4">Seleccione un colaborador para ver movimientos pendientes.</p>')
+    
+    movimientos = ActaService.obtener_movimientos_pendientes(real_pk)
+    
+    return render(request, 'actas/partials/movimientos_pendientes.html', {
+        'movimientos': movimientos
+    })

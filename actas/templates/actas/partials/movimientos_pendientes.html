@@ -1,0 +1,41 @@
+{% load acta_tags %}
+{% if movimientos %}
+<div class="space-y-3">
+    <h4 class="text-[9px] font-black text-jmie-gray uppercase tracking-widest border-b border-white/5 pb-1">Movimientos de Stock (Suministros)</h4>
+    {% for mov in movimientos %}
+    <label class="flex items-start gap-4 p-4 rounded-xl bg-surface-container-highest/30 border border-white/5 hover:border-amber-500/30 hover:bg-amber-500/5 transition-all cursor-pointer group">
+        <div class="pt-1">
+            <input type="checkbox" 
+                   name="movimientos" 
+                   value="{{ mov.pk }}" 
+                   checked
+                   class="w-5 h-5 rounded border-white/10 bg-surface-container-high text-amber-500 focus:ring-amber-500/40 transition-all cursor-pointer">
+        </div>
+        <div class="flex-1">
+            <div class="flex items-center justify-between mb-1">
+                <span class="text-xs font-black text-on-background uppercase tracking-tight group-hover:text-amber-500 transition-colors">{{ mov.suministro.nombre }}</span>
+                <span class="text-[9px] font-black text-on-background bg-amber-500/20 px-1.5 py-0.5 rounded border border-amber-500/30 uppercase">x{{ mov.cantidad }}</span>
+            </div>
+            <p class="text-[11px] text-jmie-gray font-bold uppercase">{{ mov.suministro.categoria.nombre|default:"Sin categoría" }}</p>
+            <div class="flex items-center gap-4 mt-2">
+                <div class="flex items-center gap-1.5 opacity-60">
+                    <span class="material-symbols-outlined text-[14px] text-jmie-gray">event</span>
+                    <span class="text-[9px] font-medium text-jmie-gray font-mono">{{ mov.fecha|date:"d/m/Y" }}</span>
+                </div>
+                {% if mov.costo_unitario %}
+                <div class="flex items-center gap-1.5 opacity-60">
+                    <span class="material-symbols-outlined text-[14px] text-jmie-gray">payments</span>
+                    <span class="text-[9px] font-medium text-jmie-gray font-mono">${{ mov.costo_unitario|currency_clp }} c/u</span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </label>
+    {% endfor %}
+</div>
+{% else %}
+<div class="flex flex-col items-center justify-center py-8 opacity-40">
+    <span class="material-symbols-outlined text-4xl mb-2 text-jmie-gray">inventory_2</span>
+    <p class="text-xs font-bold uppercase tracking-widest text-jmie-gray text-center px-4">Este colaborador no tiene movimientos de suministros pendientes de acta.</p>
+</div>
+{% endif %}

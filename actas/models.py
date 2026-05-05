@@ -4,10 +4,21 @@ from django.utils import timezone
 from colaboradores.models import Colaborador
 from dispositivos.models import Dispositivo
 
+
+class MovimientoStockActa(models.Model):
+    """Modelo intermedio para vincular MovimientoStock con Acta."""
+    acta = models.ForeignKey('Acta', on_delete=models.CASCADE, related_name='movimientos_stock')
+    movimiento = models.ForeignKey('suministros.MovimientoStock', on_delete=models.PROTECT, related_name='actas')
+
+    class Meta:
+        db_table = 'actas_movimiento_stock_acta'
+        unique_together = ['acta', 'movimiento']
+
 class Acta(models.Model):
     TIPO_ACTA_CHOICES = [
         ('ENTREGA', 'Acta de Entrega'),
         ('DEVOLUCION', 'Acta de Devolución'),
+        ('ENTREGA_SUMINISTROS', 'Acta de Entrega de Suministros'),
     ]
 
     METODO_SANITIZACION_CHOICES = [
@@ -20,7 +31,7 @@ class Acta(models.Model):
     folio = models.CharField(max_length=20, unique=True, editable=False)
     fecha = models.DateTimeField(default=timezone.now)
     colaborador = models.ForeignKey(Colaborador, on_delete=models.PROTECT, related_name="actas")
-    tipo_acta = models.CharField(max_length=15, choices=TIPO_ACTA_CHOICES, default='ENTREGA')
+    tipo_acta = models.CharField(max_length=25, choices=TIPO_ACTA_CHOICES, default='ENTREGA')
     
     creado_por = models.ForeignKey(Colaborador, on_delete=models.SET_NULL, null=True, related_name="actas_creadas")
     observaciones = models.TextField(null=True, blank=True)

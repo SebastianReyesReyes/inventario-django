@@ -10,6 +10,23 @@
             -webkit-print-color-adjust: exact;
             print-color-adjust: exact;
         }
+
+        /* Paged media: ensure consistent page sizing and margins */
+        @page {
+            size: letter;
+            margin: 1.5cm;
+        }
+
+        @media print {
+            /* Prevent awkward page breaks inside key sections */
+            .preview-document .signatures { page-break-inside: avoid; }
+            .preview-document .clauses { page-break-inside: avoid; }
+            .preview-document table { page-break-inside: auto; }
+            .preview-document .section-title { page-break-after: avoid; }
+
+            /* Footer: avoid being orphaned at the top of a new page */
+            .preview-document .footer-legal { page-break-before: avoid; }
+        }
     </style>
 </head>
 <body>

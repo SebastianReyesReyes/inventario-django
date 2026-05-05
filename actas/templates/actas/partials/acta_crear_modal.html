@@ -1,4 +1,4 @@
-<div x-data="{ open: true, tipoActa: 'ENTREGA' }" 
+<div x-data="{ open: true, tipoActa: '{{ form.tipo_acta.value|default:'ENTREGA' }}' }" 
      x-show="open" 
      x-cloak
      @modal-close.window="open = false; setTimeout(() => { $el.remove() }, 500)"
@@ -24,7 +24,10 @@
                         <span class="material-symbols-outlined text-3xl">description</span>
                     </div>
                     <div>
-                        <h2 class="text-2xl font-black tracking-tighter uppercase" x-text="tipoActa === 'ENTREGA' ? 'Generar Acta de Entrega' : 'Generar Acta de Devolución'">Generar Nueva Acta</h2>
+                        <h2 class="text-2xl font-black tracking-tighter uppercase"
+                            x-text="tipoActa === 'ENTREGA_SUMINISTROS' ? 'Generar Acta de Suministros' : (tipoActa === 'ENTREGA' ? 'Generar Acta de Entrega' : 'Generar Acta de Devolución')">
+                            Generar Nueva Acta
+                        </h2>
                         <p class="text-jmie-gray text-xs font-bold uppercase tracking-widest mt-0.5">Gestión de Respaldo Legal</p>
                     </div>
                 </div>
@@ -69,9 +72,13 @@
                 </div>
 
                 <div class="space-y-2">
-                    <c-form-label><span x-text="tipoActa === 'ENTREGA' ? 'Equipos Pendientes de Entrega' : 'Equipos a Devolver'">Equipos Pendientes de Acta</span></c-form-label>
+                    <c-form-label>
+                        <span x-text="tipoActa === 'ENTREGA_SUMINISTROS' ? 'Movimientos Pendientes de Suministros' : (tipoActa === 'ENTREGA' ? 'Equipos Pendientes de Entrega' : 'Equipos a Devolver')">
+                            Equipos Pendientes de Acta
+                        </span>
+                    </c-form-label>
                     <div id="asignaciones-container" class="bg-surface-container-low rounded-2xl border border-white/5 p-4 min-h-[120px] max-h-[200px] overflow-y-auto custom-scrollbar">
-                        <p class="text-xs text-jmie-gray italic text-center py-4">Seleccione un colaborador para ver los equipos.</p>
+                        <p class="text-xs text-jmie-gray italic text-center py-4" x-text="tipoActa === 'ENTREGA_SUMINISTROS' ? 'Seleccione un colaborador para ver los movimientos de suministros.' : 'Seleccione un colaborador para ver los equipos.'">Seleccione un colaborador para ver los equipos.</p>
                     </div>
                 </div>
 
@@ -115,22 +122,46 @@
 <script>
     (function() {
         const selectColaborador = document.querySelector('.htmx-colaborador-select');
+        const selectTipoActa = document.querySelector('[x-model="tipoActa"]');
         const selectMinistro = document.querySelector('.htmx-ministro-select');
-        
+
+        function cargarItemsPendientes(colaboradorId, tipoActa) {
+            if (!colaboradorId) {
+                const defaultMsg = tipoActa === 'ENTREGA_SUMINISTROS'
+                    ? 'Seleccione un colaborador para ver los movimientos de suministros.'
+                    : 'Seleccione un colaborador para ver los equipos.';
+                document.getElementById('asignaciones-container').innerHTML = '<p class="text-xs text-jmie-gray italic text-center py-4">' + defaultMsg + '</p>';
+                return;
+            }
+
+            if (tipoActa === 'ENTREGA_SUMINISTROS') {
+                const urlMovimientos = `{% url 'actas:acta_movimientos_pendientes' 0 %}`.replace('0', colaboradorId);
+                htmx.ajax('GET', urlMovimientos, {target:'#asignaciones-container'});
+            } else {
+                const urlAsignaciones = `{% url 'actas:acta_asignaciones_pendientes' 0 %}`.replace('0', colaboradorId);
+                htmx.ajax('GET', urlAsignaciones, {target:'#asignaciones-container'});
+            }
+        }
+
         if (selectColaborador) {
             selectColaborador.addEventListener('change', function(e) {
-                const val = e.target.value;
-                if (val) {
-                    // 1. Cargar equipos pendientes
-                    const urlAsignaciones = `{% url 'actas:acta_asignaciones_pendientes' 0 %}`.replace('0', val);
-                    htmx.ajax('GET', urlAsignaciones, {target:'#asignaciones-container'});
-                    
-                    // 2. Cargar Ministros de Fe filtrados por obra (solo si estamos en devolución o para tenerlo listo)
-                    const urlMinistros = `{% url 'actas:acta_ministros_por_colaborador' 0 %}`.replace('0', val);
+                const colaboradorId = e.target.value;
+                const tipoActa = selectTipoActa ? selectTipoActa.value : 'ENTREGA';
+                cargarItemsPendientes(colaboradorId, tipoActa);
+
+                // Cargar Ministros de Fe filtrados por obra
+                if (colaboradorId) {
+                    const urlMinistros = `{% url 'actas:acta_ministros_por_colaborador' 0 %}`.replace('0', colaboradorId);
                     htmx.ajax('GET', urlMinistros, {target:'.htmx-ministro-select'});
-                } else {
-                    document.getElementById('asignaciones-container').innerHTML = '<p class="text-xs text-jmie-gray italic text-center py-4">Seleccione un colaborador para ver los equipos.</p>';
                 }
+            });
+        }
+
+        if (selectTipoActa) {
+            selectTipoActa.addEventListener('change', function(e) {
+                const tipoActa = e.target.value;
+                const colaboradorId = selectColaborador ? selectColaborador.value : '';
+                cargarItemsPendientes(colaboradorId, tipoActa);
             });
         }
     })();

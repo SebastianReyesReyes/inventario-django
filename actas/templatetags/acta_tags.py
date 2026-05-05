@@ -29,3 +29,16 @@ def format_rut(value):
     cuerpo_formateado = cuerpo + cuerpo_formateado
     
     return f"{cuerpo_formateado}-{dv}"
+
+@register.filter(name='currency_clp')
+def currency_clp(value):
+    """
+    Formatea un valor numérico a formato moneda chilena con puntos (ej: 1.000)
+    """
+    if value is None or value == "":
+        return "0"
+    try:
+        # Convertir a entero y usar el separador de miles de Python (,) para luego cambiarlo a (.)
+        return f"{int(float(value)):,}".replace(",", ".")
+    except (ValueError, TypeError):
+        return value

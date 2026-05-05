@@ -1,0 +1,347 @@
+{% load acta_tags %}
+{% load static %}
+
+<style>
+    .preview-document {
+        font-family: Arial, sans-serif;
+        font-size: 10pt;
+        line-height: 1.4;
+        color: #222;
+        position: relative;
+        background: white;
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        overflow: hidden;
+    }
+
+    /* === Modo PDF: limpio, sin sombra, footer al fondo === */
+    .preview-document.pdf-mode {
+        border-radius: 0;
+        box-shadow: none;
+        padding: 0;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+    }
+    .preview-document.pdf-mode .footer-legal {
+        margin-top: auto;
+    }
+
+    .preview-document .watermark {
+        position: absolute;
+        top: 40%;
+        left: 50%;
+        transform: translate(-50%, -50%) rotate(-20deg);
+        font-size: 72pt;
+        font-weight: 900;
+        color: #e5e7eb;
+        text-transform: uppercase;
+        letter-spacing: 8px;
+        pointer-events: none;
+        z-index: 1;
+        opacity: 0.7;
+        user-select: none;
+    }
+
+    .preview-document .header {
+        display: grid;
+        grid-template-columns: 130px 1fr 130px;
+        align-items: flex-start;
+        gap: 16px;
+        border-bottom: 2px solid #003594;
+        padding-bottom: 12px;
+        margin-bottom: 16px;
+        position: relative;
+        z-index: 2;
+    }
+
+    .preview-document .logo {
+        font-size: 18pt;
+        font-weight: bold;
+        color: #003594;
+        max-width: 130px;
+    }
+
+    .preview-document .logo img {
+        max-width: 100%;
+        height: auto;
+    }
+
+    .preview-document .acta-title {
+        text-align: center;
+        align-self: center;
+    }
+
+    .preview-document .acta-title h1 {
+        font-size: 14pt;
+        margin: 0;
+        color: #003594;
+        text-transform: uppercase;
+    }
+
+    .preview-document .acta-meta {
+        text-align: right;
+    }
+
+    .preview-document .acta-meta p {
+        margin: 2pt 0;
+        font-weight: bold;
+        font-size: 9pt;
+    }
+
+    .preview-document .section-title {
+        background-color: #f1f3f8;
+        padding: 6pt 10pt;
+        font-weight: bold;
+        text-transform: uppercase;
+        font-size: 8.5pt;
+        margin: 14pt 0 6pt 0;
+        border-left: 3pt solid #ED8B00;
+    }
+
+    .preview-document table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 10pt;
+        font-size: 8pt;
+    }
+
+    .preview-document table th {
+        background-color: #003594;
+        color: white;
+        font-size: 7.5pt;
+        padding: 6pt;
+        text-transform: uppercase;
+        text-align: left;
+        font-weight: bold;
+    }
+
+    .preview-document table td {
+        border: 0.5pt solid #ddd;
+        padding: 5pt;
+        font-size: 8pt;
+    }
+
+    .preview-document .clauses {
+        font-size: 8.5pt;
+        text-align: justify;
+        margin-top: 12pt;
+        position: relative;
+        z-index: 2;
+    }
+
+    .preview-document .clauses h3 {
+        font-size: 9pt;
+        margin-bottom: 4pt;
+        color: #003594;
+        border-bottom: 0.5pt solid #eee;
+    }
+
+    .preview-document .clauses ol {
+        margin-top: 3pt;
+        padding-left: 14pt;
+    }
+
+    .preview-document .clauses li {
+        margin-bottom: 3pt;
+    }
+
+    .preview-document .signatures {
+        margin-top: 24pt;
+        display: flex;
+        justify-content: space-between;
+        gap: 16pt;
+        flex-wrap: wrap;
+        position: relative;
+        z-index: 2;
+    }
+
+    .preview-document .signature-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 16pt;
+        flex-wrap: wrap;
+        width: 100%;
+    }
+
+    .preview-document .signature-box {
+        flex: 1;
+        min-width: 120pt;
+        text-align: center;
+    }
+
+    .preview-document .signature-line {
+        border-top: 0.5pt solid #333;
+        margin-top: 28pt;
+        padding-top: 4pt;
+        font-size: 8pt;
+    }
+
+    .preview-document .footer-legal {
+        margin-top: 16pt;
+        border-top: 0.5pt solid #ddd;
+        padding-top: 8pt;
+        font-size: 7pt;
+        color: #888;
+        text-align: center;
+        font-style: italic;
+        position: relative;
+        z-index: 2;
+    }
+
+    .preview-document .observation-box {
+        font-size: 8pt;
+        min-height: 30pt;
+        padding: 5pt;
+        border: 0.5pt solid #ccc;
+        background-color: #fafafa;
+    }
+
+    .preview-document .folio-badge {
+        display: inline-block;
+        background: #003594;
+        color: white;
+        padding: 2pt 8pt;
+        border-radius: 4pt;
+        font-size: 8pt;
+        font-weight: bold;
+    }
+
+    .preview-document .folio-pendiente {
+        background: #f59e0b !important;
+    }
+</style>
+
+<div class="preview-document {% if pdf_mode %}pdf-mode{% endif %}">
+    {% if not pdf_mode %}
+    <div class="watermark">PRELIMINAR</div>
+    {% endif %}
+
+    <div class="header">
+        <div class="logo">
+            {% if logo_path %}
+            <img src="{{ logo_path }}" alt="Logo JMIE">
+            {% else %}
+            <div style="font-size: 20pt; font-weight: bold; color: #003594;">JMIE</div>
+            {% endif %}
+        </div>
+        <div class="acta-title">
+            <h1>Acta de Entrega de Suministros</h1>
+        </div>
+        <div class="acta-meta">
+            <p>Folio: <span class="folio-badge {% if preview %}folio-pendiente{% endif %}">{{ acta.folio }}</span></p>
+            <p>Fecha Emisión: {{ acta.fecha|date:"d/m/Y" }}</p>
+        </div>
+    </div>
+
+    <!-- DATOS DEL COLABORADOR -->
+    <div class="section-title">Identificación del Colaborador</div>
+    <table>
+        <tr>
+            <td width="15%" style="font-weight:bold; background-color:#f9f9f9;">Nombre:</td>
+            <td width="35%">{{ acta.colaborador.nombre_completo }}</td>
+            <td width="15%" style="font-weight:bold; background-color:#f9f9f9;">RUT:</td>
+            <td width="35%">{{ acta.colaborador.rut|default:"---"|format_rut }}</td>
+        </tr>
+        <tr>
+            <td style="font-weight:bold; background-color:#f9f9f9;">Cargo:</td>
+            <td>{{ acta.colaborador.cargo|default:"---" }}</td>
+            <td style="font-weight:bold; background-color:#f9f9f9;">Obra:</td>
+            <td>{{ acta.colaborador.centro_costo|default:"Administración Central" }}</td>
+        </tr>
+    </table>
+
+    <!-- MOVIMIENTOS DE SUMINISTROS -->
+    <div class="section-title">Detalle de Suministros Entregados</div>
+    <table>
+        <thead>
+            <tr>
+                <th width="8%">Cant.</th>
+                <th width="35%">Suministro</th>
+                <th width="20%">Categoría</th>
+                <th width="15%">Fecha Mov.</th>
+                <th width="12%">Valor Unit.</th>
+                <th width="10%">Subtotal</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if movimientos_data %}
+            {% for data in movimientos_data %}
+            <tr>
+                <td style="text-align:center;">{{ data.movimiento.cantidad }}</td>
+                <td>{{ data.movimiento.suministro.nombre }}</td>
+                <td>{{ data.movimiento.suministro.categoria.nombre|default:"---" }}</td>
+                <td>{{ data.movimiento.fecha|date:"d/m/Y" }}</td>
+                <td style="text-align:right;">{% if data.costo_efectivo %}${{ data.costo_efectivo|currency_clp }}{% else %}—{% endif %}</td>
+                <td style="text-align:right;">{% if data.subtotal %}${{ data.subtotal|currency_clp }}{% else %}—{% endif %}</td>
+            </tr>
+            {% endfor %}
+            {% else %}
+            {% for mov in movimientos %}
+            <tr>
+                <td style="text-align:center;">{{ mov.cantidad }}</td>
+                <td>{{ mov.suministro.nombre }}</td>
+                <td>{{ mov.suministro.categoria.nombre|default:"---" }}</td>
+                <td>{{ mov.fecha|date:"d/m/Y" }}</td>
+                <td style="text-align:right;">${{ mov.costo_unitario|default:0|currency_clp }}</td>
+                <td style="text-align:right;">${{ mov.costo_unitario|default:0|currency_clp }}</td>
+            </tr>
+            {% endfor %}
+            {% endif %}
+        </tbody>
+        {% if valor_total %}
+        <tfoot>
+            <tr>
+                <td colspan="5" style="text-align:right; font-weight:bold; background-color:#f9f9f9;">Valor Total:</td>
+                <td style="text-align:right; font-weight:bold; background-color:#f9f9f9;">${{ valor_total|currency_clp }}</td>
+            </tr>
+        </tfoot>
+        {% endif %}
+    </table>
+
+    <!-- OBSERVACIONES -->
+    {% if acta.observaciones %}
+    <div class="section-title">Notas del Responsable</div>
+    <div class="observation-box">
+        {{ acta.observaciones|linebreaks }}
+    </div>
+    {% endif %}
+
+    <!-- CLÁUSULAS LEGALES -->
+    <div class="clauses">
+        <h3>1. Cláusulas de Responsabilidad de Entrega de Suministros</h3>
+        <ol>
+            <li>El colaborador recibe los suministros detallados en el presente acta, asumiendo su correcta utilización para fines laborales.</li>
+            <li><strong>Consumibles:</strong> Los items de uso único (tóner, tintas, papel, etc.) no son retornables una vez entregados, salvo defecto de fábrica comprobado.</li>
+            <li><strong>Periféricos reutilizables:</strong> En caso de mouse, teclados, adaptadores u otros items reutilizables, estos deberán ser devueltos al área TI al término de su uso o en caso de cambio de cargo.</li>
+            <li><strong>Privacidad:</strong> Los datos personales asociados a esta entrega son tratados conforme a la Ley 21.719.</li>
+        </ol>
+    </div>
+
+    <!-- CUADRO DE FIRMAS -->
+    <div class="signatures">
+        <div class="signature-row">
+            <div class="signature-box">
+                <div class="signature-line">
+                    <strong>Responsable Emisión TI</strong><br>
+                    {{ acta.creado_por.nombre_completo }}<br>
+                    RUT: {{ acta.creado_por.rut|format_rut }}
+                </div>
+            </div>
+
+            <div class="signature-box" style="margin-left: 2%;">
+                <div class="signature-line">
+                    <strong>Recibí Conforme</strong><br>
+                    {{ acta.colaborador.nombre_completo }}<br>
+                    RUT: {{ acta.colaborador.rut|format_rut }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer-legal">
+        Este documento es un registro oficial del Sistema JMIE. Su falsificación o alteración está penada por ley.<br>
+        Identificador Único (Folio): {{ acta.folio }}
+    </div>
+</div>

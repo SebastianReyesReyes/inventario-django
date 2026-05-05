@@ -20,25 +20,35 @@ class ActaService:
 
     @staticmethod
     @transaction.atomic
-    def crear_acta(colaborador, tipo_acta, asignacion_ids, creado_por, observaciones=None, accesorio_ids=None, metodo_sanitizacion='N/A', ministro_de_fe=None):
+    def crear_acta(colaborador, tipo_acta, asignacion_ids=None, movimiento_ids=None, 
+                   creado_por=None, observaciones=None, accesorio_ids=None, 
+                   metodo_sanitizacion='N/A', ministro_de_fe=None):
         """
-        Crea un acta nueva y vincula las asignaciones seleccionadas.
+        Crea un acta nueva y vincula las asignaciones o movimientos seleccionados.
 
         Args:
             colaborador: Instancia de Colaborador destinatario del acta.
-            tipo_acta: Tipo de documento ('ENTREGA' o 'DEVOLUCION').
-            asignacion_ids: Lista de PKs de HistorialAsignacion a vincular.
-            creado_por: Instancia de Colaborador (usuario autenticado) que genera el acta.
+            tipo_acta: Tipo de documento ('ENTREGA', 'DEVOLUCION', 'ENTREGA_SUMINISTROS').
+            asignacion_ids: Lista de PKs de HistorialAsignacion (para dispositivos).
+            movimiento_ids: Lista de PKs de MovimientoStock (para suministros).
+            creado_por: Instancia de Colaborador que genera el acta.
             observaciones: Texto libre opcional.
 
         Returns:
             Acta: La instancia del acta creada.
 
         Raises:
-            ValidationError: Si no se seleccionan asignaciones o ninguna es válida.
+            ValidationError: Si no se seleccionan items o ninguno es válido.
         """
-        if not asignacion_ids:
-            raise ValidationError("Debe seleccionar al menos una asignación.")
+        from suministros.models import MovimientoStock
+
+        # Validar según tipo de acta
+        if tipo_acta == 'ENTREGA_SUMINISTROS':
+            if not movimiento_ids:
+                raise ValidationError("Debe seleccionar al menos un movimiento de stock.")
+        else:
+            if not asignacion_ids:
+                raise ValidationError("Debe seleccionar al menos una asignación.")
 
         from django.db import IntegrityError
         
@@ -61,27 +71,49 @@ class ActaService:
                     raise ValidationError("Error crítico: No se pudo generar un folio único tras varios intentos. Reintente.")
                 continue # Reintentar (el save() buscará un nuevo folio al no tener pk)
 
-        # Vincular solo asignaciones que pertenezcan al colaborador y estén sin acta
-        updated = HistorialAsignacion.objects.filter(
-            pk__in=asignacion_ids,
-            colaborador=colaborador,
-            acta__isnull=True,
-        ).update(acta=acta)
-
-        if updated == 0:
-            raise ValidationError(
-                "Las asignaciones seleccionadas ya no están disponibles "
-                "o no pertenecen al colaborador."
+        # Vincular según tipo de acta
+        if tipo_acta == 'ENTREGA_SUMINISTROS':
+            from suministros.models import MovimientoStock
+            movimientos = MovimientoStock.objects.filter(
+                pk__in=movimiento_ids,
+                colaborador_destino=colaborador,
+                tipo_movimiento=MovimientoStock.TipoMovimiento.SALIDA,
             )
-
-        # Vincular accesorios si existen
-        if accesorio_ids:
-            from dispositivos.models import EntregaAccesorio
-            EntregaAccesorio.objects.filter(
-                pk__in=accesorio_ids,
+            
+            if not movimientos.exists():
+                raise ValidationError(
+                    "Los movimientos seleccionados ya no están disponibles "
+                    "o no pertenecen al colaborador."
+                )
+            
+            # Crear instancias del modelo intermedio manualmente
+            from actas.models import MovimientoStockActa
+            MovimientoStockActa.objects.bulk_create([
+                MovimientoStockActa(acta=acta, movimiento=mov)
+                for mov in movimientos
+            ])
+        else:
+            # Vincular asignaciones de dispositivos
+            updated = HistorialAsignacion.objects.filter(
+                pk__in=asignacion_ids,
                 colaborador=colaborador,
-                acta__isnull=True
+                acta__isnull=True,
             ).update(acta=acta)
+
+            if updated == 0:
+                raise ValidationError(
+                    "Las asignaciones seleccionadas ya no están disponibles "
+                    "o no pertenecen al colaborador."
+                )
+
+            # Vincular accesorios si existen
+            if accesorio_ids:
+                from dispositivos.models import EntregaAccesorio
+                EntregaAccesorio.objects.filter(
+                    pk__in=accesorio_ids,
+                    colaborador=colaborador,
+                    acta__isnull=True
+                ).update(acta=acta)
 
         return acta
 
@@ -128,7 +160,7 @@ class ActaService:
             acta_pk: PK del acta.
 
         Returns:
-            tuple: (acta, asignaciones_queryset)
+            tuple: (acta, items) donde items es asignaciones o movimientos según tipo.
         """
         acta = Acta.objects.select_related(
             'colaborador__centro_costo',
@@ -139,8 +171,16 @@ class ActaService:
             'asignaciones__dispositivo__modelo__tipo_dispositivo',
             'asignaciones__dispositivo__modelo__fabricante',
             'accesorios',
+            'movimientos_stock__movimiento__suministro__categoria',
+            'movimientos_stock__movimiento__suministro__fabricante',
         ).get(pk=acta_pk)
 
+        if acta.tipo_acta == 'ENTREGA_SUMINISTROS':
+            from suministros.models import MovimientoStock
+            movimientos = MovimientoStock.objects.filter(
+                actas__acta=acta
+            ).select_related('suministro__categoria', 'suministro__fabricante')
+            return acta, movimientos
         return acta, acta.asignaciones.all()
 
     @staticmethod
@@ -256,8 +296,7 @@ class ActaService:
         )
         acta_preview.folio = f"ACT-{timezone.now().year}-PENDIENTE"
 
-        from django.templatetags.static import static
-        logo_path = static('img/LogoColor.png')
+        logo_path = ActaPDFService._encode_logo_to_base64(finders.find('img/LogoColor.png'))
 
         context = {
             'acta': acta_preview,
@@ -269,6 +308,106 @@ class ActaService:
         }
 
         return render_to_string('actas/partials/acta_preview_content.html', context)
+
+    @staticmethod
+    def generar_preview_html_suministros(colaborador, tipo_acta, movimiento_ids, creado_por,
+                                          observaciones=None, pdf_mode=False):
+        """
+        Construye el contexto para renderizar la vista previa de acta de suministros
+        SIN persistir en base de datos.
+        """
+        from suministros.models import MovimientoStock
+
+        if not movimiento_ids:
+            raise ValidationError("Debe seleccionar al menos un movimiento.")
+
+        movimientos = MovimientoStock.objects.filter(
+            pk__in=movimiento_ids,
+            colaborador_destino=colaborador,
+            tipo_movimiento=MovimientoStock.TipoMovimiento.SALIDA,
+        ).select_related(
+            'suministro__categoria',
+            'suministro__fabricante',
+            'centro_costo',
+            'dispositivo_destino',
+        )
+
+        if not movimientos.exists():
+            raise ValidationError(
+                "Los movimientos seleccionados ya no están disponibles."
+            )
+
+        acta_preview = Acta(
+            colaborador=colaborador,
+            tipo_acta=tipo_acta,
+            creado_por=creado_por,
+            observaciones=observaciones or '',
+            fecha=timezone.now(),
+        )
+        acta_preview.folio = f"ACT-{timezone.now().year}-PENDIENTE"
+
+        logo_path = ActaPDFService._encode_logo_to_base64(finders.find('img/LogoColor.png'))
+
+        # Obtener costo unitario desde la última ENTRADA de cada suministro
+        suministro_ids = [m.suministro_id for m in movimientos]
+        # SQLite no soporta .distinct('suministro_id'), usamos valores agrupados por suministro
+        entradas = MovimientoStock.objects.filter(
+            suministro_id__in=suministro_ids,
+            tipo_movimiento=MovimientoStock.TipoMovimiento.ENTRADA,
+            costo_unitario__isnull=False,
+        ).order_by('-fecha')
+        seen = set()
+        costos_entrada = {}
+        for e in entradas:
+            if e.suministro_id not in seen:
+                seen.add(e.suministro_id)
+                costos_entrada[e.suministro_id] = e.costo_unitario
+        # Construir lista con costo efectivo (propio o heredado de ENTRADA)
+        movimientos_data = []
+        for m in movimientos:
+            costo = m.costo_unitario or costos_entrada.get(m.suministro_id) or 0
+            movimientos_data.append({
+                'movimiento': m,
+                'costo_efectivo': costo,
+                'subtotal': costo * m.cantidad,
+            })
+
+        # Calcular valor total
+        valor_total = sum(d['subtotal'] for d in movimientos_data)
+
+        context = {
+            'acta': acta_preview,
+            'movimientos': movimientos,
+            'movimientos_data': movimientos_data,
+            'logo_path': logo_path,
+            'fecha_actual': timezone.now(),
+            'preview': True,
+            'valor_total': valor_total,
+            'es_suministros': True,
+            'pdf_mode': pdf_mode,
+        }
+
+        return render_to_string('actas/partials/acta_suministro_preview_content.html', context)
+
+    @staticmethod
+    def generar_preview_pdf_suministros(colaborador, tipo_acta, movimiento_ids, creado_por,
+                                         observaciones=None):
+        """Genera PDF preview para acta de suministros."""
+        preview_html = ActaService.generar_preview_html_suministros(
+            colaborador, tipo_acta, movimiento_ids, creado_por, observaciones,
+            pdf_mode=True
+        )
+        
+        acta_preview = Acta(
+            colaborador=colaborador,
+            tipo_acta=tipo_acta,
+            creado_por=creado_por,
+            observaciones=observaciones or '',
+            fecha=timezone.now(),
+        )
+        acta_preview.folio = f"ACT-{timezone.now().year}-PENDIENTE"
+        
+        return ActaPDFService.generar_pdf_suministros(acta_preview, preview_html)
 
     @staticmethod
     def obtener_pendientes(colaborador_pk):
@@ -297,6 +436,50 @@ class ActaService:
         return EntregaAccesorio.objects.filter(
             colaborador_id=colaborador_pk,
             acta__isnull=True
+        )
+
+    @staticmethod
+    def obtener_movimientos_pendientes(colaborador_pk):
+        """
+        Retorna los movimientos de stock tipo SALIDA sin acta de un colaborador.
+
+        Args:
+            colaborador_pk: PK del colaborador.
+
+        Returns:
+            QuerySet de MovimientoStock.
+        """
+        from suministros.models import MovimientoStock
+        return MovimientoStock.objects.filter(
+            colaborador_destino_id=colaborador_pk,
+            tipo_movimiento=MovimientoStock.TipoMovimiento.SALIDA,
+            actas__isnull=True,
+        ).select_related(
+            'suministro__categoria',
+            'suministro__fabricante',
+            'centro_costo',
+            'dispositivo_destino',
+        ).order_by('-fecha')
+
+    @staticmethod
+    def obtener_movimientos_para_pdf(acta):
+        """
+        Obtiene los movimientos de stock optimizados para renderizado PDF.
+
+        Args:
+            acta: Instancia de Acta.
+
+        Returns:
+            QuerySet de MovimientoStock.
+        """
+        from suministros.models import MovimientoStock
+        return MovimientoStock.objects.filter(
+            actas=acta
+        ).select_related(
+            'suministro__categoria',
+            'suministro__fabricante',
+            'centro_costo',
+            'dispositivo_destino',
         )
 
     @staticmethod
@@ -535,3 +718,63 @@ class ActaPDFService:
         acta_preview.folio = f"ACT-{timezone.now().year}-PENDIENTE"
 
         return ActaPDFService._playwright(acta_preview, asignaciones=asignaciones, accesorios=accesorios)
+
+    @staticmethod
+    def generar_pdf_suministros(acta, preview_html):
+        """
+        Genera PDF para acta de suministros a partir de HTML ya renderizado.
+        
+        Args:
+            acta: Instancia de Acta (para el folio en logs).
+            preview_html: HTML string renderizado del template de suministros.
+            
+        Returns:
+            bytes: Contenido binario del PDF.
+        """
+        import concurrent.futures
+        from django.conf import settings
+
+        # Wrap en HTML completo para Playwright
+        html = render_to_string('actas/playwright/pdf_wrapper.html', {
+            'preview_html': preview_html,
+        })
+
+        ActaPDFService._logger.info(
+            f"Iniciando generación Playwright para acta de suministros {acta.folio} "
+            f"(HTML={len(html)} chars)"
+        )
+
+        def _render_in_thread(html_content):
+            from playwright.sync_api import sync_playwright
+            try:
+                with sync_playwright() as pw:
+                    browser = pw.chromium.launch(
+                        headless=True,
+                        args=[
+                            '--no-sandbox', '--disable-gpu',
+                            '--disable-dev-shm-usage', '--disable-setuid-sandbox',
+                            '--font-render-hinting=none',
+                        ],
+                    )
+                    page = browser.new_page()
+                    page.set_content(html_content, wait_until='networkidle')
+                    pdf_bytes = page.pdf(
+                        format='Letter',
+                        margin={'top': '1.5cm', 'bottom': '1.5cm',
+                                'left': '1.5cm', 'right': '1.5cm'},
+                        print_background=True,
+                    )
+                    page.close()
+                    browser.close()
+                    ActaPDFService._logger.info(
+                        f"Playwright: PDF generado ({len(pdf_bytes)} bytes)"
+                    )
+                    return pdf_bytes
+            except Exception as e:
+                ActaPDFService._logger.error(f"Playwright error en thread: {e}")
+                raise
+
+        timeout = getattr(settings, 'PLAYWRIGHT_BROWSER_TIMEOUT', 15000) / 1000
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+            future = executor.submit(_render_in_thread, html)
+            return future.result(timeout=timeout + 5)

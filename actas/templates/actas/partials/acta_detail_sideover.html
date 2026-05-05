@@ -87,24 +87,40 @@
                         </div>
                     </section>
 
-                    <!-- Equipos -->
+                    <!-- Equipos o Movimientos -->
                     <section class="space-y-4">
-                        <h4 class="text-[10px] font-black uppercase tracking-widest text-jmie-gray border-b border-white/5 pb-2">Equipos Vinculados</h4>
+                        <h4 class="text-[10px] font-black uppercase tracking-widest text-jmie-gray border-b border-white/5 pb-2">
+                            {% if es_suministros %}Suministros Vinculados{% else %}Equipos Vinculados{% endif %}
+                        </h4>
                         <div class="space-y-2">
-                            {% for asig in asignaciones %}
-                            <div class="p-3 rounded-xl bg-surface-container-low border border-white/5 hover:border-white/10 transition-all group">
-                                <div class="flex justify-between items-start mb-1">
-                                    <span class="text-[10px] font-black uppercase tracking-widest text-jmie-orange">{{ asig.dispositivo.identificador_interno }}</span>
-                                    <span class="text-[9px] font-bold text-jmie-gray uppercase tracking-widest">{{ asig.dispositivo.modelo.tipo_dispositivo.sigla }}</span>
+                            {% if es_suministros %}
+                                {% for mov in movimientos %}
+                                <div class="p-3 rounded-xl bg-surface-container-low border border-white/5 hover:border-white/10 transition-all group">
+                                    <div class="flex justify-between items-start mb-1">
+                                        <span class="text-[10px] font-black uppercase tracking-widest text-amber-500">x{{ mov.cantidad }}</span>
+                                        <span class="text-[9px] font-bold text-jmie-gray uppercase tracking-widest">{{ mov.suministro.categoria.nombre|default:"---" }}</span>
+                                    </div>
+                                    <p class="text-xs font-bold text-on-background uppercase">{{ mov.suministro.nombre|default:mov.suministro.modelo }}</p>
+                                    <p class="text-[9px] text-jmie-gray font-medium tracking-wide">{{ mov.fecha|date:"d/m/Y" }}</p>
                                 </div>
-                                <p class="text-xs font-bold text-on-background uppercase">{{ asig.dispositivo.modelo }}</p>
-                                <p class="text-[9px] text-jmie-gray font-medium tracking-wide">S/N: {{ asig.dispositivo.numero_serie|default:"No registrado" }}</p>
-                            </div>
-                            {% endfor %}
+                                {% endfor %}
+                            {% else %}
+                                {% for asig in asignaciones %}
+                                <div class="p-3 rounded-xl bg-surface-container-low border border-white/5 hover:border-white/10 transition-all group">
+                                    <div class="flex justify-between items-start mb-1">
+                                        <span class="text-[10px] font-black uppercase tracking-widest text-jmie-orange">{{ asig.dispositivo.identificador_interno }}</span>
+                                        <span class="text-[9px] font-bold text-jmie-gray uppercase tracking-widest">{{ asig.dispositivo.modelo.tipo_dispositivo.sigla }}</span>
+                                    </div>
+                                    <p class="text-xs font-bold text-on-background uppercase">{{ asig.dispositivo.modelo }}</p>
+                                    <p class="text-[9px] text-jmie-gray font-medium tracking-wide">S/N: {{ asig.dispositivo.numero_serie|default:"No registrado" }}</p>
+                                </div>
+                                {% endfor %}
+                            {% endif %}
                         </div>
                     </section>
 
-                    <!-- Notas de Condición de los equipos -->
+                    <!-- Notas de Condición (solo dispositivos) -->
+                    {% if not es_suministros %}
                     <section class="space-y-4">
                         <h4 class="text-[10px] font-black uppercase tracking-widest text-jmie-gray border-b border-white/5 pb-2">Notas de Condición</h4>
                         <div class="space-y-2">
@@ -120,6 +136,7 @@
                             {% endfor %}
                         </div>
                     </section>
+                    {% endif %}
 
                     <!-- Marco Legal Badge -->
                     <div class="p-4 rounded-2xl bg-emerald-500/5 border border-emerald-500/10 flex items-center gap-4">

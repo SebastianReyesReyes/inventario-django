@@ -91,6 +91,15 @@
                         {% endfor %}
                     </select>
                 </div>
+                <div class="space-y-2">
+                    <c-form-label>Modelo Compatible</c-form-label>
+                    <select name="modelos" class="w-full bg-surface-container-high border-[1px] border-white/5 rounded-lg px-4 py-3 text-on-background appearance-none">
+                        <option value="">Todos los modelos</option>
+                        {% for mod in modelos_list %}
+                        <option value="{{ mod.pk }}" {% if modelos_seleccionados == mod.pk|stringformat:"s" %}selected{% endif %}>{{ mod.nombre }} ({{ mod.fabricante.nombre }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
             </div>
         </form>
     </div>

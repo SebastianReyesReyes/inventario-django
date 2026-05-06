@@ -5,9 +5,9 @@
 {% block section_name %}Analítica e Inventario{% endblock %}
 
 {% block content %}
-<div class="space-y-10" id="dashboard-wrapper">
+<div class="space-y-10" id="dashboard-wrapper" x-data="{ activeTab: 'hardware' }">
 
-    <!-- Scripts de Gráficos (Chart.js) -->
+    <!-- Scripts de Gráficos (Chart.js) para la pestaña estratégica -->
     <script>
         // Inicialización global para evitar colisiones en recargas parciales de HTMX
         let charts = {};
@@ -35,54 +35,38 @@
     <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-8 border-b border-white/5 pb-8">
         <div>
             <h1 class="font-sans text-4xl lg:text-5xl font-black tracking-tighter">Centro de Mando</h1>
-            <p class="text-jmie-gray mt-2 text-sm font-bold uppercase tracking-widest opacity-80">Analítica de Activos
-                IT en Tiempo Real</p>
+            <p class="text-jmie-gray mt-2 text-sm font-bold uppercase tracking-widest opacity-80">Vista Operacional y Estratégica</p>
         </div>
     </div>
 
-    <!-- Panel de Filtros Estático (HTMX) -->
-    <div class="glass-panel p-8 rounded-3xl border border-white/5 shadow-2xl">
-        <div class="flex items-center gap-3 mb-6 border-b border-white/5 pb-4">
-            <span class="material-symbols-outlined text-[20px] text-jmie-gray">tune</span>
-            <h2 class="text-[12px] font-bold uppercase tracking-widest text-jmie-gray">Filtros de Análisis Dinámico</h2>
-        </div>
-        <form hx-get="{% url 'dashboard:principal' %}" hx-target="#dashboard-content"
-            hx-trigger="change delay:200ms" hx-push-url="true" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            
-            <div class="space-y-2">
-                <c-form-label>Centro de Costo / Obra</c-form-label>
-                {{ filter.form.centro_costo }}
-            </div>
-
-            <div class="space-y-2">
-                <c-form-label>Fabricante / Marca</c-form-label>
-                {{ filter.form.fabricante }}
-            </div>
-
-            <div class="space-y-2">
-                <c-form-label>Tipo de Equipo</c-form-label>
-                {{ filter.form.tipo }}
-            </div>
-            
-            <div class="space-y-2">
-                <c-form-label>Estado Operativo</c-form-label>
-                {{ filter.form.estado }}
-            </div>
-
-            <div class="md:col-span-2 lg:col-span-4 space-y-2">
-                <c-form-label>Rango de Fecha de Compra</c-form-label>
-                <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                    {{ filter.form.fecha_compra }}
-                </div>
-            </div>
-        </form>
+    <!-- Tabs Nav -->
+    <div class="flex space-x-4 border-b border-white/10 overflow-x-auto">
+        <button @click="activeTab = 'hardware'"
+                :class="activeTab === 'hardware' ? 'border-jmie-blue text-white' : 'border-transparent text-jmie-gray hover:text-white hover:border-white/20'"
+                class="px-6 py-3 border-b-2 font-bold text-sm tracking-widest uppercase transition-colors whitespace-nowrap"
+                hx-get="{% url 'dashboard:tab_hardware' %}" hx-target="#tab-content" hx-trigger="click">
+            Disponibilidad Hardware
+        </button>
+        <button @click="activeTab = 'suministros'"
+                :class="activeTab === 'suministros' ? 'border-jmie-blue text-white' : 'border-transparent text-jmie-gray hover:text-white hover:border-white/20'"
+                class="px-6 py-3 border-b-2 font-bold text-sm tracking-widest uppercase transition-colors whitespace-nowrap"
+                hx-get="{% url 'dashboard:tab_suministros' %}" hx-target="#tab-content" hx-trigger="click">
+            Packs de Suministros
+        </button>
+        <button @click="activeTab = 'estrategico'"
+                :class="activeTab === 'estrategico' ? 'border-jmie-blue text-white' : 'border-transparent text-jmie-gray hover:text-white hover:border-white/20'"
+                class="px-6 py-3 border-b-2 font-bold text-sm tracking-widest uppercase transition-colors whitespace-nowrap"
+                hx-get="{% url 'dashboard:tab_estrategico' %}" hx-target="#tab-content" hx-trigger="click">
+            Vista Estratégica
+        </button>
     </div>
 
-    <!-- Contenido Dinámico (HTMX Target) -->
-    <div id="dashboard-content">
-        {% include "dashboard/partials/dashboard_content.html" %}
+    <!-- Contenedor de Pestañas -->
+    <div id="tab-content" hx-get="{% url 'dashboard:tab_hardware' %}" hx-trigger="load">
+        <div class="flex justify-center items-center py-20">
+            <span class="text-jmie-gray material-symbols-outlined animate-spin text-4xl">refresh</span>
+        </div>
     </div>
 
 </div>
-
 {% endblock %}

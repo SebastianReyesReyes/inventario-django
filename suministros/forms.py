@@ -19,6 +19,9 @@ class CategoriaSuministroForm(BaseStyledForm):
         }
 
 
+class CheckboxGridWidget(forms.CheckboxSelectMultiple):
+    template_name = 'widgets/checkbox_grid.html'
+
 class SuministroForm(BaseStyledForm):
     class Meta:
         model = Suministro
@@ -30,8 +33,8 @@ class SuministroForm(BaseStyledForm):
                 'hx-target': '#id_modelos_compatibles',
                 'hx-trigger': 'change',
             }),
-            'modelos_compatibles': forms.SelectMultiple(attrs={
-                'class': 'w-full bg-surface-container-high border-[1px] border-white/5 rounded-lg px-4 py-3 text-on-background h-32',
+            'modelos_compatibles': CheckboxGridWidget(attrs={
+                'class': 'grid grid-cols-1 md:grid-cols-2 gap-3 overflow-y-auto max-h-72 p-1 text-on-background',
             }),
             'nombre': forms.TextInput(attrs={'class': 'w-full bg-surface-container-high border-[1px] border-white/5 rounded-lg px-4 py-3 text-on-background'}),
             'codigo_interno': forms.TextInput(attrs={'class': 'w-full bg-surface-container-high border-[1px] border-white/5 rounded-lg px-4 py-3 text-on-background'}),

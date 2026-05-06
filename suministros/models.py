@@ -43,6 +43,10 @@ class Suministro(models.Model):
     # Campo de solo lectura, actualizado vía señales o services
     stock_actual = models.IntegerField(default=0, editable=False, help_text="Stock calculado en base a movimientos")
     esta_activo = models.BooleanField(default=True, help_text="Indica si el suministro está activo en el catálogo")
+    duracion_estimada_dias = models.PositiveIntegerField(
+        null=True, blank=True,
+        help_text="Días estimados que debería durar este insumo. Usado para alertas de consumo inusual."
+    )
 
     class Meta:
         verbose_name = "Suministro"

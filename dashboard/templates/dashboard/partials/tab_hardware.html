@@ -1,0 +1,57 @@
+<div class="space-y-6 animate-fade-in">
+    <div class="flex justify-between items-center">
+        <h2 class="text-xl font-bold">Disponibilidad de Hardware</h2>
+        <div class="relative">
+            <input type="text" placeholder="Buscar por tipo..." class="bg-black/20 border border-white/10 rounded-lg py-2 px-4 text-sm text-white focus:outline-none focus:border-jmie-blue" x-data @input="
+                let v = $event.target.value.toLowerCase();
+                document.querySelectorAll('.hw-card').forEach(el => {
+                    el.style.display = el.dataset.name.toLowerCase().includes(v) ? 'block' : 'none';
+                });
+            ">
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {% for item in hardware_data %}
+        <div class="hw-card glass-panel p-6 rounded-2xl border border-white/5 shadow-xl relative overflow-hidden group" data-name="{{ item.tipo.nombre }}">
+            <div class="absolute top-0 right-0 p-4">
+                {% if item.status == 'green' %}
+                <span class="flex h-3 w-3 relative">
+                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                  <span class="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                </span>
+                {% elif item.status == 'yellow' %}
+                <span class="flex h-3 w-3 relative">
+                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
+                  <span class="relative inline-flex rounded-full h-3 w-3 bg-yellow-500"></span>
+                </span>
+                {% else %}
+                <span class="flex h-3 w-3 relative">
+                  <span class="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                </span>
+                {% endif %}
+            </div>
+            
+            <div class="text-jmie-gray mb-1"><span class="material-symbols-outlined text-[28px]">devices</span></div>
+            <h3 class="text-lg font-bold mb-4">{{ item.tipo.nombre }}</h3>
+            
+            <div class="flex items-baseline gap-2">
+                <span class="text-4xl font-black {% if item.status == 'red' %}text-red-400{% elif item.status == 'yellow' %}text-yellow-400{% else %}text-green-400{% endif %}">
+                    {{ item.disponibles }}
+                </span>
+                <span class="text-xs text-jmie-gray uppercase tracking-wider font-bold">Disponibles</span>
+            </div>
+            <div class="mt-4 pt-4 border-t border-white/5 flex justify-between items-center">
+                <span class="text-xs text-jmie-gray">Umbral Mínimo: {{ item.umbral }}</span>
+                <a href="{% url 'dispositivos:dispositivo_list' %}?tipo={{ item.tipo.id }}&estado_nombre=Disponible" class="text-jmie-blue hover:text-white transition-colors text-sm font-bold flex items-center gap-1">
+                    Ver <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+                </a>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-span-full py-12 text-center text-jmie-gray">
+            No hay tipos de hardware configurados.
+        </div>
+        {% endfor %}
+    </div>
+</div>

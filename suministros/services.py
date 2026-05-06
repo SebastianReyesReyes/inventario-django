@@ -41,6 +41,26 @@ def registrar_movimiento_stock(
         
     # El método clean() del modelo valida que el stock_actual sea >= cantidad si es salida
     movimiento.clean() 
+
+    # Lógica de alerta de consumo inusual (Gonzalo's requirement)
+    if tipo_movimiento == MovimientoStock.TipoMovimiento.SALIDA and suministro.duracion_estimada_dias:
+        # Buscamos la última salida del mismo suministro para el mismo destino
+        ultimo_mov = MovimientoStock.objects.filter(
+            suministro=suministro,
+            tipo_movimiento=MovimientoStock.TipoMovimiento.SALIDA,
+            colaborador_destino_id=colaborador_destino_id,
+            dispositivo_destino_id=dispositivo_destino_id
+        ).order_by('-fecha').first()
+
+        if ultimo_mov:
+            dias_pasados = (timezone.now() - ultimo_mov.fecha).days
+            if dias_pasados < suministro.duracion_estimada_dias:
+                advertencia = f"⚠️ ALERTA: Consumo inusual. Duración estimada: {suministro.duracion_estimada_dias} días. Han pasado solo {dias_pasados} días desde la última entrega."
+                if movimiento.notas:
+                    movimiento.notas = f"{advertencia}\n{movimiento.notas}"
+                else:
+                    movimiento.notas = advertencia
+
     movimiento.save()
     
     # Recalcular el stock (ahora que el movimiento está guardado)

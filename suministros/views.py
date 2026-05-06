@@ -29,11 +29,26 @@ def suministro_list(request):
 
     suministros = Suministro.objects.activos().select_related('categoria', 'fabricante')
 
+    modelos_list = Modelo.objects.all().order_by('nombre')
     if categoria_id:
         suministros = suministros.filter(categoria_id=categoria_id)
+        # Filtrar modelos que pertenecen a tipos compatibles con esta categoría
+        try:
+            categoria = CategoriaSuministro.objects.get(pk=categoria_id)
+            tipos = categoria.tipos_dispositivo_compatibles.all()
+            if tipos.exists():
+                modelos_list = modelos_list.filter(tipo_dispositivo__in=tipos)
+        except CategoriaSuministro.DoesNotExist:
+            pass
 
     if fabricante_id:
         suministros = suministros.filter(fabricante_id=fabricante_id)
+
+    modelos_ids_str = request.GET.get('modelos', '')
+    if modelos_ids_str:
+        modelos_ids = [m_id for m_id in modelos_ids_str.split(',') if m_id.strip().isdigit()]
+        if modelos_ids:
+            suministros = suministros.filter(modelos_compatibles__id__in=modelos_ids).distinct()
 
     if query:
         suministros = suministros.filter(
@@ -52,9 +67,11 @@ def suministro_list(request):
         'suministros': page_obj.object_list,
         'categorias': CategoriaSuministro.objects.all(),
         'fabricantes_list': Fabricante.objects.all().order_by('nombre'),
+        'modelos_list': Modelo.objects.all().select_related('fabricante').order_by('nombre'),
         'query': query,
         'categoria_id': categoria_id,
         'fabricante_id': fabricante_id,
+        'modelos_seleccionados': request.GET.get('modelos', ''),
     }
 
     if request.headers.get('HX-Request'):

@@ -10,6 +10,10 @@ class BaseStyledForm(forms.ModelForm):
             
             if isinstance(field.widget, forms.CheckboxInput):
                 field.widget.attrs.update({'class': 'w-5 h-5 rounded border-white/10 bg-surface-container-high text-jmie-orange focus:ring-jmie-orange/40 transition-all'})
+            elif isinstance(field.widget, forms.CheckboxSelectMultiple):
+                # Si ya tiene clases (como nuestro Grid), no las sobreescribimos con space-y-2
+                if 'grid' not in current_classes:
+                    field.widget.attrs.update({'class': f'{current_classes} space-y-2'.strip()})
             elif isinstance(field.widget, (forms.Select, forms.SelectMultiple)):
                 field.widget.attrs.update({'class': f'{base_classes} appearance-none'})
             else:

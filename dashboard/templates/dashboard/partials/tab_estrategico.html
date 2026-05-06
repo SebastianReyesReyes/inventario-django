@@ -1,0 +1,44 @@
+<div class="space-y-10 animate-fade-in">
+    <!-- Panel de Filtros Estático (HTMX) -->
+    <div class="glass-panel p-8 rounded-3xl border border-white/5 shadow-2xl">
+        <div class="flex items-center gap-3 mb-6 border-b border-white/5 pb-4">
+            <span class="material-symbols-outlined text-[20px] text-jmie-gray">tune</span>
+            <h2 class="text-[12px] font-bold uppercase tracking-widest text-jmie-gray">Filtros de Análisis Dinámico</h2>
+        </div>
+        <form hx-get="{% url 'dashboard:tab_estrategico' %}" hx-target="#dashboard-content"
+            hx-trigger="change delay:200ms" hx-push-url="false" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            
+            <div class="space-y-2">
+                <c-form-label>Centro de Costo / Obra</c-form-label>
+                {{ filter.form.centro_costo }}
+            </div>
+
+            <div class="space-y-2">
+                <c-form-label>Fabricante / Marca</c-form-label>
+                {{ filter.form.fabricante }}
+            </div>
+
+            <div class="space-y-2">
+                <c-form-label>Tipo de Equipo</c-form-label>
+                {{ filter.form.tipo }}
+            </div>
+            
+            <div class="space-y-2">
+                <c-form-label>Estado Operativo</c-form-label>
+                {{ filter.form.estado }}
+            </div>
+
+            <div class="md:col-span-2 lg:col-span-4 space-y-2">
+                <c-form-label>Rango de Fecha de Compra</c-form-label>
+                <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                    {{ filter.form.fecha_compra }}
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Contenido Dinámico -->
+    <div id="dashboard-content">
+        {% include "dashboard/partials/dashboard_content.html" %}
+    </div>
+</div>

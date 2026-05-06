@@ -9,7 +9,7 @@ services:
       - .env
     environment:
       - DEBUG=False
-      - ALLOWED_HOSTS=localhost,127.0.0.1,*
+      - ALLOWED_HOSTS=localhost,127.0.0.1
       - DB_PATH=/app/data/db.sqlite3
     volumes:
       # Persistencia de datos CRÍTICA para el piloto

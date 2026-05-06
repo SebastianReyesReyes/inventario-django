@@ -173,6 +173,7 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
+STATIC_ROOT = BASE_DIR / 'static'
 
 # Media files (Uploads) — filesystem por ahora, django-storages para Azure/S3 futuro
 MEDIA_URL = '/media/'

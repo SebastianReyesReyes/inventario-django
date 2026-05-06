@@ -259,3 +259,18 @@ PLAYWRIGHT_BROWSER_TTL = int(os.getenv('PLAYWRIGHT_BROWSER_TTL', '120'))
 
 # Playwright: máximo de instancias de Chromium concurrentes en el pool
 PLAYWRIGHT_POOL_MAX_SIZE = int(os.getenv('PLAYWRIGHT_POOL_MAX_SIZE', '2'))
+
+
+# Security settings for production
+if not DEBUG:
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_SSL_REDIRECT = True
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+
+# Additional security headers
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = 'DENY'

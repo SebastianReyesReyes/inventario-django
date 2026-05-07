@@ -16,8 +16,93 @@ from core.models import Modelo, Fabricante, CentroCosto
 from colaboradores.models import Colaborador
 from .models import Suministro, MovimientoStock, CategoriaSuministro
 from .forms import SuministroForm, MovimientoStockForm, CategoriaSuministroForm, FacturaCabeceraForm, MovimientoFacturaForm
-from .services import registrar_movimiento_stock
+from .services import registrar_movimiento_stock, get_pack_siblings, registrar_movimiento_pack
 from .resources import SuministroResource, MovimientoStockResource
+
+
+@login_required
+def ajax_get_pack_siblings(request):
+    """HTMX: retorna los suministros hermanos de un pack basado en compatibilidad."""
+    suministro_id = request.GET.get('suministro')
+    if not suministro_id:
+        return HttpResponse("")
+    
+    suministro = get_object_or_404(Suministro, pk=suministro_id)
+    siblings = get_pack_siblings(suministro)
+    
+    return render(request, 'suministros/partials/pack_siblings_rows.html', {
+        'siblings': siblings,
+        'suministro_base': suministro,
+    })
+
+
+@login_required
+@permission_required('suministros.add_movimientostock', raise_exception=True)
+def movimiento_pack_create(request):
+    """Carga modal para movimiento de múltiples suministros (Pack)."""
+    ids_str = request.GET.get('ids', '') or request.POST.get('ids', '')
+    suministro_ids = [int(sid) for sid in ids_str.split(',') if sid.strip().isdigit()]
+    
+    if not suministro_ids:
+        # Si no hay IDs, quizás se disparó desde un solo suministro pidiendo pack
+        base_id = request.GET.get('base_id')
+        if base_id:
+            base_sum = get_object_or_404(Suministro, pk=base_id)
+            suministro_ids = [base_sum.id] + list(get_pack_siblings(base_sum).values_list('id', flat=True))
+    
+    suministros = Suministro.objects.filter(id__in=suministro_ids).select_related('categoria', 'fabricante')
+    
+    if request.method == 'POST':
+        # Procesamiento manual de datos de pack para evitar complejidad de formsets en modal Alpine
+        tipo = request.POST.get('tipo_movimiento')
+        colaborador_id = request.POST.get('colaborador_destino')
+        centro_costo_id = request.POST.get('centro_costo')
+        dispositivo_id = request.POST.get('dispositivo_destino')
+        notas = request.POST.get('notas', '')
+        
+        movimientos_data = []
+        for s in suministros:
+            qty = request.POST.get(f'qty_{s.id}', 0)
+            if qty and int(qty) > 0:
+                movimientos_data.append({
+                    'suministro_id': s.id,
+                    'cantidad': int(qty),
+                })
+        
+        if not movimientos_data:
+            messages.error(request, "Debe ingresar al menos una cantidad válida.")
+        else:
+            try:
+                registrar_movimiento_pack(
+                    movimientos_data=movimientos_data,
+                    tipo_movimiento=tipo,
+                    registrado_por_id=request.user.id,
+                    colaborador_destino_id=colaborador_id or None,
+                    centro_costo_id=centro_costo_id or None,
+                    dispositivo_destino_id=dispositivo_id or None,
+                    notas_comunes=notas
+                )
+                return htmx_trigger_response(
+                    trigger={
+                        'refreshSuministroList': '',
+                        'show-notification': {'message': 'Movimientos de pack registrados', 'type': 'success'}
+                    },
+                    status=204
+                )
+            except ValidationError as e:
+                messages.error(request, f"Error: {str(e)}")
+            except Exception as e:
+                messages.error(request, f"Error inesperado: {str(e)}")
+
+    # GET o POST con error
+    # Usamos MovimientoStockForm solo para renderizar los campos comunes (destinatario, etc)
+    form = MovimientoStockForm()
+    
+    return render(request, 'suministros/partials/movimiento_pack_modal.html', {
+        'suministros': suministros,
+        'form': form,
+        'ids_str': ",".join(map(str, suministro_ids)),
+    })
 
 
 @login_required

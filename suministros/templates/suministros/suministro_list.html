@@ -5,7 +5,19 @@
 
 {% block content %}
 <div class="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700"
-     x-data="{ toastMessage: '', toastType: '', showToast: false }"
+     x-data="{ 
+        toastMessage: '', 
+        toastType: '', 
+        showToast: false,
+        selectedIds: [],
+        toggleSelection(id) {
+            if (this.selectedIds.includes(id)) {
+                this.selectedIds = this.selectedIds.filter(i => i !== id);
+            } else {
+                this.selectedIds.push(id);
+            }
+        }
+     }"
      @showtoast.window="
         toastMessage = $event.detail.message;
         toastType = $event.detail.type;
@@ -23,6 +35,17 @@
 
     <c-page-header title="Gestión de Suministros" subtitle="Inventario de insumos, repuestos y consumibles.">
         <div class="flex items-center gap-3">
+            <!-- Botón de Movimiento Pack (Dinámico) -->
+            <button x-show="selectedIds.length > 0" x-transition
+                    hx-get="{% url 'suministros:movimiento_pack_create' %}"
+                    hx-include="#selected-ids-input"
+                    hx-target="#modal-container"
+                    class="px-4 py-2.5 bg-jmie-blue text-white text-xs font-black rounded-xl hover:brightness-110 shadow-[0_4px_20px_rgba(0,53,148,0.2)] transition-all flex items-center animate-in zoom-in-95">
+                <span class="material-symbols-outlined text-sm mr-2 leading-none">inventory_2</span>
+                Movimiento Pack (<span x-text="selectedIds.length"></span>)
+            </button>
+            <input type="hidden" id="selected-ids-input" name="ids" :value="selectedIds.join(',')">
+
             {% if perms.suministros.view_suministro %}
             <a href="{% url 'suministros:suministro_export_excel' %}?{{ request.GET.urlencode }}"
                class="px-4 py-2.5 rounded-xl border border-white/10 text-on-background hover:bg-white/5 transition-all text-xs font-bold flex items-center">

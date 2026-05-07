@@ -137,10 +137,10 @@ def colaborador_delete(request, pk):
 
 @login_required
 def colaborador_exportar_excel(request):
-    """Exporta el padron completo de colaboradores a formato Excel."""
-    dataset = ColaboradorResource().export(Colaborador.objects.select_related(
+    """Exporta el padron completo de colaboradores ACTIVOS a formato Excel."""
+    dataset = ColaboradorResource().export(Colaborador.objects.filter(esta_activo=True).select_related(
         'departamento', 'centro_costo'
-    ).all().order_by('first_name'))
+    ).order_by('first_name'))
     response = HttpResponse(
         dataset.export('xlsx'),
         content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'

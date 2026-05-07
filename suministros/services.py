@@ -1,5 +1,28 @@
 from django.db import transaction
+from django.utils import timezone
+from django.core.exceptions import ValidationError
 from .models import Suministro, MovimientoStock
+
+def get_pack_siblings(suministro: Suministro):
+    """
+    Retorna otros suministros que tienen EXACTAMENTE el mismo conjunto
+    de modelos compatibles (fingerprint). Útil para kits de toners.
+    """
+    modelos_ids = list(suministro.modelos_compatibles.values_list('id', flat=True).order_by('id'))
+    if not modelos_ids:
+        return Suministro.objects.none()
+    
+    # Buscamos otros que compartan la misma cantidad de modelos y todos los IDs
+    # (Enfoque manual para evitar queries complejas de ManyToMany en SQLite)
+    siblings = Suministro.objects.activos().exclude(id=suministro.id).prefetch_related('modelos_compatibles')
+    
+    match_ids = []
+    for s in siblings:
+        s_modelos_ids = list(s.modelos_compatibles.values_list('id', flat=True).order_by('id'))
+        if s_modelos_ids == modelos_ids:
+            match_ids.append(s.id)
+            
+    return Suministro.objects.filter(id__in=match_ids).select_related('categoria', 'fabricante')
 
 @transaction.atomic
 def registrar_movimiento_stock(
@@ -67,3 +90,39 @@ def registrar_movimiento_stock(
     suministro.recalcular_stock()
     
     return movimiento
+
+@transaction.atomic
+def registrar_movimiento_pack(
+    movimientos_data: list,
+    tipo_movimiento: str,
+    registrado_por_id: int,
+    colaborador_destino_id: int = None,
+    centro_costo_id: int = None,
+    dispositivo_destino_id: int = None,
+    numero_factura: str = None,
+    notas_comunes: str = ""
+):
+    """
+    Registra múltiples movimientos de stock (pack) de forma atómica.
+    movimientos_data: list of dicts {'suministro_id': int, 'cantidad': int, 'costo_unitario': int (opt)}
+    """
+    movimientos_registrados = []
+    for item in movimientos_data:
+        if item['cantidad'] <= 0:
+            continue
+            
+        mov = registrar_movimiento_stock(
+            suministro_id=item['suministro_id'],
+            tipo_movimiento=tipo_movimiento,
+            cantidad=item['cantidad'],
+            registrado_por_id=registrado_por_id,
+            colaborador_destino_id=colaborador_destino_id,
+            centro_costo_id=centro_costo_id,
+            dispositivo_destino_id=dispositivo_destino_id,
+            costo_unitario=item.get('costo_unitario'),
+            numero_factura=numero_factura,
+            notas=notas_comunes
+        )
+        movimientos_registrados.append(mov)
+    
+    return movimientos_registrados
